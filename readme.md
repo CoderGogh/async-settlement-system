@@ -1,4 +1,11 @@
-To_Uplus
+주제
+
+기능
+
+기술 스택
+
+프로젝트 구조
+
 
 ## 플로우차트
 <img width="15245" height="9216" alt="image" src="https://github.com/user-attachments/assets/a427d5cb-029c-4b71-9a3b-632f30ff6024" />
