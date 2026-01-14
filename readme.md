@@ -66,4 +66,4 @@ Ureka_plus/
 - message 서버
 <img width="2971" height="1936" alt="워크플로우-2" src="https://github.com/user-attachments/assets/0694ba33-048b-4bb3-8b4c-89372b018b3f" />
 ## 서버구조
-[img.png](img.png)
+<img width="1793" height="1100" alt="Image" src="https://github.com/user-attachments/assets/cb0d74d3-736c-44a4-af24-38f28530553e" />
