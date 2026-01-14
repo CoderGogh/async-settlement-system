@@ -15,10 +15,42 @@ Admin Server는 운영 전용 서버로, 배치 실행 상태와 메시지 발�
 이 구조의 핵심 목표는 “정산은 정확하게 한 번, 메시지는 중복 없이 전달”이다. 자동 재시도나 암묵적인 복구에 의존하지 않고, 모든 실행과 실패를 명확한 상태로 기록하고 운영자가 통제할 수 있도록 설계된 것이 Ureka Plus의 가장 큰 특징이다.
 
 
-## 기술 스택
+## 기술 스택 (Tech Stack)
 
-## 프로젝트 구조
+### Backend
+- **Language**: Java 17
+- **Framework**: Spring Boot 3.x
+- **Batch Processing**: Spring Batch
+- **Build Tool**: Gradle (Multi-module)
 
+### Infrastructure & Messaging
+- **Database**:
+    - **Main**: MySQL 8.0 (정산 및 유저 데이터)
+    - **Cache**: Redis (분산 락, 임시 저장)
+- **Message Broker**: Apache Kafka, Zookeeper
+- **Containerization**: Docker, Docker Compose
+
+### Tools
+- **Version Control**: Git
+- **Deployment**: Cafe24(DB), AWS EC2(App)
+
+---
+
+## 프로젝트 구조 (Project Structure)
+
+본 프로젝트는 **모노레포(Monorepo)** 구조로 관리되며, 다음과 같은 모듈로 구성됩니다.
+
+```
+Ureka_plus/
+├── billing_api/      # [Module] 사용자 요청 처리 및 데이터 조회 API
+├── billing_batch/    # [Module] 대용량 정산 데이터 배치 처리 (Spring Batch)
+├── billing_message/  # [Module] Kafka 메시지 소비 및 알림 발송
+├── billing_common/   # [Module] 공통 도메인, 유틸리티, 설정 (예정)
+├── docker-compose.yml # 로컬/개발 환경 인프라 구성
+└── README.md
+```
+
+---
 
 ## 플로우차트
 <img width="15245" height="9216" alt="image" src="https://github.com/user-attachments/assets/a427d5cb-029c-4b71-9a3b-632f30ff6024" />
