@@ -2,7 +2,7 @@
 대용량 통신 요금 명세서 및 알림 발송 시스템
 
 # 기능
-___
+
 ## 1. 정산
 
 - 정산 데이터의 유일한 기준
@@ -65,5 +65,6 @@ Ureka_plus/
 
 - message 서버
 <img width="2971" height="1936" alt="워크플로우-2" src="https://github.com/user-attachments/assets/0694ba33-048b-4bb3-8b4c-89372b018b3f" />
+
 ## 서버구조
-<img width="1793" height="1100" alt="Image" src="https://github.com/user-attachments/assets/cb0d74d3-736c-44a4-af24-38f28530553e" />
+<img width="998" height="615" alt="image" src="https://github.com/user-attachments/assets/8dcd30e9-94ee-4da7-ba6c-b47368421aef" />
