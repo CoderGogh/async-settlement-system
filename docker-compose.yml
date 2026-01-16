@@ -4,7 +4,27 @@ services:
   # [Infrastructure]
   # ==========================================
 
-  # Mysql 삭제
+#  mysql:
+#    image: mysql:8.0
+#    container_name: billing-db
+#    ports:
+#      - "3307:3306"
+#    environment:
+#      MYSQL_ROOT_PASSWORD: root
+#      MYSQL_DATABASE: billing
+#    command:
+#      - --character-set-server=utf8mb4
+#      - --collation-server=utf8mb4_unicode_ci
+#      - --default-time-zone=+09:00
+#    volumes:
+#      - ./data/mysql:/var/lib/mysql
+#    healthcheck:
+#      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+#      interval: 10s
+#      timeout: 5s
+#      retries: 5
+#    networks:
+#      - billing-net
 
 #  redis:
 #    image: redis:7
@@ -16,6 +36,7 @@ services:
 
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
+    platform: linux/amd64 #
     container_name: billing-zookeeper
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
@@ -25,9 +46,11 @@ services:
 
   kafka:
     image: confluentinc/cp-kafka:7.5.0
+    platform: linux/amd64 #
     container_name: billing-kafka
     depends_on:
-      - zookeeper
+      zookeeper:
+        condition: service_started
     ports:
       - "9092:9092"
     environment:
@@ -38,6 +61,11 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
     networks:
       - billing-net
 
@@ -80,7 +108,7 @@ services:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
     depends_on:
       kafka:
-        condition: service_started
+        condition: service_healthy
     networks:
       - billing-net
 
@@ -102,7 +130,7 @@ services:
 
     depends_on:
       kafka:
-        condition: service_started
+        condition: service_healthy
 
     networks:
       - billing-net
