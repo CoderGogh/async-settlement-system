@@ -1,5 +1,6 @@
 package com.touplus.billing_batch.config;
 
+import com.touplus.billing_batch.domain.dto.BillingResultMessage;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
@@ -24,21 +25,21 @@ public class KafkaProducerConfig {
     }
 
     @Bean
-    public ProducerFactory<String, Object> producerFactory() {
+    public ProducerFactory<String, BillingResultMessage> producerFactory() {
 
         Map<String, Object> props = kafkaProperties.buildProducerProperties(null);
 
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
 
-        JsonSerializer<Object> serializer = new JsonSerializer<>(objectMapper);
+        JsonSerializer<BillingResultMessage> serializer = new JsonSerializer<>(objectMapper);
         serializer.setAddTypeInfo(true); // 타입 정보 포함
 
         return new DefaultKafkaProducerFactory<>(props, new StringSerializer(), serializer);
     }
 
     @Bean
-    public KafkaTemplate<String, Object> kafkaTemplate() {
+    public KafkaTemplate<String, BillingResultMessage> kafkaTemplate() {
         return new KafkaTemplate<>(producerFactory());
     }
 }

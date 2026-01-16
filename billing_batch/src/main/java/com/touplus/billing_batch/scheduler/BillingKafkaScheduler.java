@@ -1,7 +1,9 @@
 package com.touplus.billing_batch.scheduler;
 
-import com.touplus.billing_batch.domain.BillingResult;
-import com.touplus.billing_batch.domain.BillingResultRepository;
+import com.touplus.billing_batch.domain.dto.BillingResultMessage;
+import com.touplus.billing_batch.domain.entity.BillingResult;
+import com.touplus.billing_batch.domain.entity.SendStatus;
+import com.touplus.billing_batch.domain.repository.BillingResultRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -10,7 +12,6 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.data.domain.PageRequest;
 
 import java.util.List;
 
@@ -20,25 +21,36 @@ import java.util.List;
 public class BillingKafkaScheduler {
 
     private final BillingResultRepository billingResultRepository;
-    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final KafkaTemplate<String, BillingResultMessage> kafkaTemplate;
 
     private static final String TOPIC = "billing-result";
 
-    @Scheduled(fixedDelay = 5000) // 예시를 위한 1초
+//    @Scheduled(fixedDelay = 1000) // 예시를 위한 1초
     @Transactional
     public void sendBillingResult() {
-        List<BillingResult> targets = billingResultRepository.findReadyForSend(PageRequest.of(0, 1000));
+        List<BillingResult> targets = billingResultRepository.findBySendStatusOrderById(SendStatus.READY);
 
         for (BillingResult billing : targets) {
             try {
                 log.info("Trying to send billingResultId={}", billing.getId());
-                log.info("보내는 메시지: {}", billing);
+
+                // Entity → DTO 변환
+                BillingResultMessage message = new BillingResultMessage();
+                message.setId(billing.getId());
+                message.setSettlementMonth(billing.getSettlementMonth());
+                message.setUserId(billing.getUserId());
+                message.setTotalPrice(billing.getTotalPrice());
+                message.setSettlementDetails(billing.getSettlementDetails());
+                message.setSendStatus(billing.getSendStatus().name());
+                message.setBatchExecutionId(billing.getBatchExecutionId());
+                message.setProcessedAt(billing.getProcessedAt());
+
                 billing.markSending();
 
                 kafkaTemplate.send(
                         TOPIC,
                         billing.getId().toString(), // Kafka Key
-                        billing
+                        message
                 ).get(); // 동기 전송
 
                 billing.markSuccess();

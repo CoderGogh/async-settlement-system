@@ -1,5 +1,6 @@
 package com.touplus.billing_message.config;
 
+import com.touplus.billing_message.domain.dto.BillingResultMessage;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
@@ -25,28 +26,22 @@ public class KafkaConsumerConfig {
     }
 
     @Bean
-    public ConsumerFactory<String, Map<String, Object>> consumerFactory() {
+    public ConsumerFactory<String, BillingResultMessage> consumerFactory() {
         Map<String, Object> props = kafkaProperties.buildConsumerProperties(null);
-
-
-        // Map으로 역직렬화, _type 헤더 무시
-        JsonDeserializer<Map<String, Object>> valueDeserializer = new JsonDeserializer<>(Map.class);
-        valueDeserializer.addTrustedPackages("*");
-        valueDeserializer.setUseTypeMapperForKey(false);
-        valueDeserializer.setRemoveTypeHeaders(true); // ✅ _type 헤더 제거
 
         return new DefaultKafkaConsumerFactory<>(
                 props,
                 new StringDeserializer(),
-                valueDeserializer
+                new JsonDeserializer<>(BillingResultMessage.class, false)
         );
     }
 
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, Map<String, Object>> kafkaListenerContainerFactory() {
-        ConcurrentKafkaListenerContainerFactory<String, Map<String, Object>> factory =
+    public ConcurrentKafkaListenerContainerFactory<String, BillingResultMessage> kafkaListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, BillingResultMessage> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
         return factory;
     }
 }
+
