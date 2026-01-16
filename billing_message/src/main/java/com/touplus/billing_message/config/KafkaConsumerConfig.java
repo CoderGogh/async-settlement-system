@@ -2,6 +2,7 @@ package com.touplus.billing_message.config;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.EnableKafka;
@@ -17,12 +18,16 @@ import java.util.Map;
 @Configuration
 public class KafkaConsumerConfig {
 
+    private final KafkaProperties kafkaProperties;
+
+    public KafkaConsumerConfig(KafkaProperties kafkaProperties) {
+        this.kafkaProperties = kafkaProperties;
+    }
+
     @Bean
     public ConsumerFactory<String, Map<String, Object>> consumerFactory() {
-        Map<String, Object> props = new HashMap<>();
-        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-        props.put(ConsumerConfig.GROUP_ID_CONFIG, "billing-message-group");
-        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+        Map<String, Object> props = kafkaProperties.buildConsumerProperties(null);
+
 
         // Map으로 역직렬화, _type 헤더 무시
         JsonDeserializer<Map<String, Object>> valueDeserializer = new JsonDeserializer<>(Map.class);
