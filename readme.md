@@ -68,13 +68,5 @@ Ureka_plus/
 
 - message 서버
 <img width="2971" height="1936" alt="워크플로우-2" src="https://github.com/user-attachments/assets/0694ba33-048b-4bb3-8b4c-89372b018b3f" />
-
 ## 서버구조
-<img width="998" height="615" alt="image" src="https://github.com/user-attachments/assets/8dcd30e9-94ee-4da7-ba6c-b47368421aef" />
-
-## ERD
-<img width="798" height="581" alt="image" src="https://github.com/user-attachments/assets/ae0498ae-8970-4e2d-a3ff-aa32b5d0cab8" />
-
-<img width="950" height="912" alt="image" src="https://github.com/user-attachments/assets/fc162067-e6eb-4499-8ff7-f5f75283cf7f" />
-
-
+<img width="1793" height="1100" alt="Image" src="https://github.com/user-attachments/assets/cb0d74d3-736c-44a4-af24-38f28530553e" />
