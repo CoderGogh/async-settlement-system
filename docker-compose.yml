@@ -1,42 +1,43 @@
+version: "3.9"
 
 services:
   # ==========================================
   # [Infrastructure]
   # ==========================================
 
-#  mysql:
-#    image: mysql:8.0
-#    container_name: billing-db
-#    ports:
-#      - "3307:3306"
-#    environment:
-#      MYSQL_ROOT_PASSWORD: root
-#      MYSQL_DATABASE: billing
-#    command:
-#      - --character-set-server=utf8mb4
-#      - --collation-server=utf8mb4_unicode_ci
-#      - --default-time-zone=+09:00
-#    volumes:
-#      - ./data/mysql:/var/lib/mysql
-#    healthcheck:
-#      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-#      interval: 10s
-#      timeout: 5s
-#      retries: 5
-#    networks:
-#      - billing-net
+  #  mysql:
+  #    image: mysql:8.0
+  #    container_name: billing-db
+  #    ports:
+  #      - "3307:3306"
+  #    environment:
+  #      MYSQL_ROOT_PASSWORD: root
+  #      MYSQL_DATABASE: billing
+  #    command:
+  #      - --character-set-server=utf8mb4
+  #      - --collation-server=utf8mb4_unicode_ci
+  #      - --default-time-zone=+09:00
+  #    volumes:
+  #      - ./data/mysql:/var/lib/mysql
+  #    healthcheck:
+  #      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+  #      interval: 10s
+  #      timeout: 5s
+  #      retries: 5
+  #    networks:
+  #      - billing-net
 
-#  redis:
-#    image: redis:7
-#    container_name: billing-redis
-#    ports:
-#      - "6379:6379"
-#    networks:
-#      - billing-net
+  #  redis:
+  #    image: redis:7
+  #    container_name: billing-redis
+  #    ports:
+  #      - "6379:6379"
+  #    networks:
+  #      - billing-net
 
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
-    platform: linux/amd64 #
+    platform: linux/amd64
     container_name: billing-zookeeper
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
@@ -46,7 +47,7 @@ services:
 
   kafka:
     image: confluentinc/cp-kafka:7.5.0
-    platform: linux/amd64 #
+    platform: linux/amd64
     container_name: billing-kafka
     depends_on:
       zookeeper:
