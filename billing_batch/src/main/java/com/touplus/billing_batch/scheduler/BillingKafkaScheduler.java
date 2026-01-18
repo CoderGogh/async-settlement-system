@@ -22,11 +22,11 @@ import java.util.List;
 public class BillingKafkaScheduler {
 
     private final BillingResultRepository billingResultRepository;
-    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final KafkaTemplate<String, BillingResultMessage> kafkaTemplate;
 
     private static final String TOPIC = "billing-result";
 
-    @Scheduled(fixedDelay = 1000) // 예시를 위한 1초
+//    @Scheduled(fixedDelay = 1000) // 예시를 위한 1초
     @Transactional
     public void sendBillingResult() {
         List<BillingResult> targets = billingResultRepository.findBySendStatusOrderById(SendStatus.READY);
