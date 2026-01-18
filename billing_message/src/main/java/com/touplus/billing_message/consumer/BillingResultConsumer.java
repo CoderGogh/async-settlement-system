@@ -3,7 +3,6 @@ package com.touplus.billing_message.consumer;
 import com.touplus.billing_message.domain.dto.BillingResultMessage;
 import com.touplus.billing_message.domain.entity.BillingSnapshot;
 import com.touplus.billing_message.domain.respository.BillingSnapshotRepository;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -11,6 +10,7 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Map;
 
 @Slf4j
 @Component
@@ -20,19 +20,20 @@ public class BillingResultConsumer {
     private final BillingSnapshotRepository billingSnapshotRepository;
 
     @KafkaListener(
-    topics = "billing-result",
-    groupId = "billing-message-group"
+        topics = "billing-result",
+        groupId = "billing-message-group"
     )
     @Transactional
     public void consume(BillingResultMessage message) {
+
         try {
             BillingSnapshot snapshot = new BillingSnapshot(
-                message.getId(),
-                message.getSettlementMonth(),
-                message.getUserId(),
-                message.getTotalPrice(),
-                message.getSettlementDetails() != null 
-                    ? message.getSettlementDetails().toString() : "{}"
+                    message.getId(),
+                    message.getSettlementMonth(),
+                    message.getUserId(),
+                    message.getTotalPrice(),
+                    message.getSettlementDetails() != null
+                            ? message.getSettlementDetails().toString() : "{}"
             );
 
             billingSnapshotRepository.save(snapshot);
