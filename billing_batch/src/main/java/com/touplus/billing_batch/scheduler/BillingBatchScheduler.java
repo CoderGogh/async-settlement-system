@@ -1,0 +1,4 @@
+package com.touplus.billing_batch.scheduler;
+
+public class BillingBatchScheduler {
+}
