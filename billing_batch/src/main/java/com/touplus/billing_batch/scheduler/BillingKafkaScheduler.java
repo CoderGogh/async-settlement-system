@@ -4,15 +4,14 @@ import com.touplus.billing_batch.domain.dto.BillingResultMessage;
 import com.touplus.billing_batch.domain.entity.BillingResult;
 import com.touplus.billing_batch.domain.entity.SendStatus;
 import com.touplus.billing_batch.domain.repository.BillingResultRepository;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.data.domain.PageRequest;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-
 
 import java.util.List;
 
@@ -22,11 +21,11 @@ import java.util.List;
 public class BillingKafkaScheduler {
 
     private final BillingResultRepository billingResultRepository;
-    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final KafkaTemplate<String, BillingResultMessage> kafkaTemplate;
 
     private static final String TOPIC = "billing-result";
 
-    @Scheduled(fixedDelay = 1000) // 예시를 위한 1초
+//    @Scheduled(fixedDelay = 1000) // 예시를 위한 1초
     @Transactional
     public void sendBillingResult() {
         List<BillingResult> targets = billingResultRepository.findBySendStatusOrderById(SendStatus.READY);
@@ -51,11 +50,11 @@ public class BillingKafkaScheduler {
                 kafkaTemplate.send(
                         TOPIC,
                         billing.getId().toString(), // Kafka Key
-                        message                    //  DTO 전송
+                        message
                 ).get(); // 동기 전송
 
                 billing.markSuccess();
-                log.info("Successfully sent billingResultId={}", billing.getId());
+                log.info("Successfully sent billingResultId={}", billing.getId()); 
             } catch (Exception e) {
                 log.error("Kafka 전송 실패 billingResultId={}", billing.getId(), e);
                 billing.markFail();
