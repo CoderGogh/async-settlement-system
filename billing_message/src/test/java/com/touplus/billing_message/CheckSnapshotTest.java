@@ -3,73 +3,89 @@ package com.touplus.billing_message;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.test.context.EmbeddedKafka;
+import org.springframework.kafka.support.serializer.JsonSerializer;
 
 import com.touplus.billing_message.consumer.BillingResultConsumer;
 import com.touplus.billing_message.domain.dto.BillingResultMessage;
 import com.touplus.billing_message.domain.entity.BillingSnapshot;
 import com.touplus.billing_message.domain.respository.BillingSnapshotRepository;
 
-@SpringBootTest
-@EmbeddedKafka(
-    partitions = 1,
-    topics = { "billing-result" },
-    brokerProperties = { "listeners=PLAINTEXT://localhost:9092", "port=9092" }
-)
+@SpringBootTest(properties = {
+		 "spring.kafka.bootstrap-servers=localhost:9092", // 도커 Kafka
+	    "spring.datasource.url=jdbc:mysql://localhost:3306/billing_message?useSSL=false&serverTimezone=Asia/Seoul",
+	    "spring.datasource.username=root",
+	    "spring.datasource.password=1234",
+	    "spring.jpa.hibernate.ddl-auto=update"
+	})
 
-class CheckSnapshotTest {
+	class CheckSnapshotTest {
 
-    @Autowired
-    private KafkaTemplate<String, BillingResultMessage> kafkaTemplate;
+	    @Autowired
+	    private KafkaTemplate<String, BillingResultMessage> kafkaTemplate;
 
-    @Autowired
-    private BillingSnapshotRepository billingSnapshotRepository;
+	    @Autowired
+	    private BillingSnapshotRepository billingSnapshotRepository;
 
-    @Autowired
-    private BillingResultConsumer consumer;
+	    @Autowired
+	    private BillingResultConsumer consumer;
 
-    @BeforeEach
-    void setup() {
-        billingSnapshotRepository.deleteAll(); // 테스트용 초기화
-    }
+	    @BeforeEach
+	    void setup() {
+	        billingSnapshotRepository.deleteAll(); // 테스트용 초기화
+	    }
 
-    @Test
-    void testDuplicateMessage() throws Exception {
-        // 1️⃣ DB에 중복 데이터 미리 생성
-        BillingSnapshot existing = new BillingSnapshot(
-            1L,
-            LocalDate.of(2025, 12, 1),
-            1001L,
-            50000,
-            "{}"
-        );
-        billingSnapshotRepository.save(existing);
+	    @TestConfiguration
+	    static class KafkaTestConfig {
+	        @Bean
+	        public KafkaTemplate<String, BillingResultMessage> kafkaTemplate() {
+	            Map<String, Object> props = new HashMap<>();
+	            props.put("bootstrap.servers", "localhost:9092");
+	            props.put("key.serializer", StringSerializer.class);
+	            props.put("value.serializer", JsonSerializer.class); // JSON 직렬화
 
-        // 2️⃣ Kafka 메시지 생성 (중복)
-        BillingResultMessage message = new BillingResultMessage();
-        message.setId(2L);
-        message.setUserId(1001L); // DB와 동일
-        message.setSettlementMonth(LocalDate.of(2025, 12, 1));
-        message.setTotalPrice(50000);
+	            return new KafkaTemplate<>(new DefaultKafkaProducerFactory<>(props));
+	        }
+	    }
+	    
+	    @Test
+	    void testDuplicateMessage() throws Exception {
 
-        // 3️⃣ Kafka로 메시지 전송
-        kafkaTemplate.send("billing-result", message.getId().toString(), message).get();
+	        BillingSnapshot existing = new BillingSnapshot(
+	            1L,
+	            LocalDate.of(2025, 12, 1),
+	            1001L,
+	            50000,
+	            "{}"
+	        );
+	        billingSnapshotRepository.save(existing);
 
-        // 4️⃣ Consumer가 메시지를 처리할 시간을 잠깐 기다림
-        Thread.sleep(1000);
+	        // 중복 확인
+	        BillingResultMessage message = new BillingResultMessage();
+	        message.setId(1L);
+	        message.setUserId(1001L); // DB와 동일
+	        message.setSettlementMonth(LocalDate.of(2025, 12, 1));
+	        message.setTotalPrice(50000);
 
-        // 5️⃣ DB 상태 확인: 기존 데이터 그대로, 새로운 데이터는 추가되지 않음
-        List<BillingSnapshot> snapshots = billingSnapshotRepository.findAll();
-        assertEquals(1, snapshots.size());
-        assertEquals(1001L, snapshots.get(0).getUserId());
-
-        // 6️⃣ 로그 확인 (선택) - 중복 메시지 무시 로그
-    }
-}
+	        kafkaTemplate.send("billing-result", message); // 도커 Kafka로 전송
+	        
+	        Thread.sleep(1000); 
+	        
+	        List<BillingSnapshot> snapshots = billingSnapshotRepository.findAll();
+	        assertEquals(1, snapshots.size());
+	        assertEquals(1001L, snapshots.get(0).getUserId());
+	        assertEquals(LocalDate.of(2025, 12, 1), snapshots.get(0).getSettlementMonth());
+	    }
+	}
