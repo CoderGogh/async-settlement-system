@@ -3,6 +3,8 @@ package com.touplus.billing_batch.jobs.billing.step.reader;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.annotation.BeforeStep;
 import org.springframework.batch.item.ExecutionContext;
@@ -29,8 +31,13 @@ public class BillingItemReader implements ItemStreamReader<BillingUserBillingInf
     private final Deque<BillingUserBillingInfoDto> buffer = new ArrayDeque<>();
     private final int chunkSize = 1000;
 
-    private Long lastUserId = 0L; // No-Offset 페이징용
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    // DB 조회용
+    private Long lastProcessedUserId = 0L;  // 실제 read()로 반환된 ID
     private StepExecution stepExecution;
+    private static final String CTX_LAST_PROCESSED_USER_ID = "lastProcessedUserId";
 
     public BillingItemReader(
             BillingUserRepository userRepository,
@@ -53,17 +60,17 @@ public class BillingItemReader implements ItemStreamReader<BillingUserBillingInf
     }
 
     @Override
-    public void open(ExecutionContext executionContext) throws ItemStreamException {
-        // 재시작 시 lastUserId 복원
-        if (executionContext.containsKey("lastUserId")) {
-            this.lastUserId = executionContext.getLong("lastUserId");
+    public void open(ExecutionContext executionContext) {
+        if (executionContext.containsKey(CTX_LAST_PROCESSED_USER_ID)) {
+            this.lastProcessedUserId = executionContext.getLong(CTX_LAST_PROCESSED_USER_ID);
+
         }
     }
 
+
     @Override
     public void update(ExecutionContext executionContext) throws ItemStreamException {
-        // 주기적으로 ExecutionContext에 진행 상태 저장
-        executionContext.putLong("lastUserId", lastUserId);
+        executionContext.putLong(CTX_LAST_PROCESSED_USER_ID, lastProcessedUserId);
     }
 
     @Override
@@ -72,25 +79,26 @@ public class BillingItemReader implements ItemStreamReader<BillingUserBillingInf
     }
 
     @Override
-    public BillingUserBillingInfoDto read() throws Exception {
+    public BillingUserBillingInfoDto read() {
         if (buffer.isEmpty()) {
             fillBuffer();
         }
-        return buffer.poll();
+        BillingUserBillingInfoDto dto = buffer.poll();
+        if (dto != null) {
+            lastProcessedUserId = dto.getUserId();
+        }
+        return dto;
     }
 
     private void fillBuffer() {
         // 1. No-Offset 방식: userId 기준 다음 청크 조회
-        List<BillingUser> users = userRepository.findUsersGreaterThanId(lastUserId, Pageable.ofSize(chunkSize));
+        List<BillingUser> users = userRepository.findUsersGreaterThanId(lastProcessedUserId, Pageable.ofSize(chunkSize));
 
         if (users.isEmpty()) return;
 
-        // 2. 조회한 마지막 ID 저장
-        lastUserId = users.get(users.size() - 1).getUserId();
-
         List<Long> userIds = users.stream().map(BillingUser::getUserId).toList();
 
-        // 3. 청크 단위로 각 테이블 벌크 조회
+        // 2. 청크 단위로 각 테이블 벌크 조회
         Map<Long, List<UserSubscribeProduct>> uspMap = uspRepository.findByUserIdIn(userIds).stream()
                 .collect(Collectors.groupingBy(p -> p.getUser().getUserId()));
 
@@ -103,7 +111,7 @@ public class BillingItemReader implements ItemStreamReader<BillingUserBillingInf
         Map<Long, List<UserSubscribeDiscount>> discountMap = discountRepository.findByUserIdIn(userIds).stream()
                 .collect(Collectors.groupingBy(d -> d.getBillingUser().getUserId()));
 
-        // 4. DTO 조립 후 버퍼에 추가
+        // 3. DTO 조립 후 버퍼에 추가
         for (BillingUser user : users) {
             BillingUserBillingInfoDto dto = new BillingUserBillingInfoDto(
                     user.getUserId(),
