@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 
 import com.touplus.billing_message.domain.dto.BillingResultDto;
 import com.touplus.billing_message.domain.entity.BillingSnapshot;
+
 import com.touplus.billing_message.domain.respository.BillingSnapshotJdbcRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -21,7 +22,9 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class BillingResultConsumer {
 
+
     private final BillingSnapshotJdbcRepository jdbcRepository;
+
 
     @KafkaListener(
         topics = "billing-result",
@@ -62,6 +65,7 @@ public class BillingResultConsumer {
                 jdbcRepository.batchUpsertByUserMonth(toUpsert);
                 log.info("billing_snapshot upsert 요청={}건", toUpsert.size());
             }
+
 
             ack.acknowledge();
 
