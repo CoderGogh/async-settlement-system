@@ -1,6 +1,8 @@
 package com.touplus.billing_batch.domain.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -11,6 +13,8 @@ import java.time.LocalDateTime;
 @Table(name = "user_subscribe_product")
 @Getter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class UserSubscribeProduct {
 
     @Id
@@ -23,4 +27,5 @@ public class UserSubscribeProduct {
 
     private Long userId;
     private Long productId;
+
 }
