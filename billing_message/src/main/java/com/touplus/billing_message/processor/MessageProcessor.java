@@ -64,22 +64,15 @@ public class MessageProcessor {
         // 1. 날짜 결정
         LocalDate sendDate;
         if (today.getDayOfMonth() < sendingDay) {
-            // 오늘이 sending_day 전이면 → 이번 달
             sendDate = today.withDayOfMonth(sendingDay);
         } else {
-            // 오늘이 sending_day 이후면 → 다음 달
             sendDate = today.plusMonths(1).withDayOfMonth(sendingDay);
         }
 
-        // 2. 시간 결정 (ban 시간 피하기)
-        LocalTime sendTime;
-        LocalTime banEndTime = user.getBanEndTime();
-        if (banEndTime != null) {
-            // ban 종료 시간 직후 (+1분)
-            sendTime = banEndTime.plusMinutes(1);
-        } else {
-            // ban 시간 없으면 기본 09:00
-            sendTime = LocalTime.of(9, 0);
+        // 2. 시간 결정 (ban 시간 없으면 09:00)
+        LocalTime sendTime = LocalTime.of(9, 0);
+        if (user.getBanEndTime() != null) {
+            sendTime = user.getBanEndTime().plusMinutes(1);
         }
 
         return LocalDateTime.of(sendDate, sendTime);
