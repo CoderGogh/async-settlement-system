@@ -26,7 +26,7 @@ public class BillingKafkaScheduler {
 //    @Scheduled(fixedDelay = 1000) // 예시를 위한 1초
     @Transactional
     public void sendBillingResult() {
-        List<BillingResult> targets = billingResultRepository.findBySendStatusOrderById(SendStatus.READY);
+        List<BillingResult> targets = billingResultRepository.findBySendStatusForUpdate(SendStatus.READY);
 
         for (BillingResult billing : targets) {
             try {
@@ -39,7 +39,7 @@ public class BillingKafkaScheduler {
                 message.setUserId(billing.getUserId());
                 message.setTotalPrice(billing.getTotalPrice());
                 message.setSettlementDetails(billing.getSettlementDetails());
-                message.setSendStatus(billing.getSendStatus().name());
+                message.setSendStatus(billing.getSendStatus());
                 message.setBatchExecutionId(billing.getBatchExecutionId());
                 message.setProcessedAt(billing.getProcessedAt());
 

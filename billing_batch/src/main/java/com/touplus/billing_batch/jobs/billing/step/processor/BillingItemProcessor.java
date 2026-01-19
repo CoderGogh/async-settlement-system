@@ -1,69 +1,51 @@
 package com.touplus.billing_batch.jobs.billing.step.processor;
 
 import java.util.List;
-import java.util.ArrayList;
-
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.stereotype.Component;
 
 import com.touplus.billing_batch.domain.dto.BillingCalculationResult;
+import com.touplus.billing_batch.domain.dto.BillingUserBillingInfoDto;
 import com.touplus.billing_batch.domain.entity.BillingProduct;
-import com.touplus.billing_batch.domain.entity.BillingUser;
-import com.touplus.billing_batch.domain.entity.UserSubscribeProduct;
-import com.touplus.billing_batch.domain.repository.BillingProductRepository;
-import com.touplus.billing_batch.domain.repository.UserSubscribeProductRepository;
-import com.touplus.billing_batch.common.BillingException; // 커스텀 예외 임포트
+import com.touplus.billing_batch.common.BillingException;
 
 @Component
 public class BillingItemProcessor
-        implements ItemProcessor<BillingUser, BillingCalculationResult> {
-
-    private final UserSubscribeProductRepository uspRepository;
-    private final BillingProductRepository productRepository;
-
-    public BillingItemProcessor(
-            UserSubscribeProductRepository uspRepository,
-            BillingProductRepository productRepository) {
-        this.uspRepository = uspRepository;
-        this.productRepository = productRepository;
-    }
+        implements ItemProcessor<BillingUserBillingInfoDto, BillingCalculationResult> { // 타입을 DTO로 변경
 
     @Override
-    public BillingCalculationResult process(BillingUser user) {
+    public BillingCalculationResult process(BillingUserBillingInfoDto item) {
 
-        // 1. 활성화된 구독 정보 조회
-        List<UserSubscribeProduct> subscriptions =
-                uspRepository.findActiveByUserId(user.getUserId());
+        // 1. 이미 Reader에서 조회해온 구독 상품 리스트 추출
+        // Reader가 이미 BillingProduct 정보를 포함한 UserSubscribeProduct 리스트를 넘겨줍니다.
+        List<BillingProduct> products = item.getProducts().stream()
+                .map(usp -> usp.getProduct()) // UserSubscribeProduct 엔티티 내의 Product 객체 추출
+                .toList();
 
-        // [추가] 구독 중인 상품이 하나도 없는 경우 정산 대상에서 제외하거나 예외 발생
-        if (subscriptions.isEmpty()) {
-            throw BillingException.dataNotFound(user.getUserId());
+        // 2. 구독 중인 상품이 없는 경우 예외 처리
+        if (products.isEmpty()) {
+            throw BillingException.dataNotFound(item.getUserId());
         }
 
-        // 2. 구독 정보 기반으로 상품 상세 정보 로드
-        List<BillingProduct> products = new ArrayList<>();
-        for (UserSubscribeProduct s : subscriptions) {
-            BillingProduct product = productRepository.findById(s.getProductId())
-                    .orElseThrow(() -> new BillingException(
-                            "상품 정보를 찾을 수 없습니다. ProductID: " + s.getProductId(),
-                            "ERR_PRODUCT_NOT_FOUND",
-                            user.getUserId()
-                    ));
-            products.add(product);
-        }
-
-        // 3. 합계 금액 계산
+        // 3. 합계 금액 계산 (상품 가격 + 추가 요금 - 할인 등 로직 확장 가능)
         int totalPrice = products.stream()
                 .mapToInt(BillingProduct::getPrice)
                 .sum();
 
-        // [추가] 합계 금액 검증 (예: 비즈니스 규칙상 0원 이하일 수 없는 경우)
+        // [추가 요금 반영 예시]
+        int totalAdditionalCharge = item.getAdditionalCharges().stream()
+                .mapToInt(ac -> ac.getPrice())
+                .sum();
+
+        totalPrice += totalAdditionalCharge;
+
+        // 4. 금액 검증
         if (totalPrice < 0) {
-            throw BillingException.invalidAmount(user.getUserId());
+            throw BillingException.invalidAmount(item.getUserId());
         }
 
         return new BillingCalculationResult(
-                user.getUserId(),
+                item.getUserId(),
                 totalPrice,
                 products
         );

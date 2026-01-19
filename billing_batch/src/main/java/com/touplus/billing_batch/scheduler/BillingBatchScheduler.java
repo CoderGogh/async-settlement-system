@@ -1,16 +1,23 @@
 package com.touplus.billing_batch.scheduler;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
+import org.springframework.batch.core.JobParametersInvalidException;
 import org.springframework.batch.core.launch.JobLauncher;
+import org.springframework.batch.core.repository.JobExecutionAlreadyRunningException;
+import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
+import org.springframework.batch.core.repository.JobRestartException;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
+@Slf4j
 @EnableScheduling
 @Component
 @RequiredArgsConstructor
@@ -20,13 +27,27 @@ public class BillingBatchScheduler {
     private final Job billingJob;
 
 //    @Scheduled(cron = "0 0 2 1 * ?") // 매월 1일 02시
-    public void runMonthlyBilling() throws Exception {
+    public void runMonthlyBilling() {
 
-        JobParameters params = new JobParametersBuilder()
-                .addString("settlementMonth", LocalDate.now().withDayOfMonth(1).toString())
-                .addLong("run.id", System.currentTimeMillis())
-                .toJobParameters();
+        // 정산 대상이 되는 월 계산
+        String targetMonth = LocalDate.now().minusMonths(1).format(DateTimeFormatter.ofPattern("yyyy-MM"));
 
-        jobLauncher.run(billingJob, params);
+        try{
+            JobParameters params = new JobParametersBuilder()
+                    .addString("targetMonth", targetMonth)
+                    .addLong("time", System.currentTimeMillis()) // 배치 중복 실행 가능하게
+                    .toJobParameters();
+
+            jobLauncher.run(billingJob, params);
+
+        } catch (JobInstanceAlreadyCompleteException e) {
+            log.warn("[BillingBatchScheduler] 이미 완료된 정산 작업입니다: {}", e.getMessage());
+        } catch (JobExecutionAlreadyRunningException e) {
+            log.error("[BillingBatchScheduler] 배치가 이미 실행 중입니다: {}", e.getMessage());
+        } catch (JobParametersInvalidException e) {
+            log.error("[BillingBatchScheduler] 유효하지 않은 파라미터입니다: {}", e.getMessage());
+        } catch (Exception e) {
+            throw new RuntimeException("[BillingBatchScheduler] 정산 배치 가동 실패", e);
+        }
     }
 }
