@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.touplus.billing_message.domain.dto.BillingResultDto;
 import com.touplus.billing_message.domain.entity.BillingSnapshot;
 import com.touplus.billing_message.domain.respository.BillingSnapshotRepository;
+import com.touplus.billing_message.processor.MessageProcessor;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 public class BillingResultConsumer {
 
     private final BillingSnapshotRepository billingSnapshotRepository;
+    private final MessageProcessor messageProcessor;
 
     @KafkaListener(
         topics = "billing-result",
@@ -76,6 +78,10 @@ public class BillingResultConsumer {
 
             billingSnapshotRepository.save(snapshot);
             log.info("billing_snapshot 저장 완료 billingId={}", snapshot.getBillingId());
+
+            // Message 생성 로직 호출 (유저 조회 → 발송 시간 계산 → Message 저장)
+            messageProcessor.process(snapshot);
+
             ack.acknowledge();
 
         } catch (Exception e) {
