@@ -1,6 +1,7 @@
 package com.touplus.billing_batch.domain.dto;
 
 import com.touplus.billing_batch.domain.entity.UserSubscribeProduct;
+import com.touplus.billing_batch.domain.enums.ProductType;
 import lombok.*;
 
 import java.time.LocalDate;
@@ -18,6 +19,11 @@ public class UserSubscribeProductDto {
     private LocalDateTime deletedAt;
     private Long userId;
     private Long productId;
+
+    // 조인했을 때 담을 용도의 변수
+    private String productName;
+    private ProductType productType;
+    private Integer price;
 
     // Entity -> DTO 변환
     public static UserSubscribeProductDto fromEntity(UserSubscribeProduct entity) {

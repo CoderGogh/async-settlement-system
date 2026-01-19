@@ -4,6 +4,8 @@ import com.touplus.billing_batch.domain.entity.BillingDiscount;
 import com.touplus.billing_batch.domain.entity.BillingProduct;
 import com.touplus.billing_batch.domain.entity.BillingUser;
 import com.touplus.billing_batch.domain.entity.UserSubscribeDiscount;
+import com.touplus.billing_batch.domain.enums.DiscountType;
+import com.touplus.billing_batch.domain.enums.ProductType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,6 +23,16 @@ public class UserSubscribeDiscountDto {
     private Long userId;
     private Long discountId;
     private Long productId;
+
+    // 조인했을 때 담을 용도의 변수
+    private String productName;
+    private ProductType productType;
+    private Integer productPrice;
+
+    private String discountName;
+    private DiscountType isCash;
+    private Integer cash;
+    private Double percent;
 
     public static UserSubscribeDiscountDto fromEntity(UserSubscribeDiscount entity) {
         return UserSubscribeDiscountDto.builder()

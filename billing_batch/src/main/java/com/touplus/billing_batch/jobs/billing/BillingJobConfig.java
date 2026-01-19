@@ -3,13 +3,11 @@ package com.touplus.billing_batch.jobs.billing;
 import com.touplus.billing_batch.common.BillingException;
 import com.touplus.billing_batch.domain.dto.BillingUserBillingInfoDto;
 import com.touplus.billing_batch.domain.entity.BillingResult;
-import com.touplus.billing_batch.domain.entity.BillingUser;
 import com.touplus.billing_batch.jobs.billing.partitioner.UserRangePartitioner;
 import com.touplus.billing_batch.jobs.billing.step.listener.BillingSkipListener;
 import com.touplus.billing_batch.jobs.billing.step.processor.AmountCalculationProcessor;
-import com.touplus.billing_batch.jobs.billing.step.processor.BillingItemProcessor;
 import com.touplus.billing_batch.jobs.billing.step.processor.DiscountCalculationProcessor;
-import com.touplus.billing_batch.jobs.billing.step.processor.UnpaidAmountProcessor;
+import com.touplus.billing_batch.jobs.billing.step.processor.FinalBillingResultProcessor;
 import com.touplus.billing_batch.jobs.billing.step.reader.BillingItemReader;
 import com.touplus.billing_batch.jobs.billing.step.writer.BillingItemWriter;
 import lombok.RequiredArgsConstructor;
@@ -45,7 +43,7 @@ public class BillingJobConfig {
 
     private final AmountCalculationProcessor amountCalculationProcessor;
     private final DiscountCalculationProcessor discountCalculationProcessor;
-    private final UnpaidAmountProcessor unpaidAmountProcessor;
+    private final FinalBillingResultProcessor unpaidAmountProcessor;
 
     @Bean
     public Job billingJob() {
@@ -99,7 +97,7 @@ public class BillingJobConfig {
         // 3. 미납금 계산 프로세서
         delegates.add(unpaidAmountProcessor);
 
-        CompositeItemProcessor<BillingUser, BillingResult> processor = new CompositeItemProcessor<>();
+        CompositeItemProcessor<BillingUserBillingInfoDto, BillingResult> processor = new CompositeItemProcessor<>();
         processor.setDelegates(delegates);
         return processor;
     }
