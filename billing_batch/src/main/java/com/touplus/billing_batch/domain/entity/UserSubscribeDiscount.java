@@ -9,7 +9,9 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "user_subscribe_discount")
+@Table(name = "user_subscribe_discount", indexes = {
+        @Index(name = "idx_usd_user_month", columnList = "user_id, discount_subscribe_month")
+})
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor

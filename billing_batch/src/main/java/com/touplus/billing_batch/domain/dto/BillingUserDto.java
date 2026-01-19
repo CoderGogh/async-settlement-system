@@ -1,5 +1,6 @@
 package com.touplus.billing_batch.domain.dto;
 
+import com.touplus.billing_batch.domain.entity.BillingUser;
 import lombok.*;
 
 @Getter

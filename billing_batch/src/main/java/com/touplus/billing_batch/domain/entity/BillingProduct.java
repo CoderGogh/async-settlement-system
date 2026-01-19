@@ -21,5 +21,5 @@ public class BillingProduct {
     @Enumerated(EnumType.STRING)
     private ProductType productType;
 
-    private int price;
+    private Integer price;
 }
