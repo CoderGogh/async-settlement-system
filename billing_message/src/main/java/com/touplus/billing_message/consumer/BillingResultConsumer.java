@@ -9,7 +9,7 @@ import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.touplus.billing_message.domain.dto.BillingResultMessage;
+import com.touplus.billing_message.domain.dto.BillingResultDto;
 import com.touplus.billing_message.domain.entity.BillingSnapshot;
 import com.touplus.billing_message.domain.respository.BillingSnapshotRepository;
 
@@ -25,20 +25,32 @@ public class BillingResultConsumer {
 
     @KafkaListener(
         topics = "billing-result",
-        groupId = "billing-message-group"
+        groupId = "billing-message-group",
+        containerFactory = "kafkaListenerContainerFactory"
     // 수동 커밋을 위해 container factory에서 AckMode MANUAL 설정 필요 - 나중에 여기에 적으면 될 듯
     )
     @Transactional
-    public void consume(BillingResultMessage message, Acknowledgment ack) {
-
+    public void consume(BillingResultDto message, Acknowledgment ack) {
+    	 System.out.println("빌링 메시지 잘 돌아가나요?1");
         try {
         	// 메시지 정구 달이 현재 시점 기준으로 한 달 전이어야 함, ex) 청구 달 :12, 현재 처리 달:1
-        	 LocalDate messageMonth =  message.getSettlementMonth().plusMonths(1); 
              LocalDate now = LocalDate.now();
+             
+             LocalDate messageMonth = message.getSettlementMonth();
+             
+             if (messageMonth == null) {
+                 log.warn("settlementMonth가 null입니다. billingId={}", message.getId());
+                 ack.acknowledge();
+                 return;
+             }
+             messageMonth = messageMonth.plusMonths(1);
+             System.out.println("SettlementMonth=" + message.getSettlementMonth());
+
              
              // 데이터를 처리하는 달이 아니면 return
              if (messageMonth.getYear() != now.getYear() || messageMonth.getMonth() != now.getMonth()) {
                  log.info(messageMonth + "가 아닌 달", message.getId());
+                 System.out.println("빌링 메시지 잘 돌아가나요?2");
                  ack.acknowledge();
                  return;
              }

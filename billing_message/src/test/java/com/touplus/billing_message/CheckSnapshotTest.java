@@ -19,7 +19,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 
 import com.touplus.billing_message.consumer.BillingResultConsumer;
-import com.touplus.billing_message.domain.dto.BillingResultMessage;
+import com.touplus.billing_message.domain.dto.BillingResultDto;
 import com.touplus.billing_message.domain.entity.BillingSnapshot;
 import com.touplus.billing_message.domain.respository.BillingSnapshotRepository;
 
@@ -34,7 +34,7 @@ import com.touplus.billing_message.domain.respository.BillingSnapshotRepository;
 	class CheckSnapshotTest {
 
 	    @Autowired
-	    private KafkaTemplate<String, BillingResultMessage> kafkaTemplate;
+	    private KafkaTemplate<String, BillingResultDto> kafkaTemplate;
 
 	    @Autowired
 	    private BillingSnapshotRepository billingSnapshotRepository;
@@ -50,7 +50,7 @@ import com.touplus.billing_message.domain.respository.BillingSnapshotRepository;
 	    @TestConfiguration
 	    static class KafkaTestConfig {
 	        @Bean
-	        public KafkaTemplate<String, BillingResultMessage> kafkaTemplate() {
+	        public KafkaTemplate<String, BillingResultDto> kafkaTemplate() {
 	            Map<String, Object> props = new HashMap<>();
 	            props.put("bootstrap.servers", "localhost:9092");
 	            props.put("key.serializer", StringSerializer.class);
@@ -73,7 +73,7 @@ import com.touplus.billing_message.domain.respository.BillingSnapshotRepository;
 	        billingSnapshotRepository.save(existing);
 
 	        // 중복 확인
-	        BillingResultMessage message = new BillingResultMessage();
+	        BillingResultDto message = new BillingResultDto();
 	        message.setId(1L);
 	        message.setUserId(1001L); // DB와 동일
 	        message.setSettlementMonth(LocalDate.of(2025, 12, 1));
