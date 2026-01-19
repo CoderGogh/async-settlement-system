@@ -1,5 +1,6 @@
 package com.touplus.billing_batch.domain.dto;
 
+import com.touplus.billing_batch.domain.entity.BillingDiscount;
 import com.touplus.billing_batch.domain.enums.DiscountType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,4 +17,26 @@ public class BillingDiscountDto {
     private DiscountType isCash;
     private Integer cash;
     private Double percent;
+
+    // Entity -> DTO
+    public static BillingDiscountDto fromEntity(BillingDiscount entity) {
+        return BillingDiscountDto.builder()
+                .discountId(entity.getDiscountId())
+                .discountName(entity.getDiscountName())
+                .isCash(entity.getIsCash())
+                .cash(entity.getCash())
+                .percent(entity.getPercent())
+                .build();
+    }
+
+    // DTO -> Entity
+    public BillingDiscount toEntity() {
+        return BillingDiscount.builder()
+                .discountId(this.discountId)
+                .discountName(this.discountName)
+                .isCash(this.isCash)
+                .cash(this.cash)
+                .percent(this.percent)
+                .build();
+    }
 }

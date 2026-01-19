@@ -24,7 +24,7 @@ public class UserSubscribeDiscount {
     private Long udsId;
 
     @Column(name = "discount_subscribe_month", nullable = false)
-    private LocalDate subscribeMonth;
+    private LocalDate discountSubscribeMonth;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false, foreignKey = @ForeignKey(name = "fk_usd_user"))

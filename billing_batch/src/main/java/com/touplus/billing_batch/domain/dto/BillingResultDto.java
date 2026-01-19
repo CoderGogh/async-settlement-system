@@ -15,4 +15,6 @@ public class BillingResultDto {
     private String sendStatus;
     private Long batchExecutionId;
     private LocalDateTime processedAt;
+
+
 }

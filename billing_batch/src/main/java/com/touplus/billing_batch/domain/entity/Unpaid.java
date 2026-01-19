@@ -21,8 +21,9 @@ public class Unpaid {
     @Column(name = "unpaid_id")
     private Long id;
 
-    @Column(name = "user_id", nullable = false)
-    private Long userId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false, foreignKey = @ForeignKey(name = "fk_unpaid_user"))
+    private BillingUser user;
 
     @Column(name = "unpaid_price", nullable = false)
     private Integer unpaidPrice;

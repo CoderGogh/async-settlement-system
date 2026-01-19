@@ -2,6 +2,8 @@ package com.touplus.billing_batch.domain.entity;
 
 import com.touplus.billing_batch.domain.enums.ProductType;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -9,6 +11,8 @@ import lombok.NoArgsConstructor;
 @Table(name = "billing_product")
 @Getter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class BillingProduct {
 
     @Id
