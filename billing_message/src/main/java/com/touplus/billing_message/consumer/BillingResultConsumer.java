@@ -12,8 +12,9 @@ import org.springframework.stereotype.Component;
 import com.touplus.billing_message.domain.dto.BillingResultDto;
 import com.touplus.billing_message.domain.entity.BillingSnapshot;
 import com.touplus.billing_message.domain.respository.BillingSnapshotJdbcRepository;
-import com.touplus.billing_message.processor.MessageProcessor;
+import com.touplus.billing_message.domain.respository.SnapshotDBRepository;
 
+//import io.netty.channel.ChannelOutboundBuffer.MessageProcessor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -23,21 +24,20 @@ import lombok.extern.slf4j.Slf4j;
 public class BillingResultConsumer {
 
     private final BillingSnapshotJdbcRepository jdbcRepository;
-    private final MessageProcessor messageProcessor;
+    private final SnapshotDBRepository sdr;
+    //private final MessageProcessor messageProcessor;
 
 
     @KafkaListener(
         topics = "billing-result",
         groupId = "billing-message-group",
-        containerFactory = "kafkaListenerContainerFactory"
+        containerFactory = "kafkaListenerContainerFactory" // offset 수동 저장
     )
     public void consume(
             List<BillingResultDto> messages,
-            Acknowledgment ack
+            Acknowledgment ack // offset
     ) {
         try {
-        	log.error("배치 사이즈 에러", messages.size());
-        	log.info("배치 사이즈 일반", messages.size());
             LocalDate now = LocalDate.now();
             List<BillingSnapshot> toUpsert = new ArrayList<>();
 
@@ -45,12 +45,14 @@ public class BillingResultConsumer {
                 LocalDate settlementMonth = message.getSettlementMonth();
                 if (settlementMonth == null) continue;
 
+                // 청구 월이 현재 시간의 월보다 -1되어야 함 ex) 청구 : 12월, 지불 : 1월
                 LocalDate processMonth = settlementMonth.plusMonths(1);
                 if (processMonth.getYear() != now.getYear()
                     || processMonth.getMonth() != now.getMonth()) {
                     continue;
                 }
 
+                // 스냅샷 db 저장
                 toUpsert.add(new BillingSnapshot(
                         message.getId(),
                         settlementMonth,
@@ -61,30 +63,32 @@ public class BillingResultConsumer {
                                 : "{}"
                 ));
             }
-
-            log.error("for문 정상 종료, toUpsert size={}", toUpsert.size());
             
             if (!toUpsert.isEmpty()) {
                 jdbcRepository.batchUpsertByUserMonth(toUpsert);
-                log.info("billing_snapshot upsert 요청={}건", toUpsert.size());
+                log.info("스냅 샷 생성 완료={}건", toUpsert.size());
 
+                // 이 부분도 아까 말했던 에러 ㅠ
                 // Message 생성 (각 snapshot에 대해 처리)
-                for (BillingSnapshot snapshot : toUpsert) {
+                /*for (BillingSnapshot snapshot : toUpsert) {
                     messageProcessor.process(snapshot);
+                }*/
+                
+                // DB 실제 데이터 개수 확인, 스냅샷 1만개면 로그 찍음, 100만개 처리할 때 숫자 바꿔줘야 함
+                Long totalCount = sdr.countAll();
+                if (totalCount == 10000L) {
+                    log.info("데이터 넣기 끝! 총 DB 행 수={}", totalCount);
+                    ack.acknowledge();
+                    return;
                 }
-                log.info("Message 생성 완료={}건", toUpsert.size());
             }
 
-
             ack.acknowledge();
-            log.info("데이터 넣기 끝!");
         } catch (Exception e) {
+        	// 중복 제외 기타 오류 발생시
             log.error("Kafka batch 처리 실패", e);
-            // ACK 안 함 → 재처리
         }
     }
-
-
 
     // Map에서 Long 가져오기
     private Long getLong(Map<String, Object> map, String key) {
