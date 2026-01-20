@@ -24,11 +24,18 @@ public class BillingWorkDto {
     private int totalPrice; // 총 정산 금액
 
     // 상세 내역 임시 보관함 (각 프로세서가 여기에 채워넣습니다)
+    @Builder.Default
     private List<DetailItem> mobile = new ArrayList<>();
+    @Builder.Default
     private List<DetailItem> internet = new ArrayList<>();
+    @Builder.Default
     private List<DetailItem> iptv = new ArrayList<>();
+    @Builder.Default
     private List<DetailItem> dps = new ArrayList<>();
+    @Builder.Default
     private List<DetailItem> addon = new ArrayList<>();
+    @Builder.Default
     private List<DetailItem> discounts = new ArrayList<>();
+    @Builder.Default
     private List<DetailItem> unpaids = new ArrayList<>();
 }

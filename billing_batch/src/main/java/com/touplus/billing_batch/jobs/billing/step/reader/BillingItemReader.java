@@ -12,6 +12,7 @@ import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
 import org.springframework.batch.item.ItemStreamReader;
 import org.springframework.batch.core.configuration.annotation.StepScope;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
@@ -33,6 +34,12 @@ public class BillingItemReader implements ItemStreamReader<BillingUserBillingInf
 
     @PersistenceContext
     private EntityManager entityManager;
+
+    @Value("#{stepExecutionContext['minValue']}")
+    private Long minValue;
+
+    @Value("#{stepExecutionContext['maxValue']}")
+    private Long maxValue;
 
     // DB 조회용
     private Long lastProcessedUserId = 0L;  // 실제 read()로 반환된 ID
@@ -61,9 +68,18 @@ public class BillingItemReader implements ItemStreamReader<BillingUserBillingInf
 
     @Override
     public void open(ExecutionContext executionContext) {
-        if (executionContext.containsKey(CTX_LAST_PROCESSED_USER_ID)) {
-            this.lastProcessedUserId = executionContext.getLong(CTX_LAST_PROCESSED_USER_ID);
+        if (minValue == null || maxValue == null) {
+            throw new IllegalStateException(
+                    "Partition minValue / maxValue not set"
+            );
+        }
 
+        if (executionContext.containsKey(CTX_LAST_PROCESSED_USER_ID)) {
+            this.lastProcessedUserId =
+                    executionContext.getLong(CTX_LAST_PROCESSED_USER_ID);
+        } else {
+            // 파티션 시작은 minValue부터
+            this.lastProcessedUserId = minValue - 1;
         }
     }
 
@@ -92,7 +108,13 @@ public class BillingItemReader implements ItemStreamReader<BillingUserBillingInf
 
     private void fillBuffer() {
         // 1. No-Offset 방식: userId 기준 다음 청크 조회
-        List<BillingUser> users = userRepository.findUsersGreaterThanId(lastProcessedUserId, Pageable.ofSize(chunkSize));
+        List<BillingUser> users =
+                userRepository.findUsersInRange(
+                        minValue,
+                        maxValue,
+                        lastProcessedUserId,
+                        Pageable.ofSize(chunkSize)
+                );
 
         if (users.isEmpty()) return;
 

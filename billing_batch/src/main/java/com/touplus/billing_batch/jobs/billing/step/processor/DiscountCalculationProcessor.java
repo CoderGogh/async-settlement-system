@@ -22,7 +22,9 @@ public class DiscountCalculationProcessor implements ItemProcessor<BillingWorkDt
     @Override
     public BillingWorkDto process(BillingWorkDto work) throws Exception {
 
-        List<UserSubscribeDiscountDto> discounts = work.getRawData().getDiscounts();
+        List<UserSubscribeDiscountDto> discounts = work.getRawData().getDiscounts() != null
+                        ? work.getRawData().getDiscounts()
+                        : List.of();
 
         // 캐시 미리 가져오기
         Map<Long, BillingDiscountDto> discountMap = referenceCache.getDiscountMap();
@@ -35,6 +37,10 @@ public class DiscountCalculationProcessor implements ItemProcessor<BillingWorkDt
             // 캐시에서 상품 정보 가져오기
             BillingProductDto product = productMap.get(usd.getProductId());
             BillingDiscountDto discount = discountMap.get(usd.getDiscountId());
+
+            if (product == null || discount == null) {{
+                continue;
+            }
 
             String productName = product != null ? product.getProductName() : "UNKNOWN";
             ProductType productType = product != null ? product.getProductType() : null;

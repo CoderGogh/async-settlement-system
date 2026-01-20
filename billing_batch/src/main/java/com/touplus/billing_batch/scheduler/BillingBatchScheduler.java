@@ -30,7 +30,9 @@ public class BillingBatchScheduler {
     public void runMonthlyBilling() {
 
         // 정산 대상이 되는 월 계산
-        String targetMonth = LocalDate.now().minusMonths(1).format(DateTimeFormatter.ofPattern("yyyy-MM"));
+        // String targetMonth = LocalDate.now().minusMonths(1).format(DateTimeFormatter.ofPattern("yyyy-MM"));
+        String targetMonth = LocalDate.of(2025, 12, 1)
+                .format(DateTimeFormatter.ofPattern("yyyy-MM"));
 
         try{
             JobParameters params = new JobParametersBuilder()

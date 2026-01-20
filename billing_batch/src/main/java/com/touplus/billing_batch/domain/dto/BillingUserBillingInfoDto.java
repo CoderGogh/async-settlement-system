@@ -1,22 +1,25 @@
 package com.touplus.billing_batch.domain.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class BillingUserBillingInfoDto {
 
     private Long userId;
 
-    private List<UserSubscribeProductDto> products;
-    private List<UnpaidDto> unpaids;
-    private List<AdditionalChargeDto> additionalCharges;
-    private List<UserSubscribeDiscountDto> discounts;
+    @Builder.Default
+    private List<UserSubscribeProductDto> products = new ArrayList<>();
+    @Builder.Default
+    private List<UnpaidDto> unpaids = new ArrayList<>();
+    @Builder.Default
+    private List<AdditionalChargeDto> additionalCharges = new ArrayList<>();
+    @Builder.Default
+    private List<UserSubscribeDiscountDto> discounts = new ArrayList<>();
 }
