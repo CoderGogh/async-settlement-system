@@ -30,6 +30,7 @@ public class BillingResult {
     private String settlementDetails; // JSON 컬럼은 JDBC에서 String으로 처리
 
     @Column(name = "send_status")
+    @Builder.Default
     private SendStatus sendStatus = SendStatus.READY;
 
     @Column(name = "batch_execution_id", nullable = false)

@@ -25,5 +25,6 @@ public class Unpaid {
     private LocalDate unpaidMonth;
 
     @Column(name = "is_paid", nullable = false)
+    @Builder.Default
     private Boolean paid = false;
 }

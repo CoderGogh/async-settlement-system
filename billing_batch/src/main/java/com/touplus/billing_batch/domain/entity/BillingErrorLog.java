@@ -46,12 +46,15 @@ public class BillingErrorLog {
     private String errorMessage;
 
     @Column(name = "is_recoverable")
+    @Builder.Default
     private boolean isRecoverable = true;
 
     @Column(name = "processed")
+    @Builder.Default
     private boolean processed = false;
 
     @Column(name = "occurred_at")
+    @Builder.Default
     private LocalDateTime occurredAt = LocalDateTime.now();
 
     // 처리 완료 상태 변경 메서드

@@ -1,6 +1,8 @@
 package com.touplus.billing_batch.jobs.billing.step.processor;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.touplus.billing_batch.common.BillingException;
+import com.touplus.billing_batch.common.BillingFatalException;
 import com.touplus.billing_batch.domain.dto.BillingUserBillingInfoDto;
 import com.touplus.billing_batch.domain.dto.BillingWorkDto;
 import com.touplus.billing_batch.domain.dto.SettlementDetailsDto;
@@ -16,6 +18,9 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 @Component
 @StepScope
@@ -27,6 +32,9 @@ public class FinalBillingResultProcessor
 
     @Value("#{stepExecution.jobExecutionId}")
     private Long jobExecutionId;
+
+    @Value("#{jobParameters['targetMonth']}")
+    private String targetMonth;
 
     @Override
     public BillingResult process(BillingWorkDto work) throws Exception {

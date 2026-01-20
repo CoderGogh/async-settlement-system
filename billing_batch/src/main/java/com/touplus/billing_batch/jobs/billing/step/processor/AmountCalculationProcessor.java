@@ -64,7 +64,7 @@ public class AmountCalculationProcessor
                 throw BillingException.dataNotFound(item.getUserId(), "상품 Row가 비어있습니다.");
             }
 
-            if (usp.getProductType() == null) {
+            if (productType == null) {
                 throw BillingException.dataNotFound(item.getUserId(), "상품 타입이 비어있습니다.");
             }
 
@@ -72,11 +72,11 @@ public class AmountCalculationProcessor
                 throw BillingException.dataNotFound(item.getUserId(), "상품명이 비어있습니다.");
             }
 
-            if (usp.getPrice() < 0) {
+            if (price < 0) {
                 throw BillingException.invalidProductData(item.getUserId(), String.valueOf(usp.getProductId()));
             }
 
-            productSum += usp.getPrice();
+            productSum += price;
             DetailItem detail = DetailItem.builder()
                     .productType(productType != null ? productType.name().toUpperCase() : "UNKNOWN")
                     .productName(productName)
