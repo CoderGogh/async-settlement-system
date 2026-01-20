@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 import com.touplus.billing_message.domain.dto.BillingResultDto;
 import com.touplus.billing_message.domain.entity.BillingSnapshot;
 import com.touplus.billing_message.domain.respository.BillingSnapshotJdbcRepository;
-import com.touplus.billing_message.domain.respository.SnapshotDBRepository;
+import com.touplus.billing_message.domain.respository.BillingSnapshotRepository;
 import com.touplus.billing_message.processor.MessageProcessor;
 
 import lombok.RequiredArgsConstructor;
@@ -25,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 public class BillingResultConsumer {
 
     private final BillingSnapshotJdbcRepository jdbcRepository;
-    private final SnapshotDBRepository sdr;
+    private final BillingSnapshotRepository bsr;
     private final MessageProcessor messageProcessor;
 
 
@@ -47,12 +47,15 @@ public class BillingResultConsumer {
 
             for (BillingResultDto message : messages) {
                 LocalDate settlementMonth = message.getSettlementMonth();
+                
                 if (settlementMonth == null) continue;
 
-                // 청구 월이 현재 시간의 월보다 -1되어야 함 ex) 청구 : 12월, 지불 : 1월
+                // 청구 월이 현재 시간의 월보다 -1 되어야 함 ex) 청구 : 12월, 지불 : 1월
                 LocalDate processMonth = settlementMonth.plusMonths(1);
                 if (processMonth.getYear() != now.getYear()
-                    || processMonth.getMonth() != now.getMonth()) {
+                    || processMonth.getMonth() != now.getMonth()
+                    || bsr.existsByUserIdAndSettlementMonth(
+                            message.getUserId(), settlementMonth)) {
                     continue;
                 }
 
@@ -75,17 +78,18 @@ public class BillingResultConsumer {
 
                 jdbcRepository.batchUpsertByUserMonth(toUpsert.subList(i, end));
 
-                // Message 생성 (각 snapshot에 대해 처리)
-                for (BillingSnapshot snapshot : toUpsert.subList(i, end)) {
-                    messageProcessor.process(snapshot);
-                }
-                
-                Long totalCount = sdr.countAll();
+                Long totalCount = bsr.countAll();
                 if (totalCount == 10000L) {
                 	log.info("데이터 넣기 끝난 시각 : {}", LocalDateTime.now());
                 	log.info("스냅샷 데이터 다 넣음!");
                 	
                     ack.acknowledge();
+                    
+                    // Message 생성 (각 snapshot에 대해 처리)
+                    for (BillingSnapshot snapshot : toUpsert.subList(i, end)) {
+                        messageProcessor.process(snapshot);
+                    }
+                    
                     return;
                 }
             }
