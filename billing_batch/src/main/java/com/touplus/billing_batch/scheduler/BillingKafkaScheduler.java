@@ -19,7 +19,7 @@ import java.util.List;
 public class BillingKafkaScheduler {
 
     private final BillingResultRepository billingResultRepository;
-    private final KafkaTemplate<String, BillingResultDto> kafkaTemplate;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
 
     private static final String TOPIC = "billing-result";
 

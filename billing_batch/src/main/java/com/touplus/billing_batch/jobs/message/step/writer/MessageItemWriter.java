@@ -33,7 +33,7 @@ import java.util.concurrent.CompletableFuture;
 @RequiredArgsConstructor
 public class MessageItemWriter implements ItemWriter<BillingResultDto> {
 
-    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final KafkaTemplate<String, Object> kafkaTemplate; // 본문
     private final JdbcTemplate jdbcTemplate;
     private final RetryTemplate retryTemplate;
     private static final String TOPIC = "billing-result-topic";
