@@ -1,16 +1,23 @@
 package com.touplus.billing_batch.jobs.billing.step.processor;
 
 import com.touplus.billing_batch.common.BillingException;
+import com.touplus.billing_batch.common.BillingReferenceCache;
+import com.touplus.billing_batch.domain.dto.*;
+import com.touplus.billing_batch.common.BillingException;
 import com.touplus.billing_batch.common.BillingFatalException;
 import com.touplus.billing_batch.domain.dto.AdditionalChargeDto;
 import com.touplus.billing_batch.domain.dto.BillingUserBillingInfoDto;
 import com.touplus.billing_batch.domain.dto.BillingWorkDto;
 import com.touplus.billing_batch.domain.dto.SettlementDetailsDto.DetailItem;
+import com.touplus.billing_batch.domain.enums.ProductType;
+import lombok.RequiredArgsConstructor;
 import com.touplus.billing_batch.domain.dto.UserSubscribeProductDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.stereotype.Component;
+
+import java.util.Map;
 
 import java.util.Collections;
 import java.util.List;
@@ -18,8 +25,11 @@ import java.util.List;
 @Slf4j
 @Component
 @StepScope
+@RequiredArgsConstructor
 public class AmountCalculationProcessor
         implements ItemProcessor<BillingUserBillingInfoDto, BillingWorkDto> {
+
+    private final BillingReferenceCache referenceCache;
 
     @Override
     public BillingWorkDto process(BillingUserBillingInfoDto item) throws Exception {
@@ -27,14 +37,27 @@ public class AmountCalculationProcessor
                 .rawData(item)
                 .build();
 
+        Map<Long, BillingProductDto> productMap = referenceCache.getProductMap();
+
+        long productSum = 0;
+
         // 상품 가격 합산
         // product는 무조건 1개 이상 존재.
         List<UserSubscribeProductDto> products = item.getProducts();
         if(products == null || products.isEmpty())
             throw BillingException.dataNotFound(item.getUserId(), "상품 이용 내역이 존재하지 않습니다."); //데이터가 없는 경우. error. skip
 
-        long productSum = 0;
-        for (UserSubscribeProductDto usp : item.getProducts()) {
+        for (UserSubscribeProductDto usp : products) {
+            BillingProductDto product = productMap.get(usp.getProductId());
+
+            // 캐시 상품이 존재하면 상세 정보 가져오기
+            String productName = product.getProductName();
+            ProductType productType = product.getProductType();
+            int price = product.getPrice();
+
+            productSum += price;
+
+            // 상세 내역 생성 (JSON 최종용)
 
             // 상품 데이터 이상
             if (usp == null) {
@@ -45,7 +68,7 @@ public class AmountCalculationProcessor
                 throw BillingException.dataNotFound(item.getUserId(), "상품 타입이 비어있습니다.");
             }
 
-            if (usp.getProductName() == null || usp.getProductName().isBlank()) {
+            if (productName == null || productName.isBlank()) {
                 throw BillingException.dataNotFound(item.getUserId(), "상품명이 비어있습니다.");
             }
 
@@ -55,27 +78,31 @@ public class AmountCalculationProcessor
 
             productSum += usp.getPrice();
             DetailItem detail = DetailItem.builder()
-                    .productType(usp.getProductType().name().toUpperCase())
-                    .productName(usp.getProductName())
-                    .price(usp.getPrice())
+                    .productType(productType != null ? productType.name().toUpperCase() : "UNKNOWN")
+                    .productName(productName)
+                    .price(price)
                     .build();
 
-            // 상품 타입별로 분류
-            switch (usp.getProductType()) {
-                case mobile -> workDto.getMobile().add(detail);
-                case internet -> workDto.getInternet().add(detail);
-                case iptv -> workDto.getIptv().add(detail);
-                case dps -> workDto.getDps().add(detail);
-                case addon -> workDto.getAddon().add(detail);
+            // 타입별로 분류
+            if (productType != null) {
+                switch (productType) {
+                    case mobile -> workDto.getMobile().add(detail);
+                    case internet -> workDto.getInternet().add(detail);
+                    case iptv -> workDto.getIptv().add(detail);
+                    case dps -> workDto.getDps().add(detail);
+                    case addon -> workDto.getAddon().add(detail);
+                }
+            } else {
+                workDto.getAddon().add(detail);
             }
         }
 
 
-        
+
         // 추가 요금이 없으면 빈 리스트 처리
         List<AdditionalChargeDto> charges =
                 item.getAdditionalCharges() == null ? Collections.emptyList() : item.getAdditionalCharges();
-        
+
         // 추가 요금 합산
         long additionalSum = 0;
         for (AdditionalChargeDto ac : charges) {
@@ -114,5 +141,4 @@ public class AmountCalculationProcessor
 
         return workDto;
     }
-
 }

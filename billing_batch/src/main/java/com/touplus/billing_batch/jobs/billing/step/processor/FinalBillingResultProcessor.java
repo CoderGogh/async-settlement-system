@@ -1,9 +1,7 @@
 package com.touplus.billing_batch.jobs.billing.step.processor;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.touplus.billing_batch.common.BillingException;
-import com.touplus.billing_batch.common.BillingFatalException;
-import com.touplus.billing_batch.domain.dto.AdditionalChargeDto;
+import com.touplus.billing_batch.domain.dto.BillingUserBillingInfoDto;
 import com.touplus.billing_batch.domain.dto.BillingWorkDto;
 import com.touplus.billing_batch.domain.dto.SettlementDetailsDto;
 import com.touplus.billing_batch.domain.dto.SettlementDetailsDto.DetailItem;
@@ -18,8 +16,6 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.List;
 
 @Component
 @StepScope
@@ -32,11 +28,13 @@ public class FinalBillingResultProcessor
     @Value("#{stepExecution.jobExecutionId}")
     private Long jobExecutionId;
 
-    @Value("#{jobParameters['targetMonth']}")
-    private String targetMonth;
-
     @Override
     public BillingResult process(BillingWorkDto work) throws Exception {
+        // Unpaid 리스트 초기화
+        if (work.getUnpaids() == null) {
+            work.setUnpaids(new ArrayList<>());
+        }
+
 
         // 미납금이 없으면 빈 리스트 처리
         List<UnpaidDto> unpaids =

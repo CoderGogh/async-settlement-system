@@ -33,6 +33,7 @@ public class BillingUserRepositoryImpl implements BillingUserRepository{
      * JPA:
      * findUsersGreaterThanId(Long lastUserId, Pageable pageable)
      */
+    @Override
     public List<BillingUser> findUsersGreaterThanId(
             Long lastUserId,
             Pageable pageable
@@ -56,13 +57,49 @@ public class BillingUserRepositoryImpl implements BillingUserRepository{
 
     @Override
     public MinMaxIdDto findMinMaxId() {
-        String sql = "SELECT MIN(user_id) as min_id, MAX(user_id) as max_id FROM billing_user";
+        String sql = "SELECT MIN(user_id) AS min_id, MAX(user_id) AS max_id FROM billing_user";
 
-        return namedJdbcTemplate.queryForObject(sql, new MapSqlParameterSource(), (rs, rowNum) ->
-                MinMaxIdDto.builder()
-                        .minId(getLong("min_id"))
-                        .maxId(getLong("max_id"))
-                        .build()
+        return namedJdbcTemplate.queryForObject(
+                sql,
+                new MapSqlParameterSource(),
+                (rs, rowNum) -> {
+                    Long minId = rs.getLong("min_id");
+                    if (rs.wasNull()) minId = null;
+
+                    Long maxId = rs.getLong("max_id");
+                    if (rs.wasNull()) maxId = null;
+
+                    return MinMaxIdDto.builder()
+                            .minId(minId)
+                            .maxId(maxId)
+                            .build();
+                }
         );
+    }
+
+    @Override
+    public List<BillingUser> findUsersInRange(
+            Long minValue,
+            Long maxValue,
+            Long lastProcessedUserId,
+            Pageable pageable
+    ) {
+
+        String sql = """
+        SELECT user_id
+        FROM billing_user
+        WHERE user_id BETWEEN :minValue AND :maxValue
+          AND user_id > :lastProcessedUserId
+        ORDER BY user_id
+        LIMIT :limit
+    """;
+
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("minValue", minValue)
+                .addValue("maxValue", maxValue)
+                .addValue("lastProcessedUserId", lastProcessedUserId)
+                .addValue("limit", pageable.getPageSize());
+
+        return namedJdbcTemplate.query(sql, params, this::mapRow);
     }
 }

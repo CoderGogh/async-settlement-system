@@ -11,4 +11,10 @@ public interface BillingUserRepository {
     List<BillingUser> findUsersGreaterThanId(Long lastUserId, Pageable pageable);
 
     MinMaxIdDto findMinMaxId();
+    List<BillingUser> findUsersInRange(
+            Long minValue,
+            Long maxValue,
+            Long lastProcessedUserId,
+            Pageable pageable
+    );
 }
