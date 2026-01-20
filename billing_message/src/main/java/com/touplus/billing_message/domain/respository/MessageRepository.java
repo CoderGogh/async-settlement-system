@@ -1,6 +1,8 @@
 package com.touplus.billing_message.domain.respository;
 
 import com.touplus.billing_message.domain.entity.Message;
+import com.touplus.billing_message.domain.entity.MessageStatus;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -121,4 +123,24 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
                             FOR UPDATE SKIP LOCKED
                         """, nativeQuery = true)
         List<Long> lockNextMessageIdsIgnoreSchedule(@Param("limit") int limit);
+
+        
+        // 미수 : 이 아래부터 추가함, 스케줄러가 db에서 create 있는지 확인
+		boolean existsByStatus(MessageStatus created);
+		
+		// lock의 확장 버전
+		@Query(value = """
+			    SELECT *
+			    FROM message
+			    WHERE status = 'WAITED'
+			      AND (scheduled_at IS NULL OR scheduled_at <= :now)
+			    ORDER BY (scheduled_at IS NULL), scheduled_at, message_id
+			    LIMIT :limit
+			    FOR UPDATE SKIP LOCKED
+			""", nativeQuery = true)
+			List<Message> lockNextMessages(
+			        @Param("now") LocalDateTime now,
+			        @Param("limit") int limit
+			);
+
 }

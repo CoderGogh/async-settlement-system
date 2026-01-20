@@ -1,13 +1,17 @@
 package com.touplus.billing_message.service;
 
-import com.touplus.billing_message.domain.respository.MessageRepository;
 import java.time.LocalDateTime;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.touplus.billing_message.domain.entity.Message;
+import com.touplus.billing_message.domain.respository.MessageRepository;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
@@ -37,6 +41,8 @@ public class MessageClaimService {
     /**
      * 스케줄 무시하고 WAITED 상태의 메시지 선점 (테스트용)
      */
+
+    /* 이거 주석 처리하고 아래 추가
     @Transactional
     public List<Long> claimNextMessagesIgnoreSchedule() {
         log.info("메시지 조회 (스케줄 무시)");
@@ -50,5 +56,25 @@ public class MessageClaimService {
         messageRepository.markCreatedByIds(messageIds);
         log.debug("메시지 {}건 선점 완료, CREATED로 변경", messageIds.size());
         return messageIds;
+    }*/
+    
+    @Transactional
+    public List<Message> claimNextMessagesAsEntities(LocalDateTime now) {
+
+        List<Message> messages =
+                messageRepository.lockNextMessages(now, batchSize);
+
+        if (messages.isEmpty()) {
+            return messages;
+        }
+
+        List<Long> ids = messages.stream()
+                .map(Message::getMessageId)
+                .toList();
+
+        messageRepository.markCreatedByIds(ids);
+
+        return messages;
     }
+
 }
