@@ -14,8 +14,8 @@ import com.touplus.billing_message.domain.dto.BillingResultDto;
 import com.touplus.billing_message.domain.entity.BillingSnapshot;
 import com.touplus.billing_message.domain.respository.BillingSnapshotJdbcRepository;
 import com.touplus.billing_message.domain.respository.SnapshotDBRepository;
+import com.touplus.billing_message.processor.MessageProcessor;
 
-//import io.netty.channel.ChannelOutboundBuffer.MessageProcessor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -26,7 +26,7 @@ public class BillingResultConsumer {
 
     private final BillingSnapshotJdbcRepository jdbcRepository;
     private final SnapshotDBRepository sdr;
-    //private final MessageProcessor messageProcessor;
+    private final MessageProcessor messageProcessor;
 
 
     @KafkaListener(
@@ -75,11 +75,10 @@ public class BillingResultConsumer {
 
                 jdbcRepository.batchUpsertByUserMonth(toUpsert.subList(i, end));
 
-                // 이 부분도 아까 말했던 에러 ㅠ
                 // Message 생성 (각 snapshot에 대해 처리)
-                /*for (BillingSnapshot snapshot : toUpsert) {
+                for (BillingSnapshot snapshot : toUpsert.subList(i, end)) {
                     messageProcessor.process(snapshot);
-                }*/
+                }
                 
                 Long totalCount = sdr.countAll();
                 if (totalCount == 10000L) {
