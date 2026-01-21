@@ -51,8 +51,6 @@ public class UserRangePartitioner implements Partitioner {
             ExecutionContext context = new ExecutionContext();
             context.putLong("minValue", start);
             context.putLong("maxValue", Math.min(end, max));
-//            context.putLong("minValue", 900000000L);
-//            context.putLong("maxValue", 900000000L);
 
             result.put("partition" + i, context);
 
