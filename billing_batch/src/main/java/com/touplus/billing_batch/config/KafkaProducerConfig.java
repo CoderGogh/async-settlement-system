@@ -1,10 +1,10 @@
 package com.touplus.billing_batch.config;
 
-import com.touplus.billing_batch.domain.dto.BillingResultDto;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.kafka.core.*;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 
@@ -23,21 +23,23 @@ public class KafkaProducerConfig {
     }
 
     @Bean
-    public ProducerFactory<String, BillingResultDto> producerFactory() {
-
+    public ProducerFactory<String, Object> producerFactory() {
         Map<String, Object> props = kafkaProperties.buildProducerProperties(null);
 
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
 
-        JsonSerializer<BillingResultDto> serializer = new JsonSerializer<>(objectMapper);
-        serializer.setAddTypeInfo(true); // 타입 정보 포함
+        // 명시적으로 Object 타입을 처리하는 시리얼라이저 생성
+        JsonSerializer<Object> serializer = new JsonSerializer<>(objectMapper);
+        serializer.setAddTypeInfo(true);
 
         return new DefaultKafkaProducerFactory<>(props, new StringSerializer(), serializer);
     }
 
     @Bean
-    public KafkaTemplate<String, BillingResultDto> kafkaTemplate() {
+    @Primary
+    // 리턴 타입을 와일드카드나 Object로 설정하여 MessageItemWriter의 요구사항을 충족시킵니다.
+    public KafkaTemplate<String, Object> kafkaTemplate() {
         return new KafkaTemplate<>(producerFactory());
     }
 }
