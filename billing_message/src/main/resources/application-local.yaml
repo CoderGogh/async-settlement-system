@@ -2,21 +2,39 @@
 spring:
   config:
     activate:
-      on-profile: local # 이 설정은 'local' 프로필일 때만 작동함
-        
+      on-profile: local
+
   datasource:
     # 도커 내부(host.docker.internal)가 아니라 내 컴퓨터(localhost)로 접속
     url: jdbc:mysql://localhost:13306/billing_message
-    username: ${DB_USER} # 혹은 직접 입력 (예: root)
-    password: ${DB_PASSWORD} # 혹은 직접 입력
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+    hikari:
+      maximum-pool-size: 30 # 컨슈머 모듈이므로 적절히 조절
 
   kafka:
     # 도커 서비스명(kafka:29092)이 아니라 내 컴퓨터 포트(localhost:9092)로 접속
     bootstrap-servers: localhost:9092
+    # [수정] 터널링 환경에 맞춰 SASL 인증 설정 제거 (이미 SSH로 보안 통로가 확보됨)
+    # security.protocol 및 sasl 관련 설정 삭제
+
     consumer:
       group-id: billing-message-group
-      auto-offset-reset: earliest     
-      enable-auto-commit: false
-      max-poll-records: 500
-      fetch-min-size: 1048576
-      fetch-max-wait: 500
+      auto-offset-reset: earliest
+      enable-auto-commit: false # 수동 커밋 모드 (안정성 확보)
+      max-poll-records: 500     # 한 번에 가져올 메시지 양
+
+      # [추가] Deserializer 설정 (batch 모듈과 쌍을 맞춰야 데이터가 읽힙니다)
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+
+      properties:
+        # [추가] 역직렬화 시 신뢰할 수 있는 패키지 지정 (에러 방지)
+        spring.json.trusted.packages: "com.touplus.billing_batch.domain.dto,com.touplus.billing_message.domain.dto"
+        # 대량 처리를 위한 성능 옵션
+        fetch.min.bytes: 1048576  # 1MB가 모일 때까지 기다림 (네트워크 효율)
+        fetch.max.wait.ms: 500    # 최대 500ms 대기
+
+    listener:
+      # 컨슈머가 수동으로 커밋할 수 있도록 설정 (AckMode)
+      ack-mode: manual_immediate
