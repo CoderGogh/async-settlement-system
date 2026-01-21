@@ -9,12 +9,16 @@ import java.time.LocalDateTime;
 
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@ToString
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class BillingResultDto {
 
+    @EqualsAndHashCode.Include
     private Long id;
+
     private LocalDate settlementMonth;
     private Long userId;
     private Integer totalPrice;
@@ -25,8 +29,6 @@ public class BillingResultDto {
 
     // Entity -> DTO
     public static BillingResultDto fromEntity(BillingResult entity) {
-        if (entity == null) return null;
-
         return BillingResultDto.builder()
                 .id(entity.getId())
                 .settlementMonth(entity.getSettlementMonth())
