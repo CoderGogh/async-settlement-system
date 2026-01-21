@@ -32,6 +32,9 @@ subprojects {
     }
 
     dependencies {
+        // [추가] .env 파일을 읽기 위한 라이브러리를 모든 하위 모듈에 추가합니다.
+        implementation 'io.github.cdimascio:dotenv-java:3.0.0'
+
         compileOnly 'org.projectlombok:lombok'
         annotationProcessor 'org.projectlombok:lombok'
         testImplementation 'org.springframework.boot:spring-boot-starter-test'
