@@ -1,5 +1,6 @@
 package com.touplus.billing_batch.domain.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.touplus.billing_batch.domain.entity.BillingResult;
 import com.touplus.billing_batch.domain.enums.SendStatus;
 import lombok.*;
@@ -19,6 +20,7 @@ public class BillingResultDto {
     @EqualsAndHashCode.Include
     private Long id;
 
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate settlementMonth;
     private Long userId;
     private Integer totalPrice;

@@ -3,7 +3,6 @@ package com.touplus.billing_batch.jobs.billing.step.processor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.touplus.billing_batch.common.BillingException;
 import com.touplus.billing_batch.common.BillingFatalException;
-import com.touplus.billing_batch.domain.dto.BillingUserBillingInfoDto;
 import com.touplus.billing_batch.domain.dto.BillingWorkDto;
 import com.touplus.billing_batch.domain.dto.SettlementDetailsDto;
 import com.touplus.billing_batch.domain.dto.SettlementDetailsDto.DetailItem;
@@ -11,6 +10,7 @@ import com.touplus.billing_batch.domain.dto.UnpaidDto;
 import com.touplus.billing_batch.domain.entity.BillingResult;
 import com.touplus.billing_batch.domain.enums.SendStatus;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+@Slf4j
 @Component
 @StepScope
 @RequiredArgsConstructor
@@ -73,6 +74,8 @@ public class FinalBillingResultProcessor
                     .price(u.getUnpaidPrice())
                     .build());
         }
+
+        log.info("[FinalBillingResultProcessor] 미납금 합산 완료");
 
         // 최종 청구 금액 계산 (상품 + 추가요금 - 할인 + 미납금)
         long finalPrice = (long)work.getTotalPrice() + totalUnpaid;

@@ -36,7 +36,10 @@ public class BillingItemReader implements ItemStreamReader<BillingUserBillingInf
     private final UserSubscribeDiscountRepository discountRepository;
 
     private final Deque<BillingUserBillingInfoDto> buffer = new ArrayDeque<>();
-    private final int chunkSize = 2000;
+    private final int chunkSize = 1000;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Value("#{stepExecutionContext['minValue']}")
     private Long minValue;
@@ -85,9 +88,13 @@ public class BillingItemReader implements ItemStreamReader<BillingUserBillingInf
         }
 
         try {
-            // targetMonth 시작일-종료일 계산
-            this.startDate = LocalDate.parse(targetMonth);
-            this.endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
+            if(targetMonth != null){
+                // targetMonth 시작일-종료일 계산
+                this.startDate = LocalDate.parse(targetMonth);
+                this.endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
+            } else{
+                throw new BillingFatalException("targetMonth가 존재하지 않습니다: ", "ERR_NO_DATE", 0L);
+            }
         } catch (Exception e) {
             throw new BillingFatalException("targetMonth 형식이 올바르지 않습니다: " + targetMonth, "ERR_INVALID_DATE", 0L);
         }
@@ -149,13 +156,7 @@ public class BillingItemReader implements ItemStreamReader<BillingUserBillingInf
                         Pageable.ofSize(chunkSize)
                 );
 
-        if (users.isEmpty()) {
-            // 처음부터 값이 없는 경우
-            if(lastProcessedUserId == minValue - 1){
-                throw BillingFatalException.dataNotFound("정산 대상 유저가 존재하지 않습니다. 설정을 확인하세요.");
-            }
-            return;
-        }
+        if (users.isEmpty()) return;
 
         List<Long> userIds = users.stream().map(BillingUser::getUserId).toList();
 

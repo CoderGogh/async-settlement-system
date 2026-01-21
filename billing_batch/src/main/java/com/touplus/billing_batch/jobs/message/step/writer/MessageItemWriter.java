@@ -80,7 +80,11 @@ public class MessageItemWriter implements ItemWriter<BillingResultDto> {
     }
 
     private void updateSendStatus(List<Long> ids, String status) {
-        String sql = "UPDATE billing_result SET send_status = ?, processed_at = NOW() WHERE billing_result_id = ?";
+        // 실제 테이블
+//        String sql = "UPDATE billing_result SET send_status = ?, processed_at = NOW() WHERE billing_result_id = ?";
+
+        // 테스트 테이블
+        String sql = "UPDATE tmp_billing_result SET send_status = ?, processed_at = NOW() WHERE billing_result_id = ?";
         jdbcTemplate.batchUpdate(sql, ids, ids.size(), (ps, id) -> {
             ps.setString(1, status);
             ps.setLong(2, id);

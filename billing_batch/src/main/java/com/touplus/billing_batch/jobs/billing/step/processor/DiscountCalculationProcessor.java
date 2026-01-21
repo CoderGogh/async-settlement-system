@@ -5,10 +5,9 @@ import com.touplus.billing_batch.common.BillingFatalException;
 import com.touplus.billing_batch.domain.dto.BillingWorkDto;
 import com.touplus.billing_batch.domain.dto.SettlementDetailsDto;
 import com.touplus.billing_batch.domain.dto.UserSubscribeDiscountDto;
-import com.touplus.billing_batch.common.BillingReferenceCache;
+import com.touplus.billing_batch.jobs.billing.BillingReferenceCache;
 import com.touplus.billing_batch.domain.dto.*;
 import com.touplus.billing_batch.domain.enums.DiscountType;
-import com.touplus.billing_batch.domain.enums.ProductType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.configuration.annotation.StepScope;
@@ -41,6 +40,8 @@ public class DiscountCalculationProcessor implements ItemProcessor<BillingWorkDt
             throw BillingFatalException.cacheNotFound("할인 정보 캐싱이 이루어지지 않았습니다.");
         if(productMap == null || productMap.isEmpty())
             throw BillingFatalException.cacheNotFound("상품 정보 캐싱이 이루어지지 않았습니다.");
+
+        log.info("[DiscountCalculationProcessor] 할인, 상품 정보 가져오기");
         
         // 할인금액 합산 변수
         long totalDiscount = 0;
@@ -91,6 +92,8 @@ public class DiscountCalculationProcessor implements ItemProcessor<BillingWorkDt
 
 
             totalDiscount += price;
+
+            log.info("[DiscountCalculationProcessor] 할인 금액 합산 완료");
 
             // 할인 상세 내역 저장
             work.getDiscounts().add(SettlementDetailsDto.DetailItem.builder()
