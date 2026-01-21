@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.List;
 
 import static java.lang.Long.getLong;
@@ -82,22 +83,30 @@ public class BillingUserRepositoryImpl implements BillingUserRepository{
             Long minValue,
             Long maxValue,
             Long lastProcessedUserId,
+            LocalDate settlementMonth,
             Pageable pageable
     ) {
 
-        String sql = """
-        SELECT user_id
-        FROM billing_user
-        WHERE user_id BETWEEN :minValue AND :maxValue
-          AND user_id > :lastProcessedUserId
-        ORDER BY user_id
+            String sql = """
+        SELECT u.user_id
+        FROM billing_user u
+        WHERE u.user_id BETWEEN :minValue AND :maxValue
+          AND u.user_id > :lastProcessedUserId
+          AND NOT EXISTS (
+              SELECT 1 
+              FROM billing_result br 
+              WHERE br.user_id = u.user_id 
+                AND br.settlement_month = :settlementMonth
+          )
+        ORDER BY u.user_id
         LIMIT :limit
-    """;
+        """;
 
         MapSqlParameterSource params = new MapSqlParameterSource()
                 .addValue("minValue", minValue)
                 .addValue("maxValue", maxValue)
                 .addValue("lastProcessedUserId", lastProcessedUserId)
+                .addValue("settlementMonth", settlementMonth)
                 .addValue("limit", pageable.getPageSize());
 
         return namedJdbcTemplate.query(sql, params, this::mapRow);

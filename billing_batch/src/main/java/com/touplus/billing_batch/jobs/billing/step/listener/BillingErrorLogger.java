@@ -22,13 +22,13 @@ import java.time.LocalDateTime;
 public class BillingErrorLogger {
 
     private final BillingErrorLogRepository errorLogRepository;
-
+    private static final String PARAM_SETTLEMENT_MONTH = "settlementMonth";
     /**
      * DB에 에러 로그 저장
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void saveForJobLevel(JobExecution jobExecution, Long userId, Throwable t, String phase) {
-        String targetMonthStr = jobExecution.getJobParameters().getString("targetMonth");
+        String targetMonthStr = jobExecution.getJobParameters().getString(PARAM_SETTLEMENT_MONTH);
         LocalDate settlementMonth = (targetMonthStr != null) ? LocalDate.parse(targetMonthStr) : LocalDate.now();
 
         BillingErrorLog errorLog = BillingErrorLog.builder()
@@ -47,16 +47,23 @@ public class BillingErrorLogger {
 
         errorLogRepository.save(errorLog);
     }
-
-    // step 레벨 에러
-    @Transactional(propagation = Propagation.REQUIRES_NEW) // 에러 로그는 메인 트랜잭션 롤백과 무관하게 저장
+    // 기본 5개 파라미터를 사용하는 메서드
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void saveErrorLog(StepExecution stepExecution, Long userId, Throwable t, String stepPhase, boolean resolved) {
+        // 내부적으로 6개짜리 메서드를 호출하며, ErrorType은 null을 넘겨 determineErrorType이 동작하게 함
+        this.saveErrorLog(stepExecution, userId, t, stepPhase, resolved, null);
+    }
+
+    // step 레벨 에러 -- 수정 6개를 사용하는 메서드
+    @Transactional(propagation = Propagation.REQUIRES_NEW) // 에러 로그는 메인 트랜잭션 롤백과 무관하게 저장
+    public void saveErrorLog(StepExecution stepExecution, Long userId, Throwable t, String stepPhase, boolean resolved, ErrorType forcedType) {
         String errorCode = (t instanceof BillingException be) ? be.getErrorCode()
                 : (t instanceof BillingFatalException bfe) ? bfe.getErrorCode() : "SYSTEM_ERROR";
-        ErrorType errorType = determineErrorType(t);
+
+        ErrorType errorType = (forcedType != null) ? forcedType : determineErrorType(t);
 
         // 현재 Job의 파라미터에서 정산월을 가져옴
-        String targetMonth = stepExecution.getJobParameters().getString("targetMonth");
+        String targetMonth = stepExecution.getJobParameters().getString(PARAM_SETTLEMENT_MONTH);
         if (targetMonth == null) {
             throw new IllegalStateException("jobParameter targetMonth is required");
         }

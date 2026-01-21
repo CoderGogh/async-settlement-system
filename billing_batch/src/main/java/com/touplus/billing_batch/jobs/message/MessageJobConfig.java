@@ -11,6 +11,8 @@ import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.database.JdbcCursorItemReader;
+import org.springframework.batch.item.database.JdbcPagingItemReader;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.TaskExecutor;
@@ -40,25 +42,26 @@ public class MessageJobConfig {
     private final int chunkSize = 1000;
 
     @Bean
-    public Job messageJob(Step messageStep) {
+    public Job messageJob(@Qualifier("messageJobStep")Step messageStepInstance) { // 파라미터명 변경
         return new JobBuilder("messageJob", jobRepository)
-                .start(messageStep)
+                .start(messageStepInstance)
                 .build();
     }
 
-    @Bean
-    public Step messageStep(JdbcCursorItemReader<BillingResultDto> messageReader,
-                            MessageItemWriter messageItemWriter) { //  2. 파라미터로 주입받음
-        return new StepBuilder("messageStep", jobRepository)
+    // 메서드 이름을 messageStep에서 messageJobStep으로 변경 (중복 방지)
+    @Bean(name = "messageJobStep")
+    public Step messageJobStep(JdbcPagingItemReader<BillingResultDto> messageReader, // 타입 변경
+                               MessageItemWriter messageItemWriter) {
+        return new StepBuilder("messageJobStep", jobRepository)
                 .<BillingResultDto, BillingResultDto>chunk(chunkSize, transactionManager)
                 .reader(messageReader)
-                .writer(messageItemWriter) //  3. 전달받은 파라미터 사용
+                .writer(messageItemWriter)
                 .faultTolerant()
                 .skip(Exception.class)
                 .skipLimit(1000)
                 .listener(messageStepLogger)
                 .listener(messageSkipListener)
-                .taskExecutor(taskExecutor())
+                .taskExecutor(messageTaskExecutor()) //= =스레드 세이프 하게 돌아가도록
                 .build();
     }
 
@@ -70,8 +73,8 @@ public class MessageJobConfig {
                 .build();
     }
 
-    @Bean
-    public TaskExecutor taskExecutor() {
+    @Bean(name = "messageTaskExecutor")
+    public TaskExecutor messageTaskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(10);
         executor.setMaxPoolSize(20);

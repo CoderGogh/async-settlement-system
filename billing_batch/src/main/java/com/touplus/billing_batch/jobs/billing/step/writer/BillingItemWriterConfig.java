@@ -6,6 +6,7 @@ import org.springframework.batch.item.database.JdbcBatchItemWriter;
 import org.springframework.batch.item.database.builder.JdbcBatchItemWriterBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 
 import javax.sql.DataSource;
 
@@ -16,11 +17,11 @@ import javax.sql.DataSource;
 
 @Configuration
 @RequiredArgsConstructor
-public class BillingItemWriter {
+public class BillingItemWriterConfig {
 
     private final DataSource dataSource;
 
-    @Bean
+    @Bean(name = "billingItemWriter")
     public JdbcBatchItemWriter<BillingResult> billingItemWriter() {
         /*
          * 변경 포인트(JPA --> JDBC)
@@ -32,13 +33,20 @@ public class BillingItemWriter {
                 .dataSource(dataSource)
                 .sql("INSERT INTO tmp_billing_result " +
                         "(settlement_month, user_id, total_price, settlement_details, send_status, batch_execution_id, processed_at) " +
-                        "VALUES (:settlementMonth, :userId, :totalPrice, :settlementDetails, :sendStatus.name, :batchExecutionId, :processedAt) " +
-                        "ON DUPLICATE KEY UPDATE " + // 혹시 모를 재처리 시 덮어쓰기 전략
-                        "total_price = VALUES(total_price), " +
-                        "settlement_details = VALUES(settlement_details), " +
-                        "send_status = VALUES(send_status), " +
-                        "processed_at = VALUES(processed_at)")
-                .beanMapped() // BillingResult 엔티티의 필드와 SQL 파라미터 자동 매핑
+                        "VALUES (:settlementMonth, :userId, :totalPrice, :settlementDetails, :sendStatus, :batchExecutionId, :processedAt)")
+                // .beanMapped() 대신 아래 코드를 사용하세요
+                .itemSqlParameterSourceProvider(item -> {
+                    MapSqlParameterSource params = new MapSqlParameterSource();
+                    params.addValue("settlementMonth", item.getSettlementMonth());
+                    params.addValue("userId", item.getUserId());
+                    params.addValue("totalPrice", item.getTotalPrice());
+                    params.addValue("settlementDetails", item.getSettlementDetails());
+                    // Enum 객체를 .name()을 통해 순수 문자열(READY, SUCCESS 등)로 변환!
+                    params.addValue("sendStatus", item.getSendStatus() != null ? item.getSendStatus().name() : "READY");
+                    params.addValue("batchExecutionId", item.getBatchExecutionId());
+                    params.addValue("processedAt", item.getProcessedAt());
+                    return params;
+                })
                 .build();
     }
 }

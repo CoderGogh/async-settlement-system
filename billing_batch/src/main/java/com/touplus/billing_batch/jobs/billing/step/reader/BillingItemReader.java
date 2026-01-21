@@ -1,5 +1,6 @@
 package com.touplus.billing_batch.jobs.billing.step.reader;
 
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -41,6 +42,10 @@ public class BillingItemReader implements ItemStreamReader<BillingUserBillingInf
     @Value("#{stepExecutionContext['maxValue']}")
     private Long maxValue;
 
+    @Value("#{jobParameters['settlementMonth']}")
+    private String settlementMonthStr;
+
+    private LocalDate settlementMonth;
     // DB 조회용
     private Long lastProcessedUserId = 0L;  // 실제 read()로 반환된 ID
     private StepExecution stepExecution;
@@ -81,6 +86,13 @@ public class BillingItemReader implements ItemStreamReader<BillingUserBillingInf
             // 파티션 시작은 minValue부터
             this.lastProcessedUserId = minValue - 1;
         }
+        // 2. 파싱 로직 추가 (필드에 저장)
+        // 파티션이 시작될 때 한 번만 수행됩니다.
+        if (this.settlementMonthStr != null) {
+            this.settlementMonth = LocalDate.parse(this.settlementMonthStr);
+        } else {
+            throw new IllegalStateException("jobParameter 'settlementMonth' is missing");
+        }
     }
 
 
@@ -106,6 +118,7 @@ public class BillingItemReader implements ItemStreamReader<BillingUserBillingInf
         return dto;
     }
 
+
     private void fillBuffer() {
         // 1. No-Offset 방식: userId 기준 다음 청크 조회
         List<BillingUser> users =
@@ -113,6 +126,7 @@ public class BillingItemReader implements ItemStreamReader<BillingUserBillingInf
                         minValue,
                         maxValue,
                         lastProcessedUserId,
+                        settlementMonth,
                         Pageable.ofSize(chunkSize)
                 );
 
