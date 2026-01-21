@@ -3,7 +3,6 @@ package com.touplus.billing_batch.jobs.billing.step.processor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.touplus.billing_batch.common.BillingException;
 import com.touplus.billing_batch.common.BillingFatalException;
-import com.touplus.billing_batch.domain.dto.BillingUserBillingInfoDto;
 import com.touplus.billing_batch.domain.dto.BillingWorkDto;
 import com.touplus.billing_batch.domain.dto.SettlementDetailsDto;
 import com.touplus.billing_batch.domain.dto.SettlementDetailsDto.DetailItem;
@@ -33,8 +32,8 @@ public class FinalBillingResultProcessor
     @Value("#{stepExecution.jobExecutionId}")
     private Long jobExecutionId;
 
-    @Value("#{jobParameters['targetMonth']}")
-    private String targetMonth;
+    @Value("#{jobParameters['settlementMonth']}")
+    private String settlementMonth;
 
     @Override
     public BillingResult process(BillingWorkDto work) throws Exception {
@@ -95,7 +94,7 @@ public class FinalBillingResultProcessor
 
         return BillingResult.builder()
                 .userId(work.getRawData().getUserId())
-                .settlementMonth(LocalDate.parse(targetMonth))
+                .settlementMonth(LocalDate.parse(settlementMonth))
                 .totalPrice((int)finalPrice)
                 .settlementDetails(detailsJson)
                 .sendStatus(SendStatus.READY)
