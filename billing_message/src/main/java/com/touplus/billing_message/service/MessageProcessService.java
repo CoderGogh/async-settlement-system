@@ -148,6 +148,7 @@ import com.touplus.billing_message.domain.respository.*;
 import com.touplus.billing_message.sender.MessageSender;
 import com.touplus.billing_message.sender.SendResult;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -161,7 +162,6 @@ public class MessageProcessService {
     private final MessageRepository messageRepository;
     private final MessageSnapshotRepository messageSnapshotRepository;
     private final MessageSendLogRepository messageSendLogRepository;
-    private final UserBanRepository userBanRepository;
     private final MessageSender messageSender;
     private final MessagePolicy messagePolicy;
 
@@ -209,14 +209,13 @@ public class MessageProcessService {
             return;
         }
 
-        // ban 시간대 체크
-        UserBanInfo banInfo =
-                userBanRepository.findBanInfo(message.getUserId()).orElse(null);
-
+        // ban 시간대 체크 (이제 Message에서 직접 가져옴)
+        LocalTime banEndTime = message.getBanEndTime();
         LocalDateTime now = LocalDateTime.now();
-        if (messagePolicy.isInBanWindow(now, banInfo)) {
+        
+        if (messagePolicy.isInBanWindow(now, banEndTime)) {
             LocalDateTime nextAllowed =
-                    messagePolicy.nextAllowedTime(now, banInfo);
+                    messagePolicy.nextAllowedTime(now, banEndTime);
 
             messageRepository.defer(messageId, nextAllowed);
             log.info("금지 시간대 → 연기 messageId={} until={}",
@@ -234,7 +233,7 @@ public class MessageProcessService {
             LocalDateTime retryAt =
                     messagePolicy.adjustForBan(
                             messagePolicy.nextRetryAt(now, message.getRetryCount()),
-                            banInfo
+                            banEndTime
                     );
 
             messageRepository.markFailed(messageId, retryAt);
@@ -268,7 +267,7 @@ public class MessageProcessService {
         LocalDateTime retryAt =
                 messagePolicy.adjustForBan(
                         messagePolicy.nextRetryAt(now, message.getRetryCount()),
-                        banInfo
+                        banEndTime
                 );
 
         messageRepository.markFailed(messageId, retryAt);
@@ -278,14 +277,15 @@ public class MessageProcessService {
 
     // 외부 실패 처리 
     @Transactional
-    public void handleSendFailure(Long messageId, int retryCount, UserBanInfo banInfo) {
+    public void handleSendFailure(Long messageId, int retryCount, LocalTime banEndTime) {
         LocalDateTime retryAt =
                 messagePolicy.adjustForBan(
                         messagePolicy.nextRetryAt(LocalDateTime.now(), retryCount),
-                        banInfo
+                        banEndTime
                 );
 
         messageRepository.markFailed(messageId, retryAt);
         log.info("외부 실패 처리 messageId={} retryAt={}", messageId, retryAt);
     }
 }
+
