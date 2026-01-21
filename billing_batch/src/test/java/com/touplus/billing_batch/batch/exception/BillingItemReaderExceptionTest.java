@@ -1,4 +1,4 @@
-package com.touplus.billing_batch.billing.exception;
+package com.touplus.billing_batch.batch.exception;
 
 import com.touplus.billing_batch.common.BillingFatalException;
 import com.touplus.billing_batch.domain.entity.BillingUser;

@@ -156,13 +156,7 @@ public class BillingItemReader implements ItemStreamReader<BillingUserBillingInf
                         Pageable.ofSize(chunkSize)
                 );
 
-        if (users.isEmpty()) {
-            // 처음부터 값이 없는 경우
-            if(lastProcessedUserId == minValue - 1){
-                throw BillingFatalException.dataNotFound("정산 대상 유저가 존재하지 않습니다. 설정을 확인하세요.");
-            }
-            return;
-        }
+        if (users.isEmpty()) return;
 
         List<Long> userIds = users.stream().map(BillingUser::getUserId).toList();
 

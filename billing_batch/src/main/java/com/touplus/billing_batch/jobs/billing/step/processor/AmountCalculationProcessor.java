@@ -39,6 +39,8 @@ public class AmountCalculationProcessor
         Map<Long, BillingProductDto> productMap = referenceCache.getProductMap();
         if(productMap == null || productMap.isEmpty())
             throw BillingFatalException.cacheNotFound("상품 정보 캐싱이 이루어지지 않았습니다.");
+        
+        log.info("[AmountCalculationProcessor] 상품 정보 가져오기 성공");
 
         long productSum = 0;
 
@@ -92,7 +94,7 @@ public class AmountCalculationProcessor
             }
         }
 
-
+        log.info("[AmountCalculationProcessor] 상품 금액 합산 완료");
 
         // 추가 요금이 없으면 빈 리스트 처리
         List<AdditionalChargeDto> charges =
@@ -122,6 +124,8 @@ public class AmountCalculationProcessor
                     .build());
         }
 
+        log.info("[AmountCalculationProcessor] 추가 요금 합산 완료");
+
         // 정산 로직 이상 탐지
         long baseAmount = productSum + additionalSum;
         if(productSum<0 || additionalSum<0 || baseAmount <0 || baseAmount > Integer.MAX_VALUE){
@@ -133,6 +137,8 @@ public class AmountCalculationProcessor
 
         // 총 상품 금액 + 총 추가요금
         workDto.setBaseAmount((int)baseAmount);
+
+        log.info("[AmountCalculationProcessor] DTO에 상품/추가요금 내역 저장");
 
         return workDto;
     }
