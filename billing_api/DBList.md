@@ -4,9 +4,12 @@
   - unpaid
   - 
 - **Batch 실행 이력**
-  - BATCH_JOB_EXECUTION
-  - BATCH_STEP_EXECUTION
-  - batch_billing_error_log < 필요하면?
+  - user 별 정산 결과 (이용중인상품/가격?)
+  - Biling_result -> details
+
+- 논의(개발자인 운영자) 
+  - 몇퍼 성공 / 실패 -> 실패한 사람 id나 name, email, phone Moking
+  - 현재 배치 진행 사항 (실시간) < 논의 
 
 > 추가 가능한 영역
 >> - **user가 가장 많이 가입한 상품** 
