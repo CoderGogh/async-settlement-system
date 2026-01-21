@@ -41,17 +41,31 @@ public class BillingStepListener implements StepExecutionListener {
         }
 
         // stepExecution에 들어있는 FAIL 예외 가져오기. 없으면 새로 생성. 있으면 가장 최신 것 조회.
-        Throwable t = stepExecution.getFailureExceptions().isEmpty()
+        Throwable wrapper = stepExecution.getFailureExceptions().isEmpty()
                 ? new RuntimeException("UNKNOWN_STEP_FAILURE")
                 : stepExecution.getFailureExceptions().get(0);
 
+        String phase = determinePhase(wrapper);
+
+        Throwable t = (wrapper.getCause() != null) ? wrapper.getCause() : wrapper;
 
         Long userId = (t instanceof BillingFatalException bfe) ? bfe.getUserId()
                 : (t instanceof BillingException be) ? be.getUserId() : 0L;
 
-        log.error(">> [Stop In Process] UserId: {}, Reason: {}", userId, t.getMessage());
-        billingErrorLogger.saveErrorLog(stepExecution, userId, t, "PROCESSOR", false);
+        log.error(">> [Stop In {}] UserId: {}, Reason: {}", phase, userId, t.getMessage());
+        billingErrorLogger.saveErrorLog(stepExecution, userId, t, phase, false);
 
         return stepExecution.getExitStatus();
+    }
+
+    private String determinePhase(Throwable wrapper) {
+        if (wrapper instanceof org.springframework.batch.core.step.skip.NonSkippableReadException) {
+            return "READER";
+        } else if (wrapper instanceof org.springframework.batch.core.step.skip.NonSkippableProcessException) {
+            return "PROCESSOR";
+        } else if (wrapper instanceof org.springframework.batch.core.step.skip.NonSkippableWriteException) {
+            return "WRITER";
+        }
+        return "UNKNOWN";
     }
 }

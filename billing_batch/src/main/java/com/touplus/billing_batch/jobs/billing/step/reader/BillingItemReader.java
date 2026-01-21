@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import com.touplus.billing_batch.common.BillingFatalException;
 import com.touplus.billing_batch.domain.dto.*;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -56,6 +57,9 @@ public class BillingItemReader implements ItemStreamReader<BillingUserBillingInf
     private StepExecution stepExecution;
     private static final String CTX_LAST_PROCESSED_USER_ID = "lastProcessedUserId";
 
+    private LocalDate startDate;
+    private LocalDate endDate;
+
     public BillingItemReader(
             BillingUserRepository userRepository,
             UserSubscribeProductRepository uspRepository,
@@ -82,10 +86,16 @@ public class BillingItemReader implements ItemStreamReader<BillingUserBillingInf
             log.info(">> [NOTICE] 전체 재정산 모드(forceFullScan=true)로 동작합니다. 모든 데이터를 다시 처리합니다.");
         }
 
+        try {
+            // targetMonth 시작일-종료일 계산
+            this.startDate = LocalDate.parse(targetMonth);
+            this.endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
+        } catch (Exception e) {
+            throw new BillingFatalException("targetMonth 형식이 올바르지 않습니다: " + targetMonth, "ERR_INVALID_DATE", 0L);
+        }
+
         if (minValue == null || maxValue == null) {
-            throw new IllegalStateException(
-                    "Partition minValue / maxValue not set"
-            );
+            throw new BillingFatalException("Partition minValue / maxValue가 설정되지 않았습니다.", "ERR_NO_PARTITION", 0L);
         }
 
         if (executionContext.containsKey(CTX_LAST_PROCESSED_USER_ID)) {
@@ -110,20 +120,24 @@ public class BillingItemReader implements ItemStreamReader<BillingUserBillingInf
 
     @Override
     public BillingUserBillingInfoDto read() {
-        if (buffer.isEmpty()) {
-            fillBuffer();
+        try {
+            if (buffer.isEmpty()) {
+                fillBuffer();
+            }
+
+            BillingUserBillingInfoDto dto = buffer.poll();
+            if (dto != null) {
+                lastProcessedUserId = dto.getUserId();
+            }
+            return dto;
+        }catch (BillingFatalException e){
+            throw e;
+        }catch (Exception e){
+            throw new BillingFatalException("Reader 실행 중 예상치 못한 오류 발생", "ERR_READER_UNKNOWN", 0L);
         }
-        BillingUserBillingInfoDto dto = buffer.poll();
-        if (dto != null) {
-            lastProcessedUserId = dto.getUserId();
-        }
-        return dto;
     }
 
-    private void fillBuffer() {
-        // targetMonth 시작일-종료일 계산
-        LocalDate startDate = LocalDate.parse(targetMonth);
-        LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
+    private void fillBuffer() throws Exception{
 
         // 1. No-Offset 방식: userId 기준 다음 청크 조회
         List<BillingUser> users =
@@ -137,7 +151,13 @@ public class BillingItemReader implements ItemStreamReader<BillingUserBillingInf
                         Pageable.ofSize(chunkSize)
                 );
 
-        if (users.isEmpty()) return;
+        if (users.isEmpty()) {
+            // 처음부터 값이 없는 경우
+            if(lastProcessedUserId == minValue - 1){
+                throw BillingFatalException.dataNotFound("정산 대상 유저가 존재하지 않습니다. 설정을 확인하세요.");
+            }
+            return;
+        }
 
         List<Long> userIds = users.stream().map(BillingUser::getUserId).toList();
 
@@ -145,6 +165,10 @@ public class BillingItemReader implements ItemStreamReader<BillingUserBillingInf
         Map<Long, List<UserSubscribeProductDto>> uspMap = uspRepository.findByUserIdIn(userIds).stream()
                 .map(UserSubscribeProductDto::fromEntity)
                 .collect(Collectors.groupingBy(UserSubscribeProductDto::getUserId));
+
+        if(uspMap.isEmpty()){
+            throw BillingFatalException.dataNotFound(String.format("데이터 정합성 오류: 대상 유저 %d명에 대한 구독 상품 정보가 존재하지 않습니다.", users.size()));
+        }
 
         Map<Long, List<UnpaidDto>> unpaidMap = unpaidRepository.findByUserIdIn(userIds).stream()
                 .map(UnpaidDto::fromEntity)

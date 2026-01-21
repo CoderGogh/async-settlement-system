@@ -18,6 +18,10 @@ public class BillingFatalException extends RuntimeException {
         return new BillingFatalException(message, "ERR_CACHE_NOT_FOUND", 0L);
     }
 
+    public static BillingFatalException dataNotFound(String message) {
+        return new BillingFatalException(message, "ERR_DATA_NOT_FOUND", 0L);
+    }
+
     public static BillingFatalException invalidProductAmount(Long userId, long productSum, long additionalSum, long baseAmount) {
         return new BillingFatalException(
                 "상품 로직 이상 userId=" + userId
