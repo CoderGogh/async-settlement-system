@@ -15,6 +15,9 @@ import java.time.LocalTime;
 @Table(name = "message",
     indexes = {
         @Index(name = "idx_message_status_schedule", columnList = "status, scheduled_at")
+    },
+    uniqueConstraints = {
+        @UniqueConstraint(name = "uk_billing_id", columnNames = "billing_id")
     }
 )
 @Getter

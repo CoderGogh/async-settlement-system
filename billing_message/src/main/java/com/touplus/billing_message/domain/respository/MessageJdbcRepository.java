@@ -17,7 +17,7 @@ public class MessageJdbcRepository {
 
     public void batchInsert(List<Message> messages) {
         String sql = """
-            INSERT INTO message
+            INSERT IGNORE INTO message
             (billing_id, user_id, status, scheduled_at, retry_count, ban_end_time)
             VALUES (?, ?, ?, ?, ?, ?)
         """;
