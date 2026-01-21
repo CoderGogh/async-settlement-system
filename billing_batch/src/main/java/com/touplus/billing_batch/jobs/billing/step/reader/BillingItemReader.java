@@ -1,11 +1,13 @@
 package com.touplus.billing_batch.jobs.billing.step.reader;
 
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import com.touplus.billing_batch.domain.dto.*;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.annotation.BeforeStep;
 import org.springframework.batch.item.ExecutionContext;
@@ -19,6 +21,7 @@ import org.springframework.stereotype.Component;
 import com.touplus.billing_batch.domain.entity.*;
 import com.touplus.billing_batch.domain.repository.*;
 
+@Slf4j
 @Component
 @StepScope
 public class BillingItemReader implements ItemStreamReader<BillingUserBillingInfoDto> {
@@ -30,7 +33,7 @@ public class BillingItemReader implements ItemStreamReader<BillingUserBillingInf
     private final UserSubscribeDiscountRepository discountRepository;
 
     private final Deque<BillingUserBillingInfoDto> buffer = new ArrayDeque<>();
-    private final int chunkSize = 1000;
+    private final int chunkSize = 2000;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -40,6 +43,13 @@ public class BillingItemReader implements ItemStreamReader<BillingUserBillingInf
 
     @Value("#{stepExecutionContext['maxValue']}")
     private Long maxValue;
+
+    @Value("#{jobParameters['targetMonth']}")
+    private String targetMonth;
+
+    @Value("#{jobParameters['forceFullScan'] ?: false}")
+    private boolean forceFullScan;
+
 
     // DB 조회용
     private Long lastProcessedUserId = 0L;  // 실제 read()로 반환된 ID
@@ -68,6 +78,10 @@ public class BillingItemReader implements ItemStreamReader<BillingUserBillingInf
 
     @Override
     public void open(ExecutionContext executionContext) {
+        if (forceFullScan) {
+            log.info(">> [NOTICE] 전체 재정산 모드(forceFullScan=true)로 동작합니다. 모든 데이터를 다시 처리합니다.");
+        }
+
         if (minValue == null || maxValue == null) {
             throw new IllegalStateException(
                     "Partition minValue / maxValue not set"
@@ -107,12 +121,19 @@ public class BillingItemReader implements ItemStreamReader<BillingUserBillingInf
     }
 
     private void fillBuffer() {
+        // targetMonth 시작일-종료일 계산
+        LocalDate startDate = LocalDate.parse(targetMonth);
+        LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
+
         // 1. No-Offset 방식: userId 기준 다음 청크 조회
         List<BillingUser> users =
                 userRepository.findUsersInRange(
                         minValue,
                         maxValue,
                         lastProcessedUserId,
+                        forceFullScan,
+                        startDate,
+                        endDate,
                         Pageable.ofSize(chunkSize)
                 );
 
