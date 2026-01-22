@@ -32,7 +32,6 @@ public class MessageJobConfig {
      */
 
 
-
     private final JobRepository jobRepository;
     private final PlatformTransactionManager transactionManager;
     //  1. 필드 주입 제거 (순환 고리 끊기)
@@ -43,7 +42,7 @@ public class MessageJobConfig {
     private final int chunkSize = 1000;
 
     @Bean
-    public Job messageJob(@Qualifier("createTopicStep")Step createTopicStep, @Qualifier("messageJobStep")Step messageStepInstance) { // 파라미터명 변경
+    public Job messageJob(@Qualifier("createTopicStep") Step createTopicStep, @Qualifier("messageJobStep") Step messageStepInstance) { // 파라미터명 변경
         return new JobBuilder("messageJob", jobRepository)
                 .start(createTopicStep)      // 1. 토픽을 먼저 생성
                 .next(messageStepInstance)   // 2. 이후 메시지 발송 실행
@@ -51,7 +50,7 @@ public class MessageJobConfig {
     }
 
     // kafka topic 설정 담당 메소드
-    @Bean(name="createTopicStep")
+    @Bean(name = "createTopicStep")
     public Step createTopicStep() {
         return new StepBuilder("createTopicStep", jobRepository)
                 .tasklet(topicCreateTasklet, transactionManager)
@@ -86,10 +85,11 @@ public class MessageJobConfig {
     @Bean(name = "messageTaskExecutor")
     public TaskExecutor messageTaskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(20);   // 서버 사양에 따라서 수정 ( 20~30)
+        executor.setCorePoolSize(20);
         executor.setMaxPoolSize(30);
-        executor.setQueueCapacity(2000);
-        executor.setThreadNamePrefix("Batch-Thread-");
+        // [수정] 비동기 작업이 큐에 쌓일 수 있으므로 넉넉하게 설정
+        executor.setQueueCapacity(10000);
+        executor.setThreadNamePrefix("Msg-Thread-");
         executor.initialize();
         return executor;
     }

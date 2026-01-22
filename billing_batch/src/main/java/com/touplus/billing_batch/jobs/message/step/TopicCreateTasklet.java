@@ -26,15 +26,22 @@ public class TopicCreateTasklet implements Tasklet {
 
     @Override
     public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) {
-        String TOPIC = BASE_TOPIC + settlementMonth;
+        // [수정] 안전한 토픽명 생성 로직
+        String topicSuffix;
+        if (settlementMonth.contains("-")) {
+            // "2025-12-01" -> "2512"
+            topicSuffix = settlementMonth.replace("-", "").substring(2, 6);
+        } else {
+            // 이미 "2512"로 들어온 경우 그대로 사용
+            topicSuffix = settlementMonth;
+        }
+
+        String TOPIC = BASE_TOPIC + topicSuffix;
 
         NewTopic newTopic = TopicBuilder.name(TOPIC)
                 .partitions(3)
                 .replicas(1)
-                .config(
-                        TopicConfig.RETENTION_MS_CONFIG,
-                        String.valueOf(3 * 24 * 60 * 60 * 1000L)
-                )
+                .config(TopicConfig.RETENTION_MS_CONFIG, String.valueOf(3 * 24 * 60 * 60 * 1000L))
                 .build();
 
         kafkaAdmin.createOrModifyTopics(newTopic);
