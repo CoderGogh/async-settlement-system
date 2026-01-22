@@ -169,6 +169,9 @@ public class MessageProcessService {
     private final MessageJdbcRepository messageJdbcRepository;
     private final MessageSnapshotJdbcRepository messageSnapshotJdbcRepository;
 
+    // SendLog 버퍼 서비스 추가
+    private final SendLogBufferService sendLogBufferService;
+
     // 스냅샷 이미 다 생성된 후의 발송 처리
     @Transactional
     public void processMessage(Long messageId) {
@@ -238,19 +241,14 @@ public class MessageProcessService {
             return;
         }
 
-        // 로그 (실패해도 무시)
-        try {
-            messageSendLogRepository.save(
-                    new MessageSendLog(
-                            messageId,
-                            message.getRetryCount(),
-                            messageType,
-                            result.code(),
-                            result.message(),
-                            LocalDateTime.now()));
-        } catch (Exception e) {
-            log.warn("SendLog 저장 실패 messageId={}", messageId, e);
-        }
+        // 로그 버퍼에 추가 (DB 호출 없음)
+        sendLogBufferService.addLog(
+                messageId,
+                message.getRetryCount(),
+                messageType,
+                result.code(),
+                result.message(),
+                LocalDateTime.now());
 
         // 결과 반영
         if (result.success()) {
@@ -337,19 +335,14 @@ public class MessageProcessService {
             return new MessageDispatchService.ProcessResult(messageId, false);
         }
 
-        // 로그 저장 (실패해도 무시)
-        try {
-            messageSendLogRepository.save(
-                    new MessageSendLog(
-                            messageId,
-                            message.getRetryCount(),
-                            messageType,
-                            result.code(),
-                            result.message(),
-                            LocalDateTime.now()));
-        } catch (Exception e) {
-            log.warn("SendLog 저장 실패 messageId={}", messageId, e);
-        }
+        // 로그 버퍼에 추가 (DB 호출 없음)
+        sendLogBufferService.addLog(
+                messageId,
+                message.getRetryCount(),
+                messageType,
+                result.code(),
+                result.message(),
+                LocalDateTime.now());
 
         // 결과 반환 (UPDATE는 Bulk로 처리됨)
         if (result.success()) {
@@ -437,19 +430,14 @@ public class MessageProcessService {
             return new MessageDispatchService.ProcessResult(messageId, false);
         }
 
-        // 로그 저장 (실패해도 무시) - 여전히 JPA 사용
-        try {
-            messageSendLogRepository.save(
-                    new MessageSendLog(
-                            messageId,
-                            message.retryCount(),
-                            messageType,
-                            result.code(),
-                            result.message(),
-                            LocalDateTime.now()));
-        } catch (Exception e) {
-            log.warn("SendLog 저장 실패 messageId={}", messageId, e);
-        }
+        // 로그 버퍼에 추가 (DB 호출 없음, 즉시 반환)
+        sendLogBufferService.addLog(
+                messageId,
+                message.retryCount(),
+                messageType,
+                result.code(),
+                result.message(),
+                LocalDateTime.now());
 
         // 결과 반환 (UPDATE는 Bulk로 처리됨)
         if (result.success()) {

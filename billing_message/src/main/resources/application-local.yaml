@@ -3,6 +3,10 @@ spring:
   config:
     activate:
       on-profile: local # 이 설정은 'local' 프로필일 때만 작동함
+  task:
+    scheduling:
+      pool:
+        size: 10  # 스케줄러 스레드 풀 (기본값 1 → 10)
   jpa:
     properties:
       hibernate:
