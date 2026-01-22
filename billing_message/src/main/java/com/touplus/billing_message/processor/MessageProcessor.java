@@ -103,15 +103,20 @@ public class MessageProcessor {
         return messageJdbcRepository.batchInsert(messages);
     }
 
+    /* 발송 예정 시간 계산
+    	- sendingDay: 발송 예정일 (1~28)
+    	- banStartTime/banEndTime: 발송 금지 시간대 */
     private LocalDateTime calculateScheduledTime(User user) {
         LocalDate today = LocalDate.now();
         int sendingDay = user.getSendingDay();
 
+        // 날짜 결정
         LocalDate sendDate =
                 today.getDayOfMonth() < sendingDay
                         ? today.withDayOfMonth(sendingDay)
                         : today.plusMonths(1).withDayOfMonth(sendingDay);
 
+        // 시간 결정
         LocalTime sendTime =
                 user.getBanEndTime() != null
                         ? user.getBanEndTime().plusMinutes(1)

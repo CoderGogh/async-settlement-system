@@ -32,23 +32,6 @@ public class MessageJdbcRepository {
             VALUES (?, ?, ?, ?, ?, ?)
         """;
 
-<<<<<<< HEAD
-        jdbcTemplate.batchUpdate(
-                sql,
-                messages,
-                messages.size(),
-                (ps, m) -> {
-                    ps.setLong(1, m.getBillingId());
-                    ps.setLong(2, m.getUserId());
-                    ps.setString(3, m.getStatus().name());
-                    // LocalDateTime -> Timestamp 변환 필요
-                    ps.setTimestamp(4, m.getScheduledAt() != null ? Timestamp.valueOf(m.getScheduledAt()) : null);
-                    ps.setInt(5, m.getRetryCount());
-                    // LocalTime -> Time 변환
-                    ps.setTime(6, m.getBanEndTime() != null ? Time.valueOf(m.getBanEndTime()) : null);
-                }
-        );
-=======
         int[][] results = jdbcTemplate.batchUpdate(
             sql,
             messages,
@@ -73,7 +56,6 @@ public class MessageJdbcRepository {
             }
         }
         return successCount;
->>>>>>> c01ac7d6668deb472d9b3781185934e35f9b93bd
     }
 
     /**

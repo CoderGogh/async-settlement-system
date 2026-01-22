@@ -32,7 +32,7 @@ public class TestController {
         BillingSnapshot snapshot = snapshotRepository.findById(billingId)
             .orElseThrow(() -> new RuntimeException("Snapshot 없음: " + billingId));
 
-        messageProcessor.process(snapshot);
+        //messageProcessor.process(snapshot);
 
         return "Message 생성 완료! billingId=" + billingId;
     }
