@@ -48,26 +48,30 @@ public class MessageItemWriter implements ItemWriter<BillingResultDto> {
 
     @Override
     public void write(Chunk<? extends BillingResultDto> chunk) throws Exception {
-        List<Long> successIds = new ArrayList<>();
-        List<Long> failedIds = new ArrayList<>();
         String TOPIC = BASE_TOPIC + settlementMonth;
 
+        // 현재 청크 전송 결과 리스트
+        List<CompletableFuture<?>> futures = new ArrayList<>();
+
+        List<Long> successIds = Collections.synchronizedList(new ArrayList<>());
+        List<Long> failedIds = Collections.synchronizedList(new ArrayList<>());
+
         for (BillingResultDto dto : chunk) {
-            try {
-                // kafka 전송 및 응답 확인 + 재시도 로직
-                retryTemplate.execute(context -> {
-                    // Kafka 전송 후 응답 대기 (.get())
-                    kafkaTemplate.send(TOPIC, String.valueOf(dto.getUserId()), dto).get();
-                    return null;
-                });
-                // 성공 리스트에 저장
-                successIds.add(dto.getId());
-            } catch (Exception e) {
-                log.error("최종 발송 실패 - ID: {}", dto.getId());
-                // 설정된 최대 재시도 횟수 도달 시 실패 목록에 추가
-                failedIds.add(dto.getId());
-            }
+            // 비동기로 전송 시도 (Kafka 자체 retries 설정에 의존)
+            CompletableFuture<?> future = kafkaTemplate.send(TOPIC, String.valueOf(dto.getUserId()), dto)
+                    .thenAccept(result -> {
+                        successIds.add(dto.getId());
+                    }) // 성공 시 ID 반환
+                    .exceptionally(ex -> {
+                        log.error("카프카 최종 발송 실패 - ID: {}, 사유: {}", dto.getId(), ex.getMessage());
+                        failedIds.add(dto.getId());
+                        return null;
+                    });
+
+            futures.add(future);
         }
+        // 청크 사이즈만큼 모두 처리 완료 대기
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 
         // 성공 데이터 DB 일괄 업데이트
         if (!successIds.isEmpty()) {

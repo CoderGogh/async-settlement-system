@@ -26,9 +26,9 @@ public class TopicCreateTasklet implements Tasklet {
 
     @Override
     public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) {
-        String topicName = BASE_TOPIC + settlementMonth;
+        String TOPIC = BASE_TOPIC + settlementMonth;
 
-        NewTopic newTopic = TopicBuilder.name(topicName)
+        NewTopic newTopic = TopicBuilder.name(TOPIC)
                 .partitions(3)
                 .replicas(1)
                 .config(
