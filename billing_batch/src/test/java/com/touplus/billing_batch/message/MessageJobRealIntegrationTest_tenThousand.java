@@ -74,24 +74,22 @@ public class MessageJobRealIntegrationTest_tenThousand {
         // 2. When
         jobLauncherTestUtils.setJob(messageJob);
         JobParameters jobParameters = new JobParametersBuilder()
-                .addString("settlementMonth", "2026-01-01")
+                .addString("settlementMonth", targetMonth)
                 .addLong("time", System.currentTimeMillis())
-                .addString("targetMonth", targetMonth)
                 .toJobParameters();
 
         JobExecution jobExecution = jobLauncherTestUtils.launchJob(jobParameters);
 
         // 3. Wait: 10,000건 전송 및 업데이트 대기 (로컬 사양에 따라 조절)
         System.out.println(">>> Kafka 전송 및 DB 업데이트 대기 중 (15초)...");
-        Thread.sleep(15000);
 
         // 4. Then
         assertThat(jobExecution.getStatus()).isEqualTo(BatchStatus.COMPLETED);
 
         Integer finalSuccessCount = jdbcTemplate.queryForObject(
-                "SELECT count(*) FROM tmp_billing_result WHERE send_status = 'SUCCESS'", Integer.class);
+                "SELECT count(*) FROM billing_result WHERE send_status = 'SUCCESS'", Integer.class);
         Integer finalReadyCount = jdbcTemplate.queryForObject(
-                "SELECT count(*) FROM tmp_billing_result WHERE send_status = 'READY'", Integer.class);
+                "SELECT count(*) FROM billing_result WHERE send_status = 'READY'", Integer.class);
 
         System.out.println("==============================================");
         System.out.println("### 메시지 배치 최종 결과 요약 ###");

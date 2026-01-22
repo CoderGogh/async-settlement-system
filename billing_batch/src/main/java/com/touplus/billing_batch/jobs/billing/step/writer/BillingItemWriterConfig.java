@@ -31,7 +31,7 @@ public class BillingItemWriterConfig {
          */
         return new JdbcBatchItemWriterBuilder<BillingResult>()
                 .dataSource(dataSource)
-                .sql("INSERT INTO tmp_billing_result " +
+                .sql("INSERT INTO billing_result " +
                         "(settlement_month, user_id, total_price, settlement_details, send_status, batch_execution_id, processed_at) " +
                         "VALUES (:settlementMonth, :userId, :totalPrice, :settlementDetails, :sendStatus, :batchExecutionId, :processedAt)")
                 // .beanMapped() 대신 아래 코드를 사용하세요

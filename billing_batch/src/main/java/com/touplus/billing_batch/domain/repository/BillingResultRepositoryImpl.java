@@ -60,7 +60,7 @@ public class BillingResultRepositoryImpl implements BillingResultRepository {
                 send_status,
                 batch_execution_id,
                 processed_at
-            FROM tmp_billing_result
+            FROM billing_result
             WHERE send_status = :sendStatus
             ORDER BY billing_result_id
             FOR UPDATE
@@ -76,7 +76,7 @@ public class BillingResultRepositoryImpl implements BillingResultRepository {
     public void saveAll(List<BillingResult> results) throws Exception {
 
         String sql = """
-            INSERT INTO tmp_billing_result
+            INSERT INTO billing_result
             (settlement_month, user_id, total_price, settlement_details, send_status, batch_execution_id, processed_at)
             VALUES
             (:settlementMonth, :userId, :totalPrice, :settlementDetails, :sendStatus, :batchExecutionId, :processedAt)

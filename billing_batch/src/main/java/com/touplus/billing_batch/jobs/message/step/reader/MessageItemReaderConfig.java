@@ -49,7 +49,7 @@ public class MessageItemReaderConfig {
 
         // AS id 를 제거하고 순수하게 DB 컬럼명만 나열하세요. (문법 에러 방지)
         queryProvider.setSelectClause("billing_result_id, settlement_month, user_id, total_price, settlement_details, send_status, batch_execution_id, processed_at");
-        queryProvider.setFromClause("tmp_billing_result");
+        queryProvider.setFromClause("billing_result");
         queryProvider.setWhereClause("send_status = 'READY'");
 
         Map<String, Order> sortKeys = new HashMap<>();
