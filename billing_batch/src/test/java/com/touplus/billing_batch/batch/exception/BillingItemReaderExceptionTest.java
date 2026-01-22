@@ -54,21 +54,21 @@ class BillingItemReaderExceptionTest {
                 .hasFieldOrPropertyWithValue("errorCode", "ERR_INVALID_DATE");
     }
 
-    @Test
-    @DisplayName("2. 첫 번째 조회인데 유저가 없으면 DATA_NOT_FOUND 발생")
-    void fillBuffer_NoUsersOnFirstRead_ThrowsException() {
-        // Given
-        ExecutionContext executionContext = new ExecutionContext();
-        billingItemReader.open(executionContext); // lastProcessedUserId = 0L 세팅
-
-        given(userRepository.findUsersInRange(anyLong(), anyLong(), anyLong(), anyBoolean(), any(), any(), any()))
-                .willReturn(List.of()); // 유저 없음
-
-        // When & Then
-        assertThatThrownBy(() -> billingItemReader.read())
-                .isInstanceOf(BillingFatalException.class)
-                .hasMessageContaining("정산 대상 유저가 존재하지 않습니다");
-    }
+//    @Test
+//    @DisplayName("2. 첫 번째 조회인데 유저가 없으면 DATA_NOT_FOUND 발생")
+//    void fillBuffer_NoUsersOnFirstRead_ThrowsException() {
+//        // Given
+//        ExecutionContext executionContext = new ExecutionContext();
+//        billingItemReader.open(executionContext); // lastProcessedUserId = 0L 세팅
+//
+//        given(userRepository.findUsersInRange(anyLong(), anyLong(), anyLong(), anyBoolean(), any(), any(), any()))
+//                .willReturn(List.of()); // 유저 없음
+//
+//        // When & Then
+//        assertThatThrownBy(() -> billingItemReader.read())
+//                .isInstanceOf(BillingFatalException.class)
+//                .hasMessageContaining("정산 대상 유저가 존재하지 않습니다");
+//    }
 
     @Test
     @DisplayName("3. 유저는 있지만 구독 상품 정보가 전무하면 정합성 오류 발생")

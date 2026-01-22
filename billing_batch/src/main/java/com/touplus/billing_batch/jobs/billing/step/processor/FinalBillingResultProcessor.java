@@ -74,8 +74,7 @@ public class FinalBillingResultProcessor
                     .price(u.getUnpaidPrice())
                     .build());
         }
-
-        log.info("[FinalBillingResultProcessor] 미납금 합산 완료");
+//        log.info("[FinalBillingResultProcessor] 미납금 합산 완료");
 
         // 최종 청구 금액 계산 (상품 + 추가요금 - 할인 + 미납금)
         long finalPrice = (long)work.getTotalPrice() + totalUnpaid;
@@ -98,7 +97,7 @@ public class FinalBillingResultProcessor
 
         return BillingResult.builder()
                 .userId(work.getRawData().getUserId())
-                .settlementMonth(LocalDate.parse(targetMonth))
+                .settlementMonth(LocalDate.parse(targetMonth).plusMonths(1)) // 정산월은 배치를 돌리는 해당월.
                 .totalPrice((int)finalPrice)
                 .settlementDetails(detailsJson)
                 .sendStatus(SendStatus.READY)

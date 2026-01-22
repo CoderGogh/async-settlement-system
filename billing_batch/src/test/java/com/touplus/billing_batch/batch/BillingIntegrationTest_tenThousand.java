@@ -50,7 +50,7 @@ class BillingIntegrationTest_tenThousand {
         // 만약 테스트 코드에서 직접 데이터를 넣어야 한다면 여기서 10,000건 INSERT 로직을 수행하세요.
 
         JobParameters jobParameters = new JobParametersBuilder()
-                .addString("settlementMonth", "2026-01-01")
+                .addString("targetMonth", "2025-12-01")
                 .addLong("time", System.currentTimeMillis())
                 .toJobParameters();
 

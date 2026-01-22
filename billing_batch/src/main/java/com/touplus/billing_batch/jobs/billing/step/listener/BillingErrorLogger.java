@@ -22,7 +22,7 @@ import java.time.LocalDateTime;
 public class BillingErrorLogger {
 
     private final BillingErrorLogRepository errorLogRepository;
-    private static final String PARAM_SETTLEMENT_MONTH = "settlementMonth";
+    private static final String PARAM_SETTLEMENT_MONTH = "targetMonth";
     /**
      * DB에 에러 로그 저장
      */
