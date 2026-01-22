@@ -75,7 +75,7 @@ public class FinalBillingResultProcessor
                     .build());
         }
 
-        log.info("[FinalBillingResultProcessor] 미납금 합산 완료");
+//        log.info("[FinalBillingResultProcessor] 미납금 합산 완료");
 
         // 최종 청구 금액 계산 (상품 + 추가요금 - 할인 + 미납금)
         long finalPrice = (long)work.getTotalPrice() + totalUnpaid;
