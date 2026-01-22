@@ -45,10 +45,7 @@ public class MessageProcessor {
 
         String retryLabel = retryCount > 0 ? String.format(" (retry %d번)", retryCount) : "";
 
-        // 1. COUNT 전
-        long beforeCount = messageRepository.count();
-
-        // 2. 유저 정보 일괄 조회
+        // 1. 유저 정보 일괄 조회
         java.util.List<Long> userIds = snapshots.stream()
             .map(BillingSnapshot::getUserId)
             .distinct()
@@ -57,7 +54,7 @@ public class MessageProcessor {
         java.util.Map<Long, User> userMap = userRepository.findAllById(userIds).stream()
             .collect(java.util.stream.Collectors.toMap(User::getUserId, u -> u));
 
-        // 3. Message 생성
+        // 2. Message 생성
         java.util.List<Message> messages = new java.util.ArrayList<>();
         
         for (BillingSnapshot snapshot : snapshots) {
@@ -76,23 +73,20 @@ public class MessageProcessor {
             ));
         }
 
-        // 4. Batch Insert (INSERT IGNORE - 중복 자동 무시)
-        if (!messages.isEmpty()) {
-            messageJdbcRepository.batchInsert(messages);
-            log.info("Message 배치 저장 완료{}: count={}", retryLabel, messages.size());
-        }
-
-        // 5. COUNT 비교로 누락 확인
-        long afterCount = messageRepository.count();
-        long expectedCount = beforeCount + messages.size();
+        // 3. Batch Insert (INSERT IGNORE - 중복 자동 무시)
+        if (messages.isEmpty()) return;
         
-        if (afterCount == expectedCount) {
+        int successCount = messageJdbcRepository.batchInsert(messages);
+        log.info("Message 배치 저장 완료{}: count={}", retryLabel, successCount);
+
+        // 4. affectedRows로 누락 확인 (COUNT 쿼리 없음!)
+        if (successCount == messages.size()) {
             // YES: 정상 완료
             return;
         }
         
         // NO: 누락 발생 - 상세 검사 및 재시도
-        log.warn("⚠️ COUNT 불일치{}: expected={} actual={}", retryLabel, expectedCount, afterCount);
+        log.warn("⚠️ 누락 감지{}: expected={} actual={}", retryLabel, messages.size(), successCount);
         
         if (retryCount >= MAX_RETRY) {
             log.error("❌ 최종 실패! (최대 재시도 초과)");
