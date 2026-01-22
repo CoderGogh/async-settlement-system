@@ -43,14 +43,14 @@ public class MessageItemWriter implements ItemWriter<BillingResultDto> {
     private final RetryTemplate retryTemplate;
     private static final String BASE_TOPIC = "billing-result-topic-";
 
-    @Value("#{jobParameters['targetMonth']}")
-    private String targetMonth;
+    @Value("#{jobParameters['settlementMonth']}")
+    private String settlementMonth;
 
     @Override
     public void write(Chunk<? extends BillingResultDto> chunk) throws Exception {
         List<Long> successIds = new ArrayList<>();
         List<Long> failedIds = new ArrayList<>();
-        String TOPIC = BASE_TOPIC + targetMonth;
+        String TOPIC = BASE_TOPIC + settlementMonth;
 
         for (BillingResultDto dto : chunk) {
             try {

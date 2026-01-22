@@ -32,7 +32,7 @@ public class BillingKafkaScheduler {
     //    @Scheduled(cron = "0 0 2 2 * ?") // 매월 2일 02시
     public void runBillingKafkaJob() {
 
-        String targetMonth = LocalDate.now()
+        String settlementMonth = LocalDate.now()
                 .minusMonths(1)
                 .format(DateTimeFormatter.ofPattern("yyMM")); // "2512"
 
@@ -40,7 +40,7 @@ public class BillingKafkaScheduler {
             // Job 파라미터 (중복 실행 방지를 위해 timestamp 추가)
             JobParameters params = new JobParametersBuilder()
                     .addLong("time", System.currentTimeMillis())
-                    .addString("targetMonth", targetMonth)
+                    .addString("settlementMonth", settlementMonth)
                     .toJobParameters();
 
             // batch Job 실행

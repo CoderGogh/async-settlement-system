@@ -3,6 +3,7 @@ package com.touplus.billing_batch.jobs.message;
 import com.touplus.billing_batch.domain.dto.BillingResultDto;
 import com.touplus.billing_batch.jobs.message.step.MessageSkipListener;
 import com.touplus.billing_batch.jobs.message.step.MessageStepLogger;
+import com.touplus.billing_batch.jobs.message.step.TopicCreateTasklet;
 import com.touplus.billing_batch.jobs.message.step.writer.MessageItemWriter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.Job;
@@ -10,7 +11,6 @@ import org.springframework.batch.core.Step;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
-import org.springframework.batch.item.database.JdbcCursorItemReader;
 import org.springframework.batch.item.database.JdbcPagingItemReader;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
@@ -39,12 +39,22 @@ public class MessageJobConfig {
     // private final MessageItemWriter messageItemWriter;
     private final MessageSkipListener messageSkipListener;
     private final MessageStepLogger messageStepLogger;
+    private final TopicCreateTasklet topicCreateTasklet;
     private final int chunkSize = 1000;
 
     @Bean
-    public Job messageJob(@Qualifier("messageJobStep")Step messageStepInstance) { // 파라미터명 변경
+    public Job messageJob(@Qualifier("createTopicStep")Step createTopicStep, @Qualifier("messageJobStep")Step messageStepInstance) { // 파라미터명 변경
         return new JobBuilder("messageJob", jobRepository)
-                .start(messageStepInstance)
+                .start(createTopicStep)      // 1. 토픽을 먼저 생성
+                .next(messageStepInstance)   // 2. 이후 메시지 발송 실행
+                .build();
+    }
+
+    // kafka topic 설정 담당 메소드
+    @Bean(name="createTopicStep")
+    public Step createTopicStep() {
+        return new StepBuilder("createTopicStep", jobRepository)
+                .tasklet(topicCreateTasklet, transactionManager)
                 .build();
     }
 

@@ -62,7 +62,7 @@ class BillingIntegrationTest_tenThousand {
 
         // 결과 조회
         Integer successCount = jdbcTemplate.queryForObject(
-                "SELECT count(*) FROM tmp_billing_result WHERE settlement_month = '2026-01-01'", Integer.class);
+                "SELECT count(*) FROM tmp_billing_result WHERE settlement_month = '2026-12-01'", Integer.class);
 
         Integer distinctErrorUserCount = jdbcTemplate.queryForObject(
                 "SELECT count(DISTINCT user_id) FROM batch_billing_error_log", Integer.class);
