@@ -64,4 +64,5 @@ public class BillingSnapshotJdbcRepository {
         Long count = jdbcTemplate.queryForObject(sql, Long.class);
         return count != null ? count : 0L;
     }
+   
 }

@@ -44,9 +44,12 @@ public class MessageProcessor {
     public void processBatchWithUsers(List<BillingSnapshot> snapshots, Map<Long, User> userMap) {
         if (snapshots.isEmpty())
             return;
-
+        
+        LocalDate today = LocalDate.now();
+        
         // Message 생성
-        List<Message> messages = new ArrayList<>();
+        List<Message> messages = new ArrayList<>(snapshots.size());
+
         for (BillingSnapshot snapshot : snapshots) {
             User user = userMap.get(snapshot.getUserId());
             if (user == null)
@@ -55,7 +58,7 @@ public class MessageProcessor {
             messages.add(new Message(
                     snapshot.getBillingId(),
                     snapshot.getUserId(),
-                    calculateScheduledTime(user),
+                    calculateScheduledTime(user, today),
                     user.getBanEndTime()));
         }
 
@@ -64,13 +67,17 @@ public class MessageProcessor {
 
         // INSERT
         int inserted = insertBatch(messages);
-        log.info("Message insert: expected={}, actual={}", messages.size(), inserted);
+        if (log.isDebugEnabled()) {
+            log.debug("Message insert: expected={}, actual={}", messages.size(), inserted);
+        }
     }
 
     public void processBatch(List<BillingSnapshot> snapshots) {
+    
         if (snapshots.isEmpty())
             return;
-
+        LocalDate today = LocalDate.now();
+        
         int retry = 0;
         List<BillingSnapshot> target = snapshots;
 
@@ -87,7 +94,8 @@ public class MessageProcessor {
                     .collect(Collectors.toMap(User::getUserId, u -> u));
 
             // 2. Message 생성
-            List<Message> messages = new ArrayList<>();
+            List<Message> messages = new ArrayList<>(target.size());
+
             for (BillingSnapshot snapshot : target) {
                 User user = userMap.get(snapshot.getUserId());
                 if (user == null)
@@ -96,7 +104,7 @@ public class MessageProcessor {
                 messages.add(new Message(
                         snapshot.getBillingId(),
                         snapshot.getUserId(),
-                        calculateScheduledTime(user),
+                        calculateScheduledTime(user, today),
                         user.getBanEndTime()));
             }
 
@@ -105,8 +113,12 @@ public class MessageProcessor {
 
             // 3. INSERT (짧은 트랜잭션)
             int inserted = insertBatch(messages);
-            log.info("Message insert: expected={}, actual={}", messages.size(), inserted);
+            
+            if (log.isDebugEnabled()) {
+                log.debug("Message insert: expected={}, actual={}", messages.size(), inserted);
+            }
 
+            
             if (inserted == messages.size()) {
                 return; // 정상 완료
             }
@@ -127,7 +139,7 @@ public class MessageProcessor {
         }
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     public int insertBatch(List<Message> messages) {
         return messageJdbcRepository.batchInsert(messages);
     }
@@ -135,8 +147,8 @@ public class MessageProcessor {
     /* 발송 예정 시간 계산
     	- sendingDay: 발송 예정일 (1~28)
     	- banStartTime/banEndTime: 발송 금지 시간대 */
-    private LocalDateTime calculateScheduledTime(User user) {
-        LocalDate today = LocalDate.now();
+    private LocalDateTime calculateScheduledTime(User user, LocalDate today) {
+        
         int sendingDay = user.getSendingDay();
 
         LocalDate sendDate = today.getDayOfMonth() < sendingDay

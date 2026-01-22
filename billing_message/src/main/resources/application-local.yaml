@@ -18,6 +18,9 @@ spring:
   datasource:
     # 도커 내부(host.docker.internal)가 아니라 내 컴퓨터(localhost)로 접속
     url: jdbc:mysql://localhost:13306/billing_message
+     ?rewriteBatchedStatements=true
+      &useServerPrepStmts=true
+      &cachePrepStmts=true
     username: ${DB_USER}
     password: ${DB_PASSWORD}
     hikari:
@@ -31,7 +34,7 @@ spring:
     # security.protocol 및 sasl 관련 설정 삭제
 
     consumer:
-      group-id: billing-message-groupM1
+      group-id: billing-message-groupM6
       auto-offset-reset: earliest
       enable-auto-commit: false # 수동 커밋 모드 (안정성 확보)
       max-poll-records: 1000     # 한 번에 가져올 메시지 양
