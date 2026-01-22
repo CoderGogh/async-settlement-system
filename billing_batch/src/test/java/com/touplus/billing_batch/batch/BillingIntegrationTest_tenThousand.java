@@ -40,7 +40,7 @@ class BillingIntegrationTest_tenThousand {
         jobLauncherTestUtils.setJob(billingJob);
 
         jdbcTemplate.execute("DELETE FROM batch_billing_error_log");
-        jdbcTemplate.execute("DELETE FROM tmp_billing_result");
+        jdbcTemplate.execute("DELETE FROM billing_result");
     }
 
     @Test
