@@ -32,7 +32,7 @@ public class BillingResultConsumer {
 
 
     @KafkaListener(
-        topics = "billing-result",
+        topics = "billing-result-topic-2512",
         groupId = "billing-message-group",
         containerFactory = "kafkaListenerContainerFactory" // offset 수동 저장
     )
