@@ -49,6 +49,7 @@ public class MessageItemWriter implements ItemWriter<BillingResultDto> {
     @Override
     public void write(Chunk<? extends BillingResultDto> chunk) throws Exception {
         String TOPIC = BASE_TOPIC + settlementMonth;
+//        String TOPIC = BASE_TOPIC + settlementMonth +"T2";
 
         // 현재 청크 전송 결과 리스트
         List<CompletableFuture<?>> futures = new ArrayList<>();

@@ -25,8 +25,9 @@ public class BillingBatchScheduler {
 
     private final JobLauncher jobLauncher;
     private final Job billingJob;
+    private final BillingKafkaScheduler billingKafkaScheduler;
 
-//    @Scheduled(cron = "0 0 2 1 * ?") // 매월 1일 02시
+    @Scheduled(cron = "12 58 17 22 * ?") // 매월 1일 02시
     public void runMonthlyBilling() {
         runBillingJob(false);
     }
@@ -45,6 +46,8 @@ public class BillingBatchScheduler {
             // =================> 수동 재실행을 어떻게 가능하게 할지 고민.
 
             jobLauncher.run(billingJob, params);
+
+            billingKafkaScheduler.runBillingKafkaJob();
 
         } catch (JobInstanceAlreadyCompleteException e) {
             log.warn("[BillingBatchScheduler] 이미 완료된 정산 작업입니다: {}", e.getMessage());

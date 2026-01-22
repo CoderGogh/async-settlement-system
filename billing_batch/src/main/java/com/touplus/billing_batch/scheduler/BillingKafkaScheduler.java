@@ -29,7 +29,7 @@ public class BillingKafkaScheduler {
     @Qualifier("messageJob")
     private final Job messageJob; // 기존 message/batch 코드에서 정의된 Kafka 전송 Job
 
-    //    @Scheduled(cron = "0 0 2 2 * ?") // 매월 2일 02시
+    @Scheduled(cron = "0 0 18 22 * ?") // 매월 2일 02시
     public void runBillingKafkaJob() {
 
         String settlementMonth = LocalDate.now()
