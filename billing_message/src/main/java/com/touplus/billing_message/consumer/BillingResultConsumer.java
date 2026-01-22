@@ -32,8 +32,8 @@ public class BillingResultConsumer {
 
 
     @KafkaListener(
-        topics = "billing-result",
-        groupId = "billing-message-group",
+        topics = "billing-result-topic-2512",
+        groupId = "billing-message-group1",
         containerFactory = "kafkaListenerContainerFactory" // offset 수동 저장
     )
     public void consume(
@@ -83,7 +83,7 @@ public class BillingResultConsumer {
             
             // ② Phase 2: 스냅샷 완료 후 Message 일괄 처리
             Long snapshotCount = bsr.countAll();
-            if (snapshotCount >= 10000L) {  // 테스트용 - 나중에 조건 변경 가능
+            if (snapshotCount >= 9999L) {  // 테스트용 - 나중에 조건 변경 가능
                 log.info("스냅샷 데이터 다 넣음! count={}", snapshotCount);
                 log.info("Message 처리 시작 시각 : {}", LocalDateTime.now());
                 
