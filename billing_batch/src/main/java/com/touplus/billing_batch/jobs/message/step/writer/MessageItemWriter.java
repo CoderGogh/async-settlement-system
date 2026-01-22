@@ -3,8 +3,10 @@ package com.touplus.billing_batch.jobs.message.step.writer;
 import com.touplus.billing_batch.domain.dto.BillingResultDto;
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.retry.support.RetryTemplate;
@@ -31,15 +33,21 @@ import java.util.concurrent.CompletableFuture;
 
 @Component
 @RequiredArgsConstructor
+@StepScope
 public class MessageItemWriter implements ItemWriter<BillingResultDto> {
 
     private final KafkaTemplate<String, Object> kafkaTemplate; // 본문
     private final JdbcTemplate jdbcTemplate;
     private final RetryTemplate retryTemplate;
-    private static final String TOPIC = "billing-result-topic";
+    private static final String BASE_TOPIC = "billing-result-topic-";
+
+    @Value("#{jobParameters['targetMonth']}")
+    private String targetMonth;
 
     @Override
     public void write(Chunk<? extends BillingResultDto> chunk) throws Exception {
+        String TOPIC = BASE_TOPIC + targetMonth;
+
         List<Long> successIds = Collections.synchronizedList(new ArrayList<>());
         List<BillingResultDto> failedItems = Collections.synchronizedList(new ArrayList<>());
         List<CompletableFuture<?>> futures = new ArrayList<>();

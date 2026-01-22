@@ -16,6 +16,9 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBatchTest
@@ -65,11 +68,15 @@ public class MessageJobRealIntegrationTest_tenThousand {
     @Test
     @DisplayName("10,000건 --> 대량 데이터 Kafka 전송 및 상태 업데이트 완결성 테스트")
     void bulkKafkaIntegrationTest() throws Exception {
+        String targetMonth = LocalDate.now()
+                .minusMonths(1)
+                .format(DateTimeFormatter.ofPattern("yyMM")); // "2512"
         // 2. When
         jobLauncherTestUtils.setJob(messageJob);
         JobParameters jobParameters = new JobParametersBuilder()
                 .addString("settlementMonth", "2026-01-01")
                 .addLong("time", System.currentTimeMillis())
+                .addString("targetMonth", targetMonth)
                 .toJobParameters();
 
         JobExecution jobExecution = jobLauncherTestUtils.launchJob(jobParameters);
