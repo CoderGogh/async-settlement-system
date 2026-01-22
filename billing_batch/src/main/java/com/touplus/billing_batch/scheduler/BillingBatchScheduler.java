@@ -26,7 +26,10 @@ public class BillingBatchScheduler {
     private final JobLauncher jobLauncher;
     private final Job billingJob;
 
-//    @Scheduled(cron = "0 0 2 1 * ?") // 매월 1일 02시
+    // 예시 : @Scheduled(cron = "0 40 21 22 * ?")
+    //                 22일 21시 40분 00초
+
+//    @Scheduled(cron = "0 19 22 22 * ?")
     public void runMonthlyBilling() {
         runBillingJob(false);
     }

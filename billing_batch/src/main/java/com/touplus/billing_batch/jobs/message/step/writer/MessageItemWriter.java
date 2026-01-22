@@ -49,11 +49,7 @@ public class MessageItemWriter implements ItemWriter<BillingResultDto> {
 
     @Override
     public void write(Chunk<? extends BillingResultDto> chunk) throws Exception {
-        // [시나리오 1] 토픽명 동적 생성 (2025-12-01 -> 2512)
-        String topicSuffix = settlementMonth.contains("-")
-                ? settlementMonth.replace("-", "").substring(2, 6)
-                : settlementMonth;
-        String TOPIC = BASE_TOPIC + topicSuffix;
+        String TOPIC = BASE_TOPIC + settlementMonth;
 
         // 현재 청크 전송 결과 리스트
         List<CompletableFuture<?>> futures = new ArrayList<>();
