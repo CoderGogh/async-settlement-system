@@ -5,7 +5,8 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.touplus.billing_api.admin.dto.MessageWithSettlementMonthDto;
-import com.touplus.billing_api.domain.message.dto.PageResult;
+import com.touplus.billing_api.admin.dto.PageResponse;
+import com.touplus.billing_api.domain.message.enums.MessageStatus;
 import com.touplus.billing_api.domain.message.service.MessageService;
 import com.touplus.billing_api.domain.repository.message.MessagePagingRepository;
 
@@ -17,8 +18,13 @@ public class MessageServiceImpl implements MessageService {
 
     private final MessagePagingRepository messagePagingRepository;
 
-    private final int PAGE_SIZE = 20;
-
+    private static final int PAGE_SIZE = 20;
+    
+    @Override
+    public List<MessageWithSettlementMonthDto> getAllMessages() {
+        return messagePagingRepository.findAll();
+    }
+    
     @Override
     public List<MessageWithSettlementMonthDto> getAllMessages(int page) {
         return messagePagingRepository.findAll(page, PAGE_SIZE);
@@ -30,19 +36,62 @@ public class MessageServiceImpl implements MessageService {
     }
 
     @Override
-    public PageResult<MessageWithSettlementMonthDto> getMessagesByStatus(String messageStatus, int page) {
-        long totalElements = messagePagingRepository.countByStatus(messageStatus);
-        int totalPages = (int) Math.ceil((double) totalElements / PAGE_SIZE);
-        List<MessageWithSettlementMonthDto> content = messagePagingRepository.findAllByStatus(messageStatus, page, PAGE_SIZE);
+    public PageResponse<MessageWithSettlementMonthDto> getMessagesByStatus(
+            MessageStatus messageStatus, int page) {
 
-        return new PageResult<>(content, totalPages, totalElements, page);
+        String status = messageStatus != null ? messageStatus.name() : null;
+
+        long totalElements = messagePagingRepository.countByStatus(status);
+        int totalPages = (int) Math.ceil((double) totalElements / PAGE_SIZE);
+
+        List<MessageWithSettlementMonthDto> contents =
+                messagePagingRepository.findAllByStatus(status, page, PAGE_SIZE);
+
+        return PageResponse.<MessageWithSettlementMonthDto>builder()
+                .contents(contents)
+                .page(page)
+                .size(PAGE_SIZE)
+                .totalElements(totalElements)
+                .totalPages(totalPages)
+                .build();
     }
 
     @Override
-    public PageResult<MessageWithSettlementMonthDto> getMessagesWithPagination(String messageStatus, String settlementMonth, int page) {
-        long totalElements = messagePagingRepository.countMessages(messageStatus, settlementMonth);
+    public PageResponse<MessageWithSettlementMonthDto> getMessagesWithPagination(
+            MessageStatus messageStatus, String settlementMonth, int page) {
+
+        if (messageStatus == null || settlementMonth == null || settlementMonth.isEmpty()) {
+
+            long totalElements = messagePagingRepository.countAll();
+            int totalPages = (int) Math.ceil((double) totalElements / PAGE_SIZE);
+
+            List<MessageWithSettlementMonthDto> contents =
+                    messagePagingRepository.findAll(page, PAGE_SIZE);
+
+            return PageResponse.<MessageWithSettlementMonthDto>builder()
+                    .contents(contents)
+                    .page(page)
+                    .size(PAGE_SIZE)
+                    .totalElements(totalElements)
+                    .totalPages(totalPages)
+                    .build();
+        }
+        
+        String status = messageStatus.name();
+
+        long totalElements =
+                messagePagingRepository.countMessages(status, settlementMonth);
         int totalPages = (int) Math.ceil((double) totalElements / PAGE_SIZE);
-        List<MessageWithSettlementMonthDto> content = messagePagingRepository.findMessages(messageStatus, settlementMonth, page, PAGE_SIZE);
-        return new PageResult<>(content, totalPages, totalElements, page);
+
+        List<MessageWithSettlementMonthDto> contents =
+                messagePagingRepository.findMessages(status, settlementMonth, page, PAGE_SIZE);
+
+        return PageResponse.<MessageWithSettlementMonthDto>builder()
+                .contents(contents)
+                .page(page)
+                .size(PAGE_SIZE)
+                .totalElements(totalElements)
+                .totalPages(totalPages)
+                .build();
     }
 }

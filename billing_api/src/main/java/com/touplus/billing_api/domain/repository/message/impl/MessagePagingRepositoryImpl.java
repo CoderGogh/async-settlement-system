@@ -27,48 +27,65 @@ public class MessagePagingRepositoryImpl implements MessagePagingRepository{
             return new MessageWithSettlementMonthDto(
                     rs.getLong("message_id"),
                     rs.getLong("billing_id"),
-                    rs.getString("message_status"),
+                    rs.getString("status"),
                     rs.getString("settlement_month"),
-                    rs.getString("content")
+                    rs.getString("settlement_details")
             );
         }
     };
 
-    // 전체 조회
+    // 전체 조회 - 페이징 처리 ㅇ
     @Override
     public List<MessageWithSettlementMonthDto> findAll(int page, int pageSize) {
         int offset = page * pageSize;
         String sql = """
-            SELECT m.id AS message_id,
+            SELECT m.message_id,
                    m.billing_id,
-                   m.message_status,
+                   m.status,
                    b.settlement_month,
-                   m.content
-            FROM message m
-            INNER JOIN billing_snapshot b
+                   b.settlement_details
+            FROM billing_message.message m
+            INNER JOIN billing_message.billing_snapshot b
                 ON m.billing_id = b.billing_id
-            ORDER BY m.id
-            LIMIT ? OFFSET ?
+            ORDER BY m.message_id
+            LIMIT ? OFFSET ?;
         """;
         return jdbcTemplate.query(sql, rowMapper, pageSize, offset);
     }
+    
+	// 전체 조회 - 페이징 처리 없이 전체 목록 전부 조회
+	@Override
+	public List<MessageWithSettlementMonthDto> findAll() {
+	    String sql = """
+	        SELECT m.message_id,
+	               m.billing_id,
+	               m.status,
+	               b.settlement_month,
+	               b.settlement_details
+	        FROM billing_message.message m
+	        INNER JOIN billing_message.billing_snapshot b
+	            ON m.billing_id = b.billing_id
+	        ORDER BY m.message_id;
+	    """;
+	    return jdbcTemplate.query(sql, rowMapper);
+	}
 
     // 월별 조회
     @Override
     public List<MessageWithSettlementMonthDto> findBySettlementMonth(String settlementMonth, int page, int pageSize) {
         int offset = page * pageSize;
         String sql = """
-            SELECT m.id AS message_id,
+            SELECT m.message_id,
                    m.billing_id,
-                   m.message_status,
+                   m.status,
                    b.settlement_month,
-                   m.content
-            FROM message m
-            INNER JOIN billing_snapshot b
+                   b.settlement_details
+            FROM billing_message.message m
+            INNER JOIN billing_message.billing_snapshot b
                 ON m.billing_id = b.billing_id
             WHERE b.settlement_month = ?
-            ORDER BY m.id
-            LIMIT ? OFFSET ?
+            ORDER BY m.message_id
+            LIMIT ? OFFSET ?;
         """;
         return jdbcTemplate.query(sql, rowMapper, settlementMonth, pageSize, offset);
     }
@@ -79,37 +96,51 @@ public class MessagePagingRepositoryImpl implements MessagePagingRepository{
         int offset = page * pageSize;
 
         String sql = """
-            SELECT m.id AS message_id,
+            SELECT m.message_id,
                    m.billing_id,
-                   m.message_status,
+                   m.status,
                    b.settlement_month,
-                   m.content
-            FROM message m
-            INNER JOIN billing_snapshot b
+                   b.settlement_details
+            FROM billing_message.message m
+            INNER JOIN billing_message.billing_snapshot b
                 ON m.billing_id = b.billing_id
-            WHERE m.message_status = ?
-            ORDER BY b.settlement_month DESC, m.id ASC
+            WHERE m.status = ?
+            ORDER BY b.settlement_month DESC, m.message_id ASC
             LIMIT ? OFFSET ?
         """;
 
         return jdbcTemplate.query(sql, rowMapper, messageStatus, pageSize, offset);
     }
 
+    // 메시지 개수 세기
+    @Override
+    public long countAll() {
+
+        String sql = """
+            SELECT COUNT(*)
+            FROM billing_message.message
+        """;
+
+        return jdbcTemplate.queryForObject(sql, Long.class);
+    }
+    
     @Override
     public long countByStatus(String messageStatus) {
-        String sql = "SELECT COUNT(*) FROM message m WHERE m.message_status = ?";
+        String sql = "SELECT COUNT(*) FROM billing_message.message m WHERE m.status = ?";
         return jdbcTemplate.queryForObject(sql, Long.class, messageStatus);
     }
 
-    // 메시지 개수 세기
+    // 통합 페이징 - 파라미터 없으면 전체 출력
     @Override
     public long countMessages(String messageStatus, String settlementMonth) {
         StringBuilder sql = new StringBuilder(
-            "SELECT COUNT(*) FROM message m INNER JOIN billing_snapshot b ON m.billing_id = b.billing_id WHERE 1=1"
-        );
+        		"SELECT COUNT(*) FROM billing_message.message m " +
+        		        "INNER JOIN billing_message.billing_snapshot b ON m.billing_id = b.billing_id " +
+        		        "WHERE 1=1"
+        		        );
         List<Object> params = new ArrayList<>();
         if (messageStatus != null && !messageStatus.isEmpty()) {
-            sql.append(" AND m.message_status = ?");
+            sql.append(" AND m.status = ?");
             params.add(messageStatus);
         }
         if (settlementMonth != null && !settlementMonth.isEmpty()) {
@@ -119,26 +150,27 @@ public class MessagePagingRepositoryImpl implements MessagePagingRepository{
         return jdbcTemplate.queryForObject(sql.toString(), params.toArray(), Long.class);
     }
 
-    // 메시지 찾기?
+    // 통합 조회(클릭시 다 따로 됨)
     @Override
     public List<MessageWithSettlementMonthDto> findMessages(String messageStatus, String settlementMonth, int page, int pageSize) {
         int offset = page * pageSize;
 
         StringBuilder sql = new StringBuilder("""
-            SELECT m.id AS message_id,
-                   m.billing_id,
-                   m.message_status,
-                   b.settlement_month,
-                   m.content
-            FROM message m
-            INNER JOIN billing_snapshot b
-                ON m.billing_id = b.billing_id
-            WHERE 1=1
+            SELECT
+		        m.message_id,
+		        m.billing_id,
+		        m.status,
+		        b.settlement_month,
+		        b.settlement_details
+		    FROM billing_message.message m
+		    INNER JOIN billing_message.billing_snapshot b
+		        ON m.billing_id = b.billing_id
+		    WHERE 1=1
         """);
 
         List<Object> params = new ArrayList<>();
         if (messageStatus != null && !messageStatus.isEmpty()) {
-            sql.append(" AND m.message_status = ?");
+            sql.append(" AND m.status = ?");
             params.add(messageStatus);
         }
         if (settlementMonth != null && !settlementMonth.isEmpty()) {
@@ -146,7 +178,7 @@ public class MessagePagingRepositoryImpl implements MessagePagingRepository{
             params.add(settlementMonth);
         }
 
-        sql.append(" ORDER BY b.settlement_month DESC, m.id ASC LIMIT ? OFFSET ?");
+        sql.append(" ORDER BY b.settlement_month DESC, m.message_id ASC LIMIT ? OFFSET ?");
         params.add(pageSize);
         params.add(offset);
 

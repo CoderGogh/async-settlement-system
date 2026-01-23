@@ -47,7 +47,8 @@ public class AdminMessageTemplateController {
      */
     @GetMapping
     public List<MessageTemplate> getTemplates(
-            @RequestParam(required = false) MessageType messageType
+            @RequestParam(value = "messageType", required = false)
+            MessageType messageType
     ) {
         if (messageType == null) {
             return messageTemplateService.getTemplates();

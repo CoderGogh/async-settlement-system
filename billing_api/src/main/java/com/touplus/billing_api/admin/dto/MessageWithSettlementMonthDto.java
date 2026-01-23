@@ -8,7 +8,7 @@ import lombok.Data;
 public class MessageWithSettlementMonthDto {
     private Long messageId;
     private Long billingId;
-    private String messageStatus;
+    private String status;
     private String settlementMonth;
-    private String content;
+    private String settlementDetails;
 }
