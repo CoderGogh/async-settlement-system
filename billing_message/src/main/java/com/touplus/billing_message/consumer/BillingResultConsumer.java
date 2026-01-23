@@ -32,7 +32,7 @@ public class BillingResultConsumer {
 
     @KafkaListener(
     		topics = "billing-result-topic-2512T2", 
-    		groupId = "billing-message-groupJ2", 
+    		groupId = "billing-message-groupM19", 
     		containerFactory = "kafkaListenerContainerFactory")
     public void consume(
             List<BillingResultDto> messages,
@@ -80,7 +80,10 @@ public class BillingResultConsumer {
 
             // 스냅샷 카운트 확인 (JDBC)
             long snapshotCount = jdbcRepository.count();
-            if (snapshotCount >= 9999L) {
+            int kafkaMessageCount = messages.size();
+            System.out.println("kafkaMessageCount 개수는? : " +  kafkaMessageCount);
+
+            if (snapshotCount >= kafkaMessageCount) {
                 log.info("스냅샷 완료! count={}", snapshotCount);
                 log.info("Message 처리 시작: {}", LocalDateTime.now());
 
