@@ -32,7 +32,7 @@ public class BillingResultConsumer {
 
     @KafkaListener(
     		topics = "billing-result-topic-2512T2", 
-    		groupId = "billing-message-groupM16", 
+    		groupId = "billing-message-groupJ2", 
     		containerFactory = "kafkaListenerContainerFactory")
     public void consume(
             List<BillingResultDto> messages,
@@ -87,6 +87,9 @@ public class BillingResultConsumer {
                 // 1. JDBC로 전체 스냅샷 조회 (JPA 페이징 오버헤드 제거)
                 List<BillingSnapshot> allSnapshots = jdbcRepository.findAll();
                 log.info("스냅샷 조회 완료: {}건", allSnapshots.size());
+
+                // 1-1. Deadlock 방지: BillingId 순으로 정렬 (Lock 순서 보장)
+                allSnapshots.sort(java.util.Comparator.comparing(BillingSnapshot::getBillingId));
 
                 // 2. User 한 번에 조회 (10000건 → 1회 쿼리)
                 List<Long> allUserIds = allSnapshots.stream()
