@@ -2,8 +2,6 @@ package com.touplus.billing_api.domain.billing.dto;
 
 import com.touplus.billing_api.domain.billing.entity.BillingResult;
 import com.touplus.billing_api.domain.billing.enums.SendStatus;
-import com.touplus.billing_batch.domain.entity.BillingResult;
-import com.touplus.billing_batch.domain.enums.SendStatus;
 import lombok.*;
 
 import java.time.LocalDate;

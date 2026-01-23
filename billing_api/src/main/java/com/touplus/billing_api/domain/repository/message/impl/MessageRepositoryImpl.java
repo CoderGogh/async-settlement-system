@@ -42,7 +42,7 @@ public class MessageRepositoryImpl implements MessageRepository {
     public List<Message> findByStatus(MessageStatus status, int limit) {
         String sql = """
             SELECT *
-            FROM message
+            FROM billing_message.message
             WHERE status = :status
             ORDER BY scheduled_at
             LIMIT :limit
@@ -66,7 +66,7 @@ public class MessageRepositoryImpl implements MessageRepository {
 
         String sql = """
             SELECT *
-            FROM message
+            FROM billing_message.message
             WHERE message_id IN (:messageIds)
         """;
 
@@ -81,7 +81,7 @@ public class MessageRepositoryImpl implements MessageRepository {
     public List<Message> findByUserId(Long userId) {
         String sql = """
             SELECT *
-            FROM message
+            FROM billing_message.message
             WHERE user_id = :userId
             ORDER BY message_id DESC
         """;
@@ -97,7 +97,7 @@ public class MessageRepositoryImpl implements MessageRepository {
     public List<Message> findSendableMessages(int limit) {
         String sql = """
             SELECT *
-            FROM message
+            FROM billing_message.message
             WHERE status = 'WAITED'
               AND (scheduled_at IS NULL OR scheduled_at <= NOW())
             ORDER BY scheduled_at
@@ -114,7 +114,7 @@ public class MessageRepositoryImpl implements MessageRepository {
     @Override
     public void updateStatus(Long messageId, MessageStatus status) {
         String sql = """
-            UPDATE message
+            UPDATE billing_message.message
             SET status = :status
             WHERE message_id = :messageId
         """;
@@ -131,7 +131,7 @@ public class MessageRepositoryImpl implements MessageRepository {
     @Override
     public void increaseRetryCount(Long messageId) {
         String sql = """
-            UPDATE message
+            UPDATE billing_message.message
             SET retry_count = retry_count + 1
             WHERE message_id = :messageId
         """;

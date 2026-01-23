@@ -37,10 +37,4 @@ public class BillingResultRepositoryImpl implements BillingResultRepository {
                 )
                 .build();
     }
-
-    @Override
-    public List<BillingResult> findBySendStatusForUpdate(SendStatus status) {
-        return List.of();
-    }
-
 }

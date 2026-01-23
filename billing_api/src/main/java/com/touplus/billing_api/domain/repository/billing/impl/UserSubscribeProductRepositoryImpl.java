@@ -53,7 +53,7 @@ public class UserSubscribeProductRepositoryImpl
                 deleted_at,
                 user_id,
                 product_id
-            FROM user_subscribe_product
+            FROM billing_batch.user_subscribe_product
             WHERE user_id = :userId
               AND deleted_at IS NULL
         """;
@@ -82,7 +82,7 @@ public class UserSubscribeProductRepositoryImpl
                 deleted_at,
                 user_id,
                 product_id
-            FROM user_subscribe_product
+            FROM billing_batch.user_subscribe_product
             WHERE user_id IN (:userIds)
               AND created_month <= :endDate
               AND (deleted_at IS NULL OR deleted_at >= :startDate)

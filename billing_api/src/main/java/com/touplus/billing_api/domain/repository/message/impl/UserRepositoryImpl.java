@@ -38,7 +38,7 @@ public class UserRepositoryImpl implements UserRepository {
     public Optional<User> findById(Long userId) {
         String sql = """
             SELECT *
-            FROM users
+            FROM billing_message.tmp_users
             WHERE user_id = :userId
         """;
 
@@ -59,7 +59,7 @@ public class UserRepositoryImpl implements UserRepository {
 
         String sql = """
             SELECT *
-            FROM users
+            FROM billing_message.tmp_users
             WHERE user_id IN (:userIds)
         """;
 

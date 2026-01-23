@@ -37,7 +37,7 @@ public class BillingSnapshotRepositoryImpl implements BillingSnapshotRepository 
     public List<BillingSnapshot> findBySettlementMonth(LocalDate settlementMonth) {
         String sql = """
             SELECT *
-            FROM billing_snapshot
+            FROM billing_message.billing_snapshot
             WHERE settlement_month = :settlementMonth
         """;
 
@@ -52,7 +52,7 @@ public class BillingSnapshotRepositoryImpl implements BillingSnapshotRepository 
     public List<Long> findUserIdsBySettlementMonth(LocalDate settlementMonth) {
         String sql = """
             SELECT user_id
-            FROM billing_snapshot
+            FROM billing_message.billing_snapshot
             WHERE settlement_month = :settlementMonth
         """;
 

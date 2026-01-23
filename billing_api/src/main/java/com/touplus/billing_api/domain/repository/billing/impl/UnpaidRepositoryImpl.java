@@ -35,7 +35,7 @@ public class UnpaidRepositoryImpl implements UnpaidRepository {
                    unpaid_price,
                    unpaid_month,
                    is_paid
-            FROM unpaid
+            FROM billing_batch.unpaid
             WHERE is_paid = false
         """;
 

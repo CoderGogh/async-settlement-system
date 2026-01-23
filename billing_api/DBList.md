@@ -23,3 +23,15 @@
   - message_send_log
 - **유저 정보(Mocking 필수)**
   - users
+
+### 사업자 페이지
+- 미정산 사람 
+- user 별 정산 결과 (이용중인상품/가격?)
+- Biling_result -> details
+
+- message_template(CRUD 다 되게)
+- user가 가장 많이 가입한 상품
+  - user_subscribe_product
+  - billing_product
+
+- 메세지 전송 완료 여부 : message status

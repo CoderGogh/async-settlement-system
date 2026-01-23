@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -21,27 +22,26 @@ public class MessageTemplateRepositoryImpl implements MessageTemplateRepository 
     private final NamedParameterJdbcTemplate jdbcTemplate;
 
     private static final RowMapper<MessageTemplate> ROW_MAPPER =
-            new RowMapper<>() {
-                @Override
-                public MessageTemplate mapRow(ResultSet rs, int rowNum) throws SQLException {
-                    return new MessageTemplate(
-                            rs.getLong("template_id"),
-                            rs.getString("template_name"),
-                            MessageType.valueOf(rs.getString("message_type")),
-                            rs.getString("template_content"),
-                            rs.getTimestamp("created_at").toLocalDateTime(),
-                            rs.getTimestamp("updated_at").toLocalDateTime(),
-                            rs.getTimestamp("deleted_at") != null
-                                    ? rs.getTimestamp("deleted_at").toLocalDateTime()
-                                    : null
-                    );
-                }
-            };
+            (rs, rowNum) -> new MessageTemplate(
+                    rs.getLong("template_id"),
+                    rs.getString("template_name"),
+                    MessageType.valueOf(rs.getString("message_type")),
+                    rs.getString("template_content"),
+                    toLocalDateTime(rs, "created_at"),
+                    toLocalDateTime(rs, "updated_at"),
+                    toLocalDateTime(rs, "deleted_at")
+            );
+
+    private static LocalDateTime toLocalDateTime(ResultSet rs, String column)
+            throws SQLException {
+        java.sql.Timestamp ts = rs.getTimestamp(column);
+        return ts != null ? ts.toLocalDateTime() : null;
+    }
 
     @Override
     public Long save(String templateName, MessageType messageType, String templateContent) {
         String sql = """
-            INSERT INTO message_template
+            INSERT INTO billing_message.message_template
             (template_name, message_type, template_content, created_at, updated_at)
             VALUES (:templateName, :messageType, :templateContent, NOW(), NOW())
         """;
@@ -63,7 +63,7 @@ public class MessageTemplateRepositoryImpl implements MessageTemplateRepository 
     public Optional<MessageTemplate> findById(Long templateId) {
         String sql = """
             SELECT *
-            FROM message_template
+            FROM billing_message.message_template
             WHERE template_id = :templateId
               AND deleted_at IS NULL
         """;
@@ -81,7 +81,7 @@ public class MessageTemplateRepositoryImpl implements MessageTemplateRepository 
     public List<MessageTemplate> findAll() {
         String sql = """
             SELECT *
-            FROM message_template
+            FROM billing_message.message_template
             WHERE deleted_at IS NULL
             ORDER BY template_id DESC
         """;
@@ -93,7 +93,7 @@ public class MessageTemplateRepositoryImpl implements MessageTemplateRepository 
     public List<MessageTemplate> findByMessageType(MessageType messageType) {
         String sql = """
             SELECT *
-            FROM message_template
+            FROM billing_message.message_template
             WHERE message_type = :messageType
               AND deleted_at IS NULL
             ORDER BY template_id DESC
@@ -109,7 +109,7 @@ public class MessageTemplateRepositoryImpl implements MessageTemplateRepository 
     @Override
     public void update(Long templateId, String templateName, MessageType messageType, String templateContent) {
         String sql = """
-            UPDATE message_template
+            UPDATE billing_message.message_template
             SET template_name = :templateName,
                 message_type = :messageType,
                 template_content = :templateContent,
@@ -132,7 +132,7 @@ public class MessageTemplateRepositoryImpl implements MessageTemplateRepository 
     @Override
     public void delete(Long templateId) {
         String sql = """
-            UPDATE message_template
+            UPDATE billing_message.message_template
             SET deleted_at = NOW()
             WHERE template_id = :templateId
         """;

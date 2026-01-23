@@ -7,6 +7,5 @@ import java.util.List;
 
 public interface BillingResultRepository {
 
-    List<BillingResult> findBySendStatusForUpdate(SendStatus status);
 
 }
