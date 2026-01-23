@@ -25,6 +25,7 @@ public class BillingBatchScheduler {
 
     private final JobLauncher jobLauncher;
     private final Job billingJob;
+    private final BillingKafkaScheduler billingKafkaScheduler;
 
     // 예시 : @Scheduled(cron = "0 40 21 22 * ?")
     //                 22일 21시 40분 00초

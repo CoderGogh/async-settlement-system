@@ -29,6 +29,7 @@ public class TopicCreateTasklet implements Tasklet {
         // [수정] 복잡한 substring 로직을 제거하고 settlementMonth를 그대로 사용합니다.
         // 예: settlementMonth가 "2025-12-01"이면 토픽명은 "billing-result-topic-2025-12-01"이 됩니다.
         String TOPIC = BASE_TOPIC + settlementMonth;
+//        String TOPIC = BASE_TOPIC + settlementMonth +"T2";
 
         NewTopic newTopic = TopicBuilder.name(TOPIC)
                 .partitions(10) // 3 --> 10개로 늘려 테스트
