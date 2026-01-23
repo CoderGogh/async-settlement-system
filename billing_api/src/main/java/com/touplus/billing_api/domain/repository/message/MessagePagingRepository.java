@@ -1,6 +1,7 @@
 package com.touplus.billing_api.domain.repository.message;
 
 import java.util.List;
+import java.util.Map;
 
 import com.touplus.billing_api.admin.dto.MessageWithSettlementMonthDto;
 
@@ -29,5 +30,8 @@ public interface MessagePagingRepository {
 
     List<MessageWithSettlementMonthDto> findMessages(String messageStatus, String settlementMonth, int page, int pageSize);
 
+    
+    // UI 용
+    Map<String, Long> countGroupByStatus();
     
 }

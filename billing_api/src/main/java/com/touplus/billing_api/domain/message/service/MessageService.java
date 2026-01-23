@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 
 import com.touplus.billing_api.admin.dto.MessageWithSettlementMonthDto;
 import com.touplus.billing_api.admin.dto.PageResponse;
+import com.touplus.billing_api.domain.message.dto.MessageStatusSummaryDto;
 import com.touplus.billing_api.domain.message.enums.MessageStatus;
 
 @Service

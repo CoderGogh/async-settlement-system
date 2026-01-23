@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>메시지 발송 현황 | 관리자</title>
+
+	<link rel="stylesheet" th:href="@{/css/message-dashboard.css}">
+</head>
+
+<body>
+<div class="container">
+    <h1>메시지 발송 현황</h1>
+    <div class="subtitle">
+        정산 배치 · 메시지 발송 시스템 관리자 페이지
+    </div>
+
+    <div class="card">
+        <!-- 이번 정산월 표시 -->
+        <div class="month">
+            정산월: <span id="settlementMonth" th:text="${summary.settlementMonth}">2026-01</span>
+        </div>
+
+        <div class="total">
+            총 발송 메시지 <span id="totalCount" th:text="${summary.totalCount}">0</span>건
+        </div>
+
+        <!-- SENT -->
+        <div class="section">
+            <div class="section-title">
+                <span>메시지 발송 성공 개수</span>
+                <span class="rate">
+                    <span id="sentCount" th:text="${summary.sentCount}">0</span>건
+                    · <span id="sentRate" th:text="${#numbers.formatDecimal(summary.sentRate,1,2)}">0</span>%
+                </span>
+            </div>
+            <div class="bar-wrap">
+                <div id="sentBar" class="bar sent"
+                     th:style="'width:' + ${summary.sentRate} + '%'"></div>
+            </div>
+        </div>
+
+        <!-- FAIL -->
+        <div class="section">
+            <div class="section-title">
+                <span>메시지 발송 실패 개수</span>
+                <span class="rate">
+                    <span id="failCount" th:text="${summary.failCount}">0</span>건
+                    · <span id="failRate" th:text="${#numbers.formatDecimal(summary.failRate,1,2)}">0</span>%
+                </span>
+            </div>
+            <div class="bar-wrap">
+                <div id="failBar" class="bar fail"
+                     th:style="'width:' + ${summary.failRate} + '%'"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        실시간 갱신 · 2초 주기
+    </div>
+</div>
+
+<script>
+    const eventSource = new EventSource('/admin/message/stream');
+
+    eventSource.onmessage = function (event) {
+        try {
+            const data = JSON.parse(event.data);
+
+            // DOM 요소가 없으면 갱신하지 않음
+            const monthEl = document.getElementById('settlementMonth');
+            if (monthEl) monthEl.innerText = data.settlementMonth || '';
+
+            const totalEl = document.getElementById('totalCount');
+            if (totalEl) totalEl.innerText = data.totalCount || 0;
+
+            const sentCountEl = document.getElementById('sentCount');
+            if (sentCountEl) sentCountEl.innerText = data.sentCount || 0;
+
+            const failCountEl = document.getElementById('failCount');
+            if (failCountEl) failCountEl.innerText = data.failCount || 0;
+
+            const sentRateEl = document.getElementById('sentRate');
+            if (sentRateEl) sentRateEl.innerText = (data.sentRate || 0).toFixed(1);
+
+            const failRateEl = document.getElementById('failRate');
+            if (failRateEl) failRateEl.innerText = (data.failRate || 0).toFixed(1);
+
+            const sentBarEl = document.getElementById('sentBar');
+            if (sentBarEl) sentBarEl.style.width = (data.sentRate || 0) + '%';
+
+            const failBarEl = document.getElementById('failBar');
+            if (failBarEl) failBarEl.style.width = (data.failRate || 0) + '%';
+
+        } catch (e) {
+            console.error("SSE 업데이트 오류:", e);
+        }
+    };
+
+    eventSource.onerror = function(err) {
+        console.error("SSE 연결 오류:", err);
+        // 필요하면 재연결 로직 추가 가능
+    };
+</script>
+
+</body>
+</html>

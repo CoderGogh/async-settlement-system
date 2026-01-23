@@ -3,7 +3,9 @@ package com.touplus.billing_api.domain.repository.message.impl;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -184,5 +186,25 @@ public class MessagePagingRepositoryImpl implements MessagePagingRepository{
 
         return jdbcTemplate.query(sql.toString(), rowMapper, params.toArray());
     }
+    
+    
+    @Override
+    public Map<String, Long> countGroupByStatus() {
+
+        String sql = """
+            SELECT status, COUNT(*) AS cnt
+            FROM billing_message.message
+            GROUP BY status
+        """;
+
+        return jdbcTemplate.query(sql, rs -> {
+            Map<String, Long> result = new HashMap<>();
+            while (rs.next()) {
+                result.put(rs.getString("status"), rs.getLong("cnt"));
+            }
+            return result;
+        });
+    }
+
 }
 
