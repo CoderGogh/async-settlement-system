@@ -27,6 +27,7 @@ public class BillingKafkaScheduler {
     private final Job messageJob; // 기존 message/batch 코드에서 정의된 Kafka 전송 Job
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     @Transactional
     public void sendBillingResult() {
         List<BillingResult> targets = billingResultRepository.findBySendStatusForUpdate(SendStatus.READY);
@@ -73,6 +74,22 @@ public class BillingKafkaScheduler {
                 billing.markFail();
             }
 =======
+=======
+    //    @Scheduled(cron = "0 0 2 2 * ?") // 매월 2일 02시
+    public void runBillingKafkaJob() {
+
+        try {
+            // Job 파라미터 (중복 실행 방지를 위해 timestamp 추가)
+            JobParameters params = new JobParametersBuilder()
+                    .addLong("time", System.currentTimeMillis())
+                    .toJobParameters();
+
+            // batch Job 실행
+            jobLauncher.run(messageJob, params);
+
+            log.info("[BillingKafkaScheduler] Kafka 전송 Job 실행 완료");
+
+>>>>>>> 3c5073978a5336f6c03074d8a2a2ce47cb0036c0
         } catch (JobInstanceAlreadyCompleteException e) {
             log.warn("[BillingKafkaScheduler] 이미 완료된 Kafka 전송 Job: {}", e.getMessage());
         } catch (JobExecutionAlreadyRunningException e) {
@@ -83,6 +100,9 @@ public class BillingKafkaScheduler {
             log.error("[BillingKafkaScheduler] Job 재시작 실패: {}", e.getMessage());
         } catch (Exception e) {
             throw new RuntimeException("[BillingKafkaScheduler] Kafka 전송 Job 실행 실패", e);
+<<<<<<< HEAD
+>>>>>>> 3c5073978a5336f6c03074d8a2a2ce47cb0036c0
+=======
 >>>>>>> 3c5073978a5336f6c03074d8a2a2ce47cb0036c0
         }
     }
