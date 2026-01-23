@@ -27,17 +27,14 @@ public class AdditionalChargeRepositoryimpl implements AdditionalChargeRepositor
                 .additionalChargeMonth(
                         rs.getDate("additional_charge_month").toLocalDate()
                 )
-                .user(
-                        BillingUser.builder()
-                                .userId(rs.getLong("user_id"))
-                                .build()
-                )
+                .userId(rs.getLong("user_id"))
                 .build();
     }
 
     /**
      * JPA: findByUser
      */
+    @Override
     public List<AdditionalCharge> findByUser(BillingUser user) {
         String sql = """
             SELECT *
@@ -54,6 +51,7 @@ public class AdditionalChargeRepositoryimpl implements AdditionalChargeRepositor
     /**
      * JPA: findByAdditionalChargeMonth
      */
+    @Override
     public List<AdditionalCharge> findByAdditionalChargeMonth(LocalDate month) {
         String sql = """
             SELECT *
@@ -70,7 +68,8 @@ public class AdditionalChargeRepositoryimpl implements AdditionalChargeRepositor
     /**
      * JPA: findByUserIdIn
      */
-    public List<AdditionalCharge> findByUserIdIn(List<Long> userIds) {
+    @Override
+    public List<AdditionalCharge> findByUserIdIn(List<Long> userIds, LocalDate startDate, LocalDate endDate) {
         if (userIds == null || userIds.isEmpty()) {
             return List.of();
         }
@@ -79,10 +78,15 @@ public class AdditionalChargeRepositoryimpl implements AdditionalChargeRepositor
             SELECT *
             FROM additional_charge
             WHERE user_id IN (:userIds)
+                AND additional_charge_month >= :startDate
+                AND additional_charge_month <= :endDate
         """;
 
         MapSqlParameterSource params =
-                new MapSqlParameterSource("userIds", userIds);
+                new MapSqlParameterSource()
+                        .addValue("userIds", userIds)
+                        .addValue("startDate", startDate)
+                        .addValue("endDate", endDate);
 
         return namedJdbcTemplate.query(sql, params, this::mapRow);
     }

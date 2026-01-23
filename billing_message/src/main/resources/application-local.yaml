@@ -30,8 +30,9 @@ spring:
   kafka:
     # 도커 서비스명(kafka:29092)이 아니라 내 컴퓨터 포트(localhost:9092)로 접속
     bootstrap-servers: localhost:9092
-    # [수정] 터널링 환경에 맞춰 SASL 인증 설정 제거 (이미 SSH로 보안 통로가 확보됨)
-    # security.protocol 및 sasl 관련 설정 삭제
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 
     consumer:
       group-id: billing-message-groupM19
@@ -44,11 +45,8 @@ spring:
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
 
       properties:
-        # [추가] 역직렬화 시 신뢰할 수 있는 패키지 지정 (에러 방지)
-        spring.json.trusted.packages: "com.touplus.billing_batch.domain.dto,com.touplus.billing_message.domain.dto"
-        # 대량 처리를 위한 성능 옵션
-        fetch.min.bytes: 1048576  # 1MB가 모일 때까지 기다림 (네트워크 효율)
-        fetch.max.wait.ms: 500    # 최대 500ms 대기
+        linger.ms: 20           # 20ms 대기 ( Throughput 향상 핵심)
+        max.request.size: 5242880 # 5MB로 확장
 
     listener:
       # 컨슈머가 수동으로 커밋할 수 있도록 설정 (AckMode)

@@ -29,21 +29,9 @@ public class UserSubscribeDiscountRepositoryImpl implements UserSubscribeDiscoun
                 .discountSubscribeMonth(
                         rs.getObject("discount_subscribe_month", LocalDate.class)
                 )
-                .billingUser(
-                        BillingUser.builder()
-                                .userId(rs.getLong("user_id"))
-                                .build()
-                )
-                .billingDiscount(
-                        BillingDiscount.builder()
-                                .discountId(rs.getLong("discount_id"))
-                                .build()
-                )
-                .billingProduct(
-                        BillingProduct.builder()
-                                .productId(rs.getLong("product_id"))
-                                .build()
-                )
+                .userId(rs.getLong("user_id"))
+                .discountId(rs.getLong("discount_id"))
+                .productId(rs.getLong("product_id"))
                 .build();
     }
 
@@ -51,7 +39,8 @@ public class UserSubscribeDiscountRepositoryImpl implements UserSubscribeDiscoun
      * JPA:
      * findByUserIdIn(List<Long> userIds)
      */
-    public List<UserSubscribeDiscount> findByUserIdIn(List<Long> userIds) {
+    @Override
+    public List<UserSubscribeDiscount> findByUserIdIn(List<Long> userIds, LocalDate startDate, LocalDate endDate) {
         if (userIds == null || userIds.isEmpty()) {
             return List.of();
         }
@@ -65,10 +54,14 @@ public class UserSubscribeDiscountRepositoryImpl implements UserSubscribeDiscoun
                 product_id
             FROM user_subscribe_discount
             WHERE user_id IN (:userIds)
+                AND discount_subscribe_month <= :endDate
+                AND (deleted_at IS NULL OR deleted_at >= :startDate)
         """;
 
-        MapSqlParameterSource params =
-                new MapSqlParameterSource("userIds", userIds);
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                        .addValue("userIds", userIds)
+                        .addValue("startDate", startDate)
+                        .addValue("endDate", endDate);
 
         return namedJdbcTemplate.query(sql, params, this::mapRow);
     }

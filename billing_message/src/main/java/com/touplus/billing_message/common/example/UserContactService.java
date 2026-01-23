@@ -1,10 +1,14 @@
 package com.touplus.billing_message.common.example;
 
 
+import org.springframework.stereotype.Service;
+
 import com.touplus.billing_message.common.crypto.Decrypto;
 import com.touplus.billing_message.common.masking.MaskingUtils;
+import com.touplus.billing_message.domain.dto.UserContactDto;
+import com.touplus.billing_message.domain.entity.User;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor

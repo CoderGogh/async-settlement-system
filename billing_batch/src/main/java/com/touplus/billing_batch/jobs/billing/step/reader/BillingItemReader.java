@@ -1,23 +1,30 @@
 package com.touplus.billing_batch.jobs.billing.step.reader;
 
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import com.touplus.billing_batch.common.BillingException;
+import com.touplus.billing_batch.common.BillingFatalException;
+import com.touplus.billing_batch.domain.dto.*;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.annotation.BeforeStep;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
 import org.springframework.batch.item.ItemStreamReader;
 import org.springframework.batch.core.configuration.annotation.StepScope;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import com.touplus.billing_batch.domain.entity.*;
-import com.touplus.billing_batch.domain.dto.BillingUserBillingInfoDto;
 import com.touplus.billing_batch.domain.repository.*;
 
+@Slf4j
 @Component
 @StepScope
 public class BillingItemReader implements ItemStreamReader<BillingUserBillingInfoDto> {
@@ -34,10 +41,25 @@ public class BillingItemReader implements ItemStreamReader<BillingUserBillingInf
     @PersistenceContext
     private EntityManager entityManager;
 
+    @Value("#{stepExecutionContext['minValue']}")
+    private Long minValue;
+
+    @Value("#{stepExecutionContext['maxValue']}")
+    private Long maxValue;
+
+    @Value("#{jobParameters['targetMonth']}")
+    private String targetMonth;
+
+    @Value("#{jobParameters['forceFullScan'] ?: false}")
+    private boolean forceFullScan;
+
     // DB 조회용
     private Long lastProcessedUserId = 0L;  // 실제 read()로 반환된 ID
     private StepExecution stepExecution;
     private static final String CTX_LAST_PROCESSED_USER_ID = "lastProcessedUserId";
+
+    private LocalDate startDate;
+    private LocalDate endDate;
 
     public BillingItemReader(
             BillingUserRepository userRepository,
@@ -61,9 +83,32 @@ public class BillingItemReader implements ItemStreamReader<BillingUserBillingInf
 
     @Override
     public void open(ExecutionContext executionContext) {
-        if (executionContext.containsKey(CTX_LAST_PROCESSED_USER_ID)) {
-            this.lastProcessedUserId = executionContext.getLong(CTX_LAST_PROCESSED_USER_ID);
+        if (forceFullScan) {
+            log.info(">> [NOTICE] 전체 재정산 모드(forceFullScan=true)로 동작합니다. 모든 데이터를 다시 처리합니다.");
+        }
 
+        try {
+            if(targetMonth != null){
+                // targetMonth 시작일-종료일 계산
+                this.startDate = LocalDate.parse(targetMonth);
+                this.endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
+            } else{
+                throw new BillingFatalException("targetMonth가 존재하지 않습니다: ", "ERR_NO_DATE", 0L);
+            }
+        } catch (Exception e) {
+            throw new BillingFatalException("targetMonth 형식이 올바르지 않습니다: " + targetMonth, "ERR_INVALID_DATE", 0L);
+        }
+
+        if (minValue == null || maxValue == null) {
+            throw new BillingFatalException("Partition minValue / maxValue가 설정되지 않았습니다.", "ERR_NO_PARTITION", 0L);
+        }
+
+        if (executionContext.containsKey(CTX_LAST_PROCESSED_USER_ID)) {
+            this.lastProcessedUserId =
+                    executionContext.getLong(CTX_LAST_PROCESSED_USER_ID);
+        } else {
+            // 파티션 시작은 minValue부터
+            this.lastProcessedUserId = minValue - 1;
         }
     }
 
@@ -80,36 +125,61 @@ public class BillingItemReader implements ItemStreamReader<BillingUserBillingInf
 
     @Override
     public BillingUserBillingInfoDto read() {
-        if (buffer.isEmpty()) {
-            fillBuffer();
+        try {
+            if (buffer.isEmpty()) {
+                fillBuffer();
+            }
+
+            BillingUserBillingInfoDto dto = buffer.poll();
+            if (dto != null) {
+                lastProcessedUserId = dto.getUserId();
+            }
+            return dto;
+        }catch (BillingFatalException e){
+            throw e;
+        }catch (Exception e){
+            throw new BillingFatalException("Reader 실행 중 예상치 못한 오류 발생", "ERR_READER_UNKNOWN", 0L);
         }
-        BillingUserBillingInfoDto dto = buffer.poll();
-        if (dto != null) {
-            lastProcessedUserId = dto.getUserId();
-        }
-        return dto;
     }
 
-    private void fillBuffer() {
+    private void fillBuffer() throws Exception{
+
         // 1. No-Offset 방식: userId 기준 다음 청크 조회
-        List<BillingUser> users = userRepository.findUsersGreaterThanId(lastProcessedUserId, Pageable.ofSize(chunkSize));
+        List<BillingUser> users =
+                userRepository.findUsersInRange(
+                        minValue,
+                        maxValue,
+                        lastProcessedUserId,
+                        forceFullScan,
+                        startDate,
+                        endDate,
+                        Pageable.ofSize(chunkSize)
+                );
 
         if (users.isEmpty()) return;
 
         List<Long> userIds = users.stream().map(BillingUser::getUserId).toList();
 
-        // 2. 청크 단위로 각 테이블 벌크 조회
-        Map<Long, List<UserSubscribeProduct>> uspMap = uspRepository.findByUserIdIn(userIds).stream()
-                .collect(Collectors.groupingBy(p -> p.getUser().getUserId()));
+        // 엔티티 -> DTO 변환 + Map 생성
+        Map<Long, List<UserSubscribeProductDto>> uspMap = uspRepository.findByUserIdIn(userIds, startDate, endDate).stream()
+                .map(UserSubscribeProductDto::fromEntity)
+                .collect(Collectors.groupingBy(UserSubscribeProductDto::getUserId));
 
-        Map<Long, List<Unpaid>> unpaidMap = unpaidRepository.findByUserIdIn(userIds).stream()
-                .collect(Collectors.groupingBy(u -> u.getUser().getUserId()));
+        if(uspMap.isEmpty()){
+            throw BillingFatalException.dataNotFound(String.format("데이터 정합성 오류: 대상 유저 %d명에 대한 구독 상품 정보가 존재하지 않습니다.", users.size()));
+        }
 
-        Map<Long, List<AdditionalCharge>> chargeMap = chargeRepository.findByUserIdIn(userIds).stream()
-                .collect(Collectors.groupingBy(c -> c.getUser().getUserId()));
+        Map<Long, List<UnpaidDto>> unpaidMap = unpaidRepository.findByUserIdIn(userIds).stream()
+                .map(UnpaidDto::fromEntity)
+                .collect(Collectors.groupingBy(UnpaidDto::getUserId));
 
-        Map<Long, List<UserSubscribeDiscount>> discountMap = discountRepository.findByUserIdIn(userIds).stream()
-                .collect(Collectors.groupingBy(d -> d.getBillingUser().getUserId()));
+        Map<Long, List<AdditionalChargeDto>> chargeMap = chargeRepository.findByUserIdIn(userIds, startDate, endDate).stream()
+                .map(AdditionalChargeDto::fromEntity)
+                .collect(Collectors.groupingBy(AdditionalChargeDto::getUserId));
+
+        Map<Long, List<UserSubscribeDiscountDto>> discountMap = discountRepository.findByUserIdIn(userIds, startDate, endDate).stream()
+                .map(UserSubscribeDiscountDto::fromEntity)
+                .collect(Collectors.groupingBy(UserSubscribeDiscountDto::getUserId));
 
         // 3. DTO 조립 후 버퍼에 추가
         for (BillingUser user : users) {
