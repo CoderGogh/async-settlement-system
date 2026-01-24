@@ -9,6 +9,7 @@ public class MessageStatusSummaryDto {
     private long waitCount;
     private long retryCount;
     private long sentCount;
+    private long smsCount;
     private long failCount;
     private long totalCount;
     
@@ -16,6 +17,7 @@ public class MessageStatusSummaryDto {
     private double retryRate;
     private double sentRate;
     private double failRate;
+    private double smsRate;
     
     private String settlementMonth;
 }

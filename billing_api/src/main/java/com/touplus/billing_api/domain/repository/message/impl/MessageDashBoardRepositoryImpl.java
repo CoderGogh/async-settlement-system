@@ -49,18 +49,32 @@ public class MessageDashBoardRepositoryImpl implements MessageDashBoardRepositor
     }
     
     @Override
-    public long countByStatusAndRetry(String status) {
+    public long countByStatusAndRetry() {
         String sql = """
             SELECT COUNT(*) 
             FROM billing_message.message 
-            WHERE status = ? 
+            WHERE status = 'WAITED' 
               AND retry_count >= 1;
         """;
 
         return jdbcTemplate.queryForObject(
             sql,
-            Long.class,
-            status
+            Long.class
+        );
+    }
+    
+    @Override
+    public long countBySMS() {
+        String sql = """
+            SELECT COUNT(*) 
+            FROM billing_message.message 
+            WHERE status = 'SENT' 
+              AND retry_count >= 2;
+        """;
+
+        return jdbcTemplate.queryForObject(
+            sql,
+            Long.class
         );
     }
 

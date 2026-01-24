@@ -14,7 +14,7 @@
     </div>
 
     <div class="card">
-        <!-- 이번 정산월 표시 -->
+        <!-- 정산월 -->
         <div class="month">
             정산월: <span id="settlementMonth" th:text="${summary.settlementMonth}">2026-01</span>
         </div>
@@ -23,10 +23,10 @@
             총 발송 메시지 <span id="totalCount" th:text="${summary.totalCount}">0</span>건
         </div>
 
-        <!-- WAITED -->
+        <!-- 이메일 WAITED -->
         <div class="section">
             <div class="section-title">
-                <span>메시지 발송 대기 건</span>
+                <span>이메일 발송 대기 건</span>
                 <span class="rate">
                     <span id="waitCount" th:text="${summary.waitCount}">0</span>건
                     · <span id="waitRate" th:text="${#numbers.formatDecimal(summary.waitRate,1,2)}">0</span>%
@@ -37,10 +37,10 @@
             </div>
         </div>
 
-        <!-- SENT -->
+        <!-- 이메일 SENT -->
         <div class="section">
             <div class="section-title">
-                <span>메시지 발송 성공 건</span>
+                <span>이메일 발송 성공 건</span>
                 <span class="rate">
                     <span id="sentCount" th:text="${summary.sentCount}">0</span>건
                     · <span id="sentRate" th:text="${#numbers.formatDecimal(summary.sentRate,1,2)}">0</span>%
@@ -51,10 +51,10 @@
             </div>
         </div>
 
-        <!-- RETRY -->
+        <!-- 이메일 RETRY -->
         <div class="section">
             <div class="section-title">
-                <span>재발송 대기 건</span>
+                <span>이메일 재발송 대기 건</span>
                 <span class="rate">
                     <span id="retryCount" th:text="${summary.retryCount}">0</span>건
                     · <span id="retryRate" th:text="${#numbers.formatDecimal(summary.retryRate,1,2)}">0</span>%
@@ -64,6 +64,21 @@
                 <div id="retryBar" class="bar retry" th:style="'width:' + ${summary.retryRate} + '%'"></div>
             </div>
         </div>
+
+       <!-- SMS -->
+		<div class="section">
+		    <div class="section-title">
+		        <span>SMS 발송 건</span>
+		        <span class="rate">
+		            <span id="smsCount" th:text="${summary.smsCount}">0</span>건
+		            · <span id="smsRate" th:text="${#numbers.formatDecimal(summary.smsRate,1,2)}">0</span>%
+		        </span>
+		    </div>
+		    <div class="bar-wrap">
+		        <div id="smsBar" class="bar sms" th:style="'width:' + ${summary.smsRate} + '%'"></div>
+		    </div>
+		</div>
+
 
         <!-- FAIL -->
         <div class="section">
@@ -88,28 +103,55 @@
 <script>
 const eventSource = new EventSource('/admin/message/stream');
 
-eventSource.onmessage = function (event) {
+eventSource.onmessage = function(event) {
     try {
         const data = JSON.parse(event.data);
 
-        document.getElementById('settlementMonth')?.innerText = data.settlementMonth || '';
-        document.getElementById('totalCount')?.innerText = data.totalCount || 0;
+        // 정산월 / 총 발송
+        const settlementMonthEl = document.getElementById('settlementMonth');
+        if (settlementMonthEl) settlementMonthEl.innerText = data.settlementMonth || '';
+        const totalCountEl = document.getElementById('totalCount');
+        if (totalCountEl) totalCountEl.innerText = data.totalCount || 0;
 
-        document.getElementById('waitCount')?.innerText = data.waitCount || 0;
-        document.getElementById('waitRate')?.innerText = (data.waitRate || 0).toFixed(1);
-        document.getElementById('waitBar')?.style.width = (data.waitRate || 0) + '%';
+        // 이메일 WAITED
+        const waitCountEl = document.getElementById('waitCount');
+        if (waitCountEl) waitCountEl.innerText = data.waitCount || 0;
+        const waitRateEl = document.getElementById('waitRate');
+        if (waitRateEl) waitRateEl.innerText = (data.waitRate || 0).toFixed(2);
+        const waitBarEl = document.getElementById('waitBar');
+        if (waitBarEl) waitBarEl.style.width = (data.waitRate || 0) + '%';
 
-        document.getElementById('sentCount')?.innerText = data.sentCount || 0;
-        document.getElementById('sentRate')?.innerText = (data.sentRate || 0).toFixed(1);
-        document.getElementById('sentBar')?.style.width = (data.sentRate || 0) + '%';
+        // 이메일 SENT
+        const sentCountEl = document.getElementById('sentCount');
+        if (sentCountEl) sentCountEl.innerText = data.sentCount || 0;
+        const sentRateEl = document.getElementById('sentRate');
+        if (sentRateEl) sentRateEl.innerText = (data.sentRate || 0).toFixed(2);
+        const sentBarEl = document.getElementById('sentBar');
+        if (sentBarEl) sentBarEl.style.width = (data.sentRate || 0) + '%';
 
-        document.getElementById('retryCount')?.innerText = data.retryCount || 0;
-        document.getElementById('retryRate')?.innerText = (data.retryRate || 0).toFixed(1);
-        document.getElementById('retryBar')?.style.width = (data.retryRate || 0) + '%';
+        // 이메일 RETRY
+        const retryCountEl = document.getElementById('retryCount');
+        if (retryCountEl) retryCountEl.innerText = data.retryCount || 0;
+        const retryRateEl = document.getElementById('retryRate');
+        if (retryRateEl) retryRateEl.innerText = (data.retryRate || 0).toFixed(2);
+        const retryBarEl = document.getElementById('retryBar');
+        if (retryBarEl) retryBarEl.style.width = (data.retryRate || 0) + '%';
 
-        document.getElementById('failCount')?.innerText = data.failCount || 0;
-        document.getElementById('failRate')?.innerText = (data.failRate || 0).toFixed(1);
-        document.getElementById('failBar')?.style.width = (data.failRate || 0) + '%';
+		// SMS
+		const smsCountEl = document.getElementById('smsCount');
+		if (smsCountEl) smsCountEl.innerText = data.smsCount || 0;
+		const smsRateEl = document.getElementById('smsRate');
+		if (smsRateEl) smsRateEl.innerText = (data.smsRate || 0).toFixed(2);
+		const smsBarEl = document.getElementById('smsBar');
+		if (smsBarEl) smsBarEl.style.width = (data.smsRate || 0) + '%';
+
+        // FAIL
+        const failCountEl = document.getElementById('failCount');
+        if (failCountEl) failCountEl.innerText = data.failCount || 0;
+        const failRateEl = document.getElementById('failRate');
+        if (failRateEl) failRateEl.innerText = (data.failRate || 0).toFixed(2);
+        const failBarEl = document.getElementById('failBar');
+        if (failBarEl) failBarEl.style.width = (data.failRate || 0) + '%';
 
     } catch (e) {
         console.error("SSE 업데이트 오류:", e);
@@ -120,6 +162,5 @@ eventSource.onerror = function(err) {
     console.error("SSE 연결 오류:", err);
 };
 </script>
-
 </body>
 </html>

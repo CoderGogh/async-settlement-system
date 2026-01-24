@@ -20,7 +20,8 @@ public class MessageDashBoardServiceImpl implements MessageDashBoardService {
     public MessageStatusSummaryDto getMessageStatusSummary() {
 
         LocalDate lastMonthDate = getLastMonthDate();
-        long retry = messageDashBoardRepository.countByStatusAndRetry("CREATED");
+        long retry = messageDashBoardRepository.countByStatusAndRetry();
+        long sms = messageDashBoardRepository.countBySMS();
 
         long total = messageDashBoardRepository.countBySettlementMonth(lastMonthDate);
         
@@ -31,6 +32,7 @@ public class MessageDashBoardServiceImpl implements MessageDashBoardService {
         double waitRate = total == 0 ? 0 : (wait * 100.0 / total);
         double retryRate = total == 0 ? 0 : (retry * 100.0 / total);
         double sentRate = total == 0 ? 0 : (sent * 100.0 / total);
+        double smsRate = total == 0 ? 0 : (sms * 100.0 / total);
         double failRate = total == 0 ? 0 : (fail * 100.0 / total);
 
         // yyyy-MM 포맷으로 변환
@@ -41,10 +43,12 @@ public class MessageDashBoardServiceImpl implements MessageDashBoardService {
                 .waitCount(wait)
                 .retryCount(retry)
                 .sentCount(sent)
+                .smsCount(sms)   
                 .failCount(fail)        
                 .waitRate(waitRate)     
                 .retryRate(retryRate)     
                 .sentRate(sentRate)
+                .smsRate(smsRate)
                 .failRate(failRate)
                 .settlementMonth(settlementMonthStr)
                 .build();

@@ -11,6 +11,7 @@ public interface MessageDashBoardRepository {
             String status
     );
     
-    long countByStatusAndRetry(String status);
+    long countByStatusAndRetry();
+    long countBySMS();
     
 }
