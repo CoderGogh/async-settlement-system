@@ -1,18 +1,20 @@
 package com.touplus.billing_api.admin.repository.impl;
 
-import com.touplus.billing_api.admin.enums.ProcessType;
-import com.touplus.billing_api.admin.repository.MessageProcessRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import java.time.LocalDate;
+
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-import java.util.Map;
+import com.touplus.billing_api.admin.enums.ProcessType;
+import com.touplus.billing_api.admin.repository.MessageProcessRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @Repository
 @RequiredArgsConstructor
 public class MessageProcessRepositoryImpl implements MessageProcessRepository {
 
-    private final NamedParameterJdbcTemplate jdbcTemplate;
+    private final JdbcTemplate jdbcTemplate;
 
     @Override
     public ProcessType findLatestKafkaReceiveStatus() {
@@ -53,5 +55,60 @@ public class MessageProcessRepositoryImpl implements MessageProcessRepository {
                 sql,
                 (rs, rowNum) -> ProcessType.valueOf(rs.getString("sent_message"))
         ).stream().findFirst().orElse(null);
+    }
+    
+    
+    
+    
+    @Override
+    public long countKafkaReceive(LocalDate settlementMonth) {
+     /*   String sql = """
+            SELECT COUNT(*)
+            FROM billing_message.billing_snapshot
+            WHERE settlement_month = ?
+              AND kafka_receive = 'DONE'
+        """;
+        return jdbcTemplate.queryForObject(
+                sql,
+                Long.class,
+                settlementMonth
+        );*/
+    	return 0;
+
+    }
+
+    @Override
+    public long countCreateMessage(LocalDate settlementMonth) {
+        String sql = """
+            SELECT COUNT(*)
+            FROM billing_message.message m
+            JOIN billing_message.billing_snapshot b
+              ON m.billing_id = b.billing_id
+            WHERE b.settlement_month = ?
+        """;
+        return jdbcTemplate.queryForObject(sql, Long.class, settlementMonth);
+    }
+
+    @Override
+    public long countSentMessage(LocalDate settlementMonth) {
+        String sql = """
+            SELECT COUNT(*)
+            FROM billing_message.message m
+            JOIN billing_message.billing_snapshot b
+              ON m.billing_id = b.billing_id
+            WHERE b.settlement_month = ?
+              AND m.status = 'SENT'
+        """;
+        return jdbcTemplate.queryForObject(sql, Long.class, settlementMonth);
+    }
+
+    @Override
+    public long countTotal(LocalDate settlementMonth) {
+        String sql = """
+            SELECT COUNT(*)
+            FROM billing_message.billing_snapshot
+            WHERE settlement_month = ?
+        """;
+        return jdbcTemplate.queryForObject(sql, Long.class, settlementMonth);
     }
 }

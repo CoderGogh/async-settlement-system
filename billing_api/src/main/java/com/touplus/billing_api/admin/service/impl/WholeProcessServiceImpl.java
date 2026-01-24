@@ -1,7 +1,11 @@
 package com.touplus.billing_api.admin.service.impl;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+
 import org.springframework.stereotype.Service;
 
+import com.touplus.billing_api.admin.dto.WholeProcessDto;
 import com.touplus.billing_api.admin.entity.BatchProcessEntity;
 import com.touplus.billing_api.admin.entity.MessageProcessEntity;
 import com.touplus.billing_api.admin.enums.ProcessType;
@@ -60,5 +64,53 @@ public class WholeProcessServiceImpl implements WholeProcessService {
         );
 
         return message;
+    }
+    
+    
+    @Override
+    public WholeProcessDto getWholeProcessStatus() {
+
+        LocalDate settlementMonth = getLastMonth();
+
+        long total = messageRepo.countTotal(settlementMonth);
+
+        long batch = batchRepo.countBatch(settlementMonth);
+        long kafkaSent = batchRepo.countKafkaSent(settlementMonth);
+        long kafkaReceive = messageRepo.countKafkaReceive(settlementMonth);
+        long createMessage = messageRepo.countCreateMessage(settlementMonth);
+        long sentMessage = messageRepo.countSentMessage(settlementMonth);
+
+        double batchRate = rate(batch, total);
+        double kafkaSentRate = rate(kafkaSent, total);
+        double kafkaReceiveRate = rate(kafkaReceive, total);
+        double createMessageRate = rate(createMessage, total);
+        double sentMessageRate = rate(sentMessage, total);
+
+        return WholeProcessDto.builder()
+                .totalCount(total)
+                .batchCount(batch)
+                .kafkaSentCount(kafkaSent)
+                .kafkaReceiveCount(kafkaReceive)
+                .createMessageCount(createMessage)
+                .sentMessageCount(sentMessage)
+                .batchRate(batchRate)
+                .kafkaSentRate(kafkaSentRate)
+                .kafkaReceivRate(kafkaReceiveRate)
+                .createMessageRate(createMessageRate)
+                .sentMessageRate(sentMessageRate)
+                .settlementMonth(
+                        settlementMonth.format(DateTimeFormatter.ofPattern("yyyy-MM"))
+                )
+                .build();
+    }
+
+    private double rate(long value, long total) {
+        return total == 0 ? 0 : value * 100.0 / total;
+    }
+
+    private LocalDate getLastMonth() {
+        return LocalDate.now()
+                .minusMonths(1)
+                .withDayOfMonth(1);
     }
 }

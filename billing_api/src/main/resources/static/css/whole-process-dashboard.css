@@ -57,3 +57,36 @@ h1 {
       margin-bottom: 20px;
       box-shadow: 0 3px 10px rgba(0,0,0,0.1);
   }
+  
+  .bar-wrap {
+    width: 100%;
+    height: 12px;              
+    background-color: #e0e0e0;
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 8px 0 16px;
+}
+
+.bar {
+    height: 100%;             
+    width: 0;
+    transition: width 0.4s ease;
+}
+
+/* 상태별 색상 */
+.bar.wait {
+    background-color: #bdc3c7;
+}
+
+.bar.pending {
+    background-color: #f1c40f;
+}
+
+.bar.done {
+    background-color: #2ecc71;
+}
+
+.bar.fail {
+    background-color: #e74c3c;
+}
+  
