@@ -115,4 +115,28 @@ public class MessageDispatchService {
         log.info("메시지 {}건 dispatch 시작", messageIds.size());
         dispatchPreparedMessages(messageIds);
     }
+
+    /**
+     * 모든 WAITED 상태 메시지를 조회하여 처리
+     * Processor에서 직접 호출하거나 백업 폴링에서 사용
+     * @return 처리된 메시지 건수
+     */
+    public int dispatchAllWaitedMessages() {
+        int totalProcessed = 0;
+        
+        while (true) {
+            List<Long> messageIds = prepareDispatch(LocalDateTime.now());
+            
+            if (messageIds.isEmpty()) {
+                break;
+            }
+            
+            dispatchPreparedMessages(messageIds);
+            totalProcessed += messageIds.size();
+            
+            log.info("배치 처리 완료: {}건, 누적: {}건", messageIds.size(), totalProcessed);
+        }
+        
+        return totalProcessed;
+    }
 }

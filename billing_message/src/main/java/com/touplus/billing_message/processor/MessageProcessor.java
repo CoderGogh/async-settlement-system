@@ -18,6 +18,7 @@ import com.touplus.billing_message.domain.entity.User;
 import com.touplus.billing_message.domain.respository.MessageJdbcRepository;
 import com.touplus.billing_message.domain.respository.MessageRepository;
 import com.touplus.billing_message.domain.respository.UserRepository;
+import com.touplus.billing_message.service.MessageDispatchService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +35,7 @@ public class MessageProcessor {
     private final UserRepository userRepository;
     private final MessageRepository messageRepository;
     private final MessageJdbcRepository messageJdbcRepository;
+    private final MessageDispatchService messageDispatchService;
 
     private static final int MAX_RETRY = 3;
 
@@ -68,6 +70,12 @@ public class MessageProcessor {
         int inserted = insertBatch(messages);
         if (log.isDebugEnabled()) {
             log.debug("Message insert: expected={}, actual={}", messages.size(), inserted);
+        }
+
+        // 저장 완료 후 즉시 발송 처리 (직접 호출)
+        if (inserted > 0) {
+            log.info("Message 저장 완료: {}건, 발송 처리 시작", inserted);
+            messageDispatchService.dispatchAllWaitedMessages();
         }
     }
 
@@ -119,6 +127,9 @@ public class MessageProcessor {
 
             
             if (inserted == messages.size()) {
+                // 저장 완료 후 즉시 발송 처리 (직접 호출)
+                log.info("Message 저장 완료: {}건, 발송 처리 시작", inserted);
+                messageDispatchService.dispatchAllWaitedMessages();
                 return; // 정상 완료
             }
 
@@ -150,9 +161,13 @@ public class MessageProcessor {
         
         int sendingDay = user.getSendingDay();
 
-        LocalDate sendDate = today.getDayOfMonth() < sendingDay
-                ? today.withDayOfMonth(sendingDay)
-                : today.plusMonths(1).withDayOfMonth(sendingDay);
+        // [테스트용] 항상 현재 달의 sendingDay로 생성
+        LocalDate sendDate = today.withDayOfMonth(sendingDay);
+        
+        // [원본] 날짜가 지났으면 다음 달로 생성
+        // LocalDate sendDate = today.getDayOfMonth() < sendingDay
+        //         ? today.withDayOfMonth(sendingDay)
+        //         : today.plusMonths(1).withDayOfMonth(sendingDay);
 
         LocalTime sendTime = user.getBanEndTime() != null
                 ? user.getBanEndTime().plusMinutes(1)
