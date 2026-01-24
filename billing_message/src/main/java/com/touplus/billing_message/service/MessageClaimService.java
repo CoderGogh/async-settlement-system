@@ -48,6 +48,10 @@ public class MessageClaimService {
             return messages;
         }
 
+        // 통과한 첫번째 메시지의 scheduled_at과 now 비교 로그
+        log.info("[scheduled_at 체크] scheduled_at={} <= now={} → 통과! {}건 발송 진행", 
+                messages.get(0).getScheduledAt(), now, messages.size());
+
         List<Long> ids = messages.stream()
                 .map(Message::getMessageId)
                 .toList();

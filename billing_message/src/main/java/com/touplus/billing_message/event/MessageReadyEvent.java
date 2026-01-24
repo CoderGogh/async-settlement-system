@@ -13,14 +13,15 @@ import org.springframework.context.ApplicationEvent;
  */
 public class MessageReadyEvent extends ApplicationEvent {
 
-    private final List<Long> billingIds;
+    private final int messageCount;
 
-    public MessageReadyEvent(Object source, List<Long> billingIds) {
-        super(source);
-        this.billingIds = billingIds;
+    public MessageReadyEvent(int messageCount) {
+        // source는 null로 전달해도 무방함 (ApplicationEvent 기본 생성자 없으므로 dummy object 전달)
+        super(new Object());
+        this.messageCount = messageCount;
     }
 
-    public List<Long> getBillingIds() {
-        return billingIds;
+    public int getMessageCount() {
+        return messageCount;
     }
 }

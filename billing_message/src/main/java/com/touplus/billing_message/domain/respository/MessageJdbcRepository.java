@@ -59,7 +59,7 @@ public class MessageJdbcRepository {
         int successCount = 0;
         for (int[] batch : results) {
             for (int affected : batch) {
-                if (affected > 0) {
+                if (affected > 0 || affected == java.sql.Statement.SUCCESS_NO_INFO) {
                     successCount++;
                 }
             }

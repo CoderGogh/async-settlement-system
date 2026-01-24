@@ -33,9 +33,10 @@ import lombok.extern.slf4j.Slf4j;
 public class MessageProcessor {
 
     private final UserRepository userRepository;
-    private final MessageRepository messageRepository;
-    private final MessageJdbcRepository messageJdbcRepository;
-    private final MessageDispatchService messageDispatchService;
+    private final com.touplus.billing_message.domain.respository.MessageRepository messageRepository;
+    private final com.touplus.billing_message.domain.respository.MessageJdbcRepository messageJdbcRepository;
+    private final com.touplus.billing_message.service.MessageDispatchService messageDispatchService;
+    private final org.springframework.context.ApplicationEventPublisher eventPublisher;
 
     private static final int MAX_RETRY = 3;
 
@@ -68,14 +69,15 @@ public class MessageProcessor {
 
         // INSERT
         int inserted = insertBatch(messages);
+        
         if (log.isDebugEnabled()) {
             log.debug("Message insert: expected={}, actual={}", messages.size(), inserted);
         }
 
-        // 저장 완료 후 즉시 발송 처리 (직접 호출)
+        // 저장 완료 후 이벤트 발행 (비동기 처리)
         if (inserted > 0) {
-            log.info("Message 저장 완료: {}건, 발송 처리 시작", inserted);
-            messageDispatchService.dispatchAllWaitedMessages();
+            log.info("Message 저장 완료: {}건, 발송 이벤트 발행 (Async)", inserted);
+            eventPublisher.publishEvent(new com.touplus.billing_message.event.MessageReadyEvent(inserted));
         }
     }
 
