@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>메시지 발송 현황 | 관리자</title>
-
-	<link rel="stylesheet" th:href="@{/css/message-dashboard.css}">
+    <link rel="stylesheet" th:href="@{/css/message-dashboard.css}">
 </head>
 
 <body>
@@ -24,33 +23,59 @@
             총 발송 메시지 <span id="totalCount" th:text="${summary.totalCount}">0</span>건
         </div>
 
+        <!-- WAITED -->
+        <div class="section">
+            <div class="section-title">
+                <span>메시지 발송 대기 건</span>
+                <span class="rate">
+                    <span id="waitCount" th:text="${summary.waitCount}">0</span>건
+                    · <span id="waitRate" th:text="${#numbers.formatDecimal(summary.waitRate,1,2)}">0</span>%
+                </span>
+            </div>
+            <div class="bar-wrap">
+                <div id="waitBar" class="bar wait" th:style="'width:' + ${summary.waitRate} + '%'"></div>
+            </div>
+        </div>
+
         <!-- SENT -->
         <div class="section">
             <div class="section-title">
-                <span>메시지 발송 성공 개수</span>
+                <span>메시지 발송 성공 건</span>
                 <span class="rate">
                     <span id="sentCount" th:text="${summary.sentCount}">0</span>건
                     · <span id="sentRate" th:text="${#numbers.formatDecimal(summary.sentRate,1,2)}">0</span>%
                 </span>
             </div>
             <div class="bar-wrap">
-                <div id="sentBar" class="bar sent"
-                     th:style="'width:' + ${summary.sentRate} + '%'"></div>
+                <div id="sentBar" class="bar sent" th:style="'width:' + ${summary.sentRate} + '%'"></div>
+            </div>
+        </div>
+
+        <!-- RETRY -->
+        <div class="section">
+            <div class="section-title">
+                <span>재발송 대기 건</span>
+                <span class="rate">
+                    <span id="retryCount" th:text="${summary.retryCount}">0</span>건
+                    · <span id="retryRate" th:text="${#numbers.formatDecimal(summary.retryRate,1,2)}">0</span>%
+                </span>
+            </div>
+            <div class="bar-wrap">
+                <div id="retryBar" class="bar retry" th:style="'width:' + ${summary.retryRate} + '%'"></div>
             </div>
         </div>
 
         <!-- FAIL -->
         <div class="section">
             <div class="section-title">
-                <span>메시지 발송 실패 개수</span>
+                <span>메시지 발송 실패 건</span>
                 <span class="rate">
                     <span id="failCount" th:text="${summary.failCount}">0</span>건
                     · <span id="failRate" th:text="${#numbers.formatDecimal(summary.failRate,1,2)}">0</span>%
                 </span>
             </div>
             <div class="bar-wrap">
-                <div id="failBar" class="bar fail"
-                     th:style="'width:' + ${summary.failRate} + '%'"></div>
+                <div id="failBar" class="bar fail" th:style="'width:' + ${summary.failRate} + '%'"></div>
             </div>
         </div>
     </div>
@@ -61,46 +86,39 @@
 </div>
 
 <script>
-    const eventSource = new EventSource('/admin/message/stream');
+const eventSource = new EventSource('/admin/message/stream');
 
-    eventSource.onmessage = function (event) {
-        try {
-            const data = JSON.parse(event.data);
+eventSource.onmessage = function (event) {
+    try {
+        const data = JSON.parse(event.data);
 
-            // DOM 요소가 없으면 갱신하지 않음
-            const monthEl = document.getElementById('settlementMonth');
-            if (monthEl) monthEl.innerText = data.settlementMonth || '';
+        document.getElementById('settlementMonth')?.innerText = data.settlementMonth || '';
+        document.getElementById('totalCount')?.innerText = data.totalCount || 0;
 
-            const totalEl = document.getElementById('totalCount');
-            if (totalEl) totalEl.innerText = data.totalCount || 0;
+        document.getElementById('waitCount')?.innerText = data.waitCount || 0;
+        document.getElementById('waitRate')?.innerText = (data.waitRate || 0).toFixed(1);
+        document.getElementById('waitBar')?.style.width = (data.waitRate || 0) + '%';
 
-            const sentCountEl = document.getElementById('sentCount');
-            if (sentCountEl) sentCountEl.innerText = data.sentCount || 0;
+        document.getElementById('sentCount')?.innerText = data.sentCount || 0;
+        document.getElementById('sentRate')?.innerText = (data.sentRate || 0).toFixed(1);
+        document.getElementById('sentBar')?.style.width = (data.sentRate || 0) + '%';
 
-            const failCountEl = document.getElementById('failCount');
-            if (failCountEl) failCountEl.innerText = data.failCount || 0;
+        document.getElementById('retryCount')?.innerText = data.retryCount || 0;
+        document.getElementById('retryRate')?.innerText = (data.retryRate || 0).toFixed(1);
+        document.getElementById('retryBar')?.style.width = (data.retryRate || 0) + '%';
 
-            const sentRateEl = document.getElementById('sentRate');
-            if (sentRateEl) sentRateEl.innerText = (data.sentRate || 0).toFixed(1);
+        document.getElementById('failCount')?.innerText = data.failCount || 0;
+        document.getElementById('failRate')?.innerText = (data.failRate || 0).toFixed(1);
+        document.getElementById('failBar')?.style.width = (data.failRate || 0) + '%';
 
-            const failRateEl = document.getElementById('failRate');
-            if (failRateEl) failRateEl.innerText = (data.failRate || 0).toFixed(1);
+    } catch (e) {
+        console.error("SSE 업데이트 오류:", e);
+    }
+};
 
-            const sentBarEl = document.getElementById('sentBar');
-            if (sentBarEl) sentBarEl.style.width = (data.sentRate || 0) + '%';
-
-            const failBarEl = document.getElementById('failBar');
-            if (failBarEl) failBarEl.style.width = (data.failRate || 0) + '%';
-
-        } catch (e) {
-            console.error("SSE 업데이트 오류:", e);
-        }
-    };
-
-    eventSource.onerror = function(err) {
-        console.error("SSE 연결 오류:", err);
-        // 필요하면 재연결 로직 추가 가능
-    };
+eventSource.onerror = function(err) {
+    console.error("SSE 연결 오류:", err);
+};
 </script>
 
 </body>

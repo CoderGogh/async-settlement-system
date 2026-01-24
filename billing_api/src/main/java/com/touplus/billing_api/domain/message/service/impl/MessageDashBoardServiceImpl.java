@@ -20,11 +20,16 @@ public class MessageDashBoardServiceImpl implements MessageDashBoardService {
     public MessageStatusSummaryDto getMessageStatusSummary() {
 
         LocalDate lastMonthDate = getLastMonthDate();
+        long retry = messageDashBoardRepository.countByStatusAndRetry("CREATED");
 
         long total = messageDashBoardRepository.countBySettlementMonth(lastMonthDate);
+        
+        long wait = messageDashBoardRepository.countBySettlementMonthAndStatus(lastMonthDate, "WAITED");
         long sent = messageDashBoardRepository.countBySettlementMonthAndStatus(lastMonthDate, "SENT");
         long fail = messageDashBoardRepository.countBySettlementMonthAndStatus(lastMonthDate, "FAILED");
 
+        double waitRate = total == 0 ? 0 : (wait * 100.0 / total);
+        double retryRate = total == 0 ? 0 : (retry * 100.0 / total);
         double sentRate = total == 0 ? 0 : (sent * 100.0 / total);
         double failRate = total == 0 ? 0 : (fail * 100.0 / total);
 
@@ -33,8 +38,12 @@ public class MessageDashBoardServiceImpl implements MessageDashBoardService {
 
         return MessageStatusSummaryDto.builder()
                 .totalCount(total)
+                .waitCount(wait)
+                .retryCount(retry)
                 .sentCount(sent)
-                .failCount(fail)
+                .failCount(fail)        
+                .waitRate(waitRate)     
+                .retryRate(retryRate)     
                 .sentRate(sentRate)
                 .failRate(failRate)
                 .settlementMonth(settlementMonthStr)

@@ -10,4 +10,7 @@ public interface MessageDashBoardRepository {
             LocalDate settlementMonth,
             String status
     );
+    
+    long countByStatusAndRetry(String status);
+    
 }

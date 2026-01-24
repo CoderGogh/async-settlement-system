@@ -47,4 +47,21 @@ public class MessageDashBoardRepositoryImpl implements MessageDashBoardRepositor
                 status
         );
     }
+    
+    @Override
+    public long countByStatusAndRetry(String status) {
+        String sql = """
+            SELECT COUNT(*) 
+            FROM billing_message.message 
+            WHERE status = ? 
+              AND retry_count >= 1;
+        """;
+
+        return jdbcTemplate.queryForObject(
+            sql,
+            Long.class,
+            status
+        );
+    }
+
 }
