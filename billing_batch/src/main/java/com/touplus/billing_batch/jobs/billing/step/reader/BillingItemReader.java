@@ -5,8 +5,11 @@ import com.touplus.billing_batch.domain.entity.BillingUser;
 import com.touplus.billing_batch.domain.repository.service.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.item.ItemReader;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -14,8 +17,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+// targetMonth 를 어디서 활용...?
+@Component
+@StepScope
 @Slf4j
-@RequiredArgsConstructor
 public class BillingItemReader implements ItemReader<BillingUserBillingInfoDto> {
 
     private final BillingUserRepository userRepository;
@@ -23,12 +28,40 @@ public class BillingItemReader implements ItemReader<BillingUserBillingInfoDto> 
     private final AdditionalChargeRepository chargeRepository;
     private final UserSubscribeDiscountRepository discountRepository;
 
-    private final Long minValue;
-    private final Long maxValue;
-    private final LocalDate startDate;
-    private final LocalDate endDate;
-    private final boolean forceFullScan;
-    private final int chunkSize;
+    public BillingItemReader(
+            BillingUserRepository userRepository,
+            UserSubscribeProductRepository uspRepository,
+            AdditionalChargeRepository chargeRepository,
+            UserSubscribeDiscountRepository discountRepository
+    ) {
+        this.userRepository = userRepository;
+        this.uspRepository = uspRepository;
+        this.chargeRepository = chargeRepository;
+        this.discountRepository = discountRepository;
+    }
+
+    @Value("#{stepExecutionContext['minValue']}")
+    private Long minValue;
+
+    @Value("#{stepExecutionContext['maxValue']}")
+    private Long maxValue;
+
+    @Value("#{jobParameters['startDate']}")
+    private LocalDate startDate;
+
+    @Value("#{jobParameters['endDate']}")
+    private LocalDate endDate;
+
+    @Value("#{jobParameters['forceFullScan'] ?: false}")
+    private boolean forceFullScan;
+
+    @Value("#{jobParameters['chunkSize'] ?: 2000}")
+    private int chunkSize;
+
+    @Value("#{jobParameters['targetMonth']}")
+    private String targetMonth;
+
+    // groupId와 usage를 제공해야 함!
 
     private Long lastProcessedUserId = 0L;
     private List<BillingUserBillingInfoDto> buffer = new ArrayList<>();
@@ -84,11 +117,10 @@ public class BillingItemReader implements ItemReader<BillingUserBillingInfoDto> 
         for (BillingUser user : users) {
             BillingUserBillingInfoDto dto = BillingUserBillingInfoDto.builder()
                     .userId(user.getUserId())
-                    // Null 방지 --> List.of() 사용
                     .products(uspMap.getOrDefault(user.getUserId(), List.of()))
                     .additionalCharges(chargeMap.getOrDefault(user.getUserId(), List.of()))
                     .discounts(discountMap.getOrDefault(user.getUserId(), List.of()))
-                    .numOfMember(user.getNumOfMember()) // 그룹에 속한 인원수
+                    .numOfMember(user.getNumOfMember())
                     .build();
 
             buffer.add(dto);
