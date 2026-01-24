@@ -17,9 +17,9 @@ public class BillingUserBillingInfoDto {
     @Builder.Default
     private List<UserSubscribeProductDto> products = new ArrayList<>();
     @Builder.Default
-    private List<UnpaidDto> unpaids = new ArrayList<>();
-    @Builder.Default
     private List<AdditionalChargeDto> additionalCharges = new ArrayList<>();
     @Builder.Default
     private List<UserSubscribeDiscountDto> discounts = new ArrayList<>();
+
+    private Integer numOfMember;
 }

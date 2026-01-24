@@ -29,6 +29,7 @@ public class BillingUserRepositoryImpl implements BillingUserRepository {
         return BillingUser.builder()
                 .userId(rs.getLong("user_id"))
                 .groupId(rs.getLong("group_id"))
+                .numOfMember(rs.getInt("num_of_member"))
                 .build();
     }
 
@@ -47,12 +48,12 @@ public class BillingUserRepositoryImpl implements BillingUserRepository {
             Long lastUserId,
             Pageable pageable
     ) {
-
         String sql = """
-            SELECT user_id
-            FROM billing_user
-            WHERE user_id > :lastUserId
-            ORDER BY user_id ASC
+            SELECT b.user_id, b.group_id, COALESCE(g.num_of_member, 0) as num_of_member
+            FROM billing_user b
+            LEFT JOIN group_discount g ON b.group_id = g.group_id
+            WHERE b.user_id > :lastUserId
+            ORDER BY b.user_id ASC
             LIMIT :limit OFFSET :offset
         """;
 
@@ -96,24 +97,27 @@ public class BillingUserRepositoryImpl implements BillingUserRepository {
             LocalDate endDate,
             Pageable pageable
     ) {
-
+        // JOIN을 통해 num_of_member를 가져오는 SQL
         String sql = """
-            SELECT b.user_id
-            FROM billing_user b
-            WHERE b.user_id BETWEEN :minValue AND :maxValue
-              AND b.user_id > :lastProcessedUserId
-              /* forceFullScan이 true면 뒤의 NOT EXISTS 조건을 무시하고 전체 조회 */
-              AND (
-                  :forceFullScan = true
-                  OR NOT EXISTS (
-                      SELECT 1
-                      FROM billing_result r
-                      WHERE r.user_id = b.user_id
-                        AND r.settlement_month BETWEEN :startDate AND :endDate
-                  )
+        SELECT 
+            b.user_id, 
+            b.group_id, 
+            COALESCE(g.num_of_member, 0) as num_of_member
+        FROM billing_user b
+        LEFT JOIN group_discount g ON b.group_id = g.group_id
+        WHERE b.user_id BETWEEN :minValue AND :maxValue
+          AND b.user_id > :lastProcessedUserId
+          AND (
+              :forceFullScan = true
+              OR NOT EXISTS (
+                  SELECT 1
+                  FROM billing_result r
+                  WHERE r.user_id = b.user_id
+                    AND r.settlement_month BETWEEN :startDate AND :endDate
               )
-            ORDER BY b.user_id
-            LIMIT :limit
+          )
+        ORDER BY b.user_id ASC
+        LIMIT :limit
     """;
 
         MapSqlParameterSource params = new MapSqlParameterSource()
@@ -125,6 +129,7 @@ public class BillingUserRepositoryImpl implements BillingUserRepository {
                 .addValue("endDate", endDate)
                 .addValue("limit", pageable.getPageSize());
 
+        // 이전에 수정했던 mapUserIdOnly를 그대로 사용 (numOfMember 매핑 포함)
         return namedJdbcTemplate.query(sql, params, this::mapUserIdOnly);
     }
 }

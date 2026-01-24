@@ -19,4 +19,7 @@ public class BillingUser {
 
     @Column(name = "group_id")
     private Long groupId;
+
+    @Transient // DB 컬럼과는 매핑x
+    private Integer numOfMember;
 }
