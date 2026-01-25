@@ -40,7 +40,7 @@ spring:
       group-id: billing-message-groupM19
       auto-offset-reset: earliest
       enable-auto-commit: false # 수동 커밋 모드 (안정성 확보)
-      max-poll-records: 2000     # 한 번에 가져올 메시지 양
+      max-poll-records: 500      # poll 처리 시간을 짧게 유지
       max-poll-interval-ms: 1800000  # 처리 시간이 길어도 리밸런스 방지 (30분)
       session-timeout-ms: 60000      # poll 지연 시 세션 유지
       heartbeat-interval-ms: 20000   # 세션 유지용 하트비트
@@ -53,12 +53,13 @@ spring:
         # [추가] 역직렬화 시 신뢰할 수 있는 패키지 지정 (에러 방지)
         spring.json.trusted.packages: "com.touplus.billing_batch.domain.dto,com.touplus.billing_message.domain.dto"
         # 대량 처리를 위한 성능 옵션
-        fetch.min.bytes: 1048576  # 1MB가 모일 때까지 기다림 (네트워크 효율)
-        fetch.max.wait.ms: 500    # 최대 500ms 대기
+        fetch.min.bytes: 1        # 즉시 응답
+        fetch.max.wait.ms: 100    # 최대 100ms 대기
 
     listener:
       # 컨슈머가 수동으로 커밋할 수 있도록 설정 (AckMode)
       ack-mode: manual_immediate
+      idle-between-polls: 100     # 빈 토픽일 때 과도 폴링 방지
       
 message:
   dispatch:
