@@ -187,24 +187,85 @@ public class MessageSnapshotService {
                 return inserted;
         }
 
-        // 템플릿 적용
-        private String buildMessageContent(
-                String template,
-                User user,
-                BillingSnapshot billing) {
+    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
 
-            String result = template;
-            result = result.replace("{userName}", user.getName());
-            result = result.replace("{userEmail}", user.getEmail());
-            result = result.replace("{userPhone}", user.getPhone());
-            result = result.replace("{settlementMonth}",
-                    billing.getSettlementMonth().format(MONTH_FORMATTER));
-            result = result.replace("{totalPrice}",
-                    PRICE_FORMATTER.format(billing.getTotalPrice()));
-            result = result.replace("{settlementDetails}",
-                    billing.getSettlementDetails());
+    // 템플릿 적용
+    private String buildMessageContent(
+            String template,
+            User user,
+            BillingSnapshot billing) {
 
-            return result;
+        String result = template;
+        result = result.replace("{userName}", user.getName());
+        result = result.replace("{userEmail}", user.getEmail());
+        result = result.replace("{userPhone}", user.getPhone());
+        result = result.replace("{settlementMonth}",
+                billing.getSettlementMonth().format(MONTH_FORMATTER));
+        result = result.replace("{totalPrice}",
+                PRICE_FORMATTER.format(billing.getTotalPrice()));
+        
+        // JSON 포맷팅 (원시 JSON -> 예쁜 문자열)
+        String detailsFormatted = formatSettlementDetails(billing.getSettlementDetails());
+        result = result.replace("{settlementDetails}", detailsFormatted);
+
+        return result;
+    }
+    
+    /**
+     * JSON 상세 내역을 보기 좋은 문자열로 변환
+     */
+    private String formatSettlementDetails(String jsonDetails) {
+        if (jsonDetails == null || jsonDetails.isBlank() || "{}".equals(jsonDetails)) {
+            return "상세 내역 없음";
         }
+
+        try {
+            // JSON 파싱
+            SettlementDetailsDto details = objectMapper.readValue(jsonDetails, SettlementDetailsDto.class);
+            StringBuilder sb = new StringBuilder();
+
+            // 1. Mobile (모바일)
+            appendSection(sb, "📱 모바일", details.mobile());
+            
+            // 2. DPS (인터넷/TV)
+            appendSection(sb, "🌐 인터넷/TV", details.dps());
+            
+            // 3. Addon (부가서비스)
+            appendSection(sb, "➕ 부가서비스", details.addon());
+            
+            // 4. Discounts (할인)
+            appendSection(sb, "📉 할인 내역", details.discounts());
+
+            return sb.toString().trim();
+
+        } catch (Exception e) {
+            log.warn("JSON 상세 내역 파싱 실패: {}", jsonDetails, e);
+            return jsonDetails; // 실패 시 원본 그대로 노출
+        }
+    }
+
+    private void appendSection(StringBuilder sb, String title, List<DetailItem> items) {
+        if (items != null && !items.isEmpty()) {
+            sb.append("\n[").append(title).append("]\n");
+            for (DetailItem item : items) {
+                sb.append("- ").append(item.productName())
+                  .append(" : ").append(PRICE_FORMATTER.format(item.price())).append("원\n");
+            }
+        }
+    }
+
+    // 내부 DTO 레코드
+    private record SettlementDetailsDto(
+        List<DetailItem> dps,
+        List<DetailItem> addon,
+        List<DetailItem> mobile,
+        List<DetailItem> discounts
+    ) {}
+
+    private record DetailItem(
+        int price,
+        String productName,
+        String productType
+    ) {}
 
 }
