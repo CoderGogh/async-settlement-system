@@ -1,5 +1,6 @@
 package com.touplus.billing_batch.jobs.billing.step.reader;
 
+import com.touplus.billing_batch.common.BillingFatalException;
 import com.touplus.billing_batch.domain.dto.*;
 import com.touplus.billing_batch.domain.entity.BillingUser;
 import com.touplus.billing_batch.domain.repository.service.*;
@@ -31,19 +32,22 @@ public class BillingItemReader implements ItemStreamReader<BillingUserBillingInf
     private final AdditionalChargeRepository chargeRepository;
     private final UserSubscribeDiscountRepository discountRepository;
     private final UserUsageRepository userUsageRepository;
+    private final GroupDiscountRepository groupDiscountRepository;
 
     public BillingItemReader(
             BillingUserRepository userRepository,
             UserSubscribeProductRepository uspRepository,
             AdditionalChargeRepository chargeRepository,
             UserSubscribeDiscountRepository discountRepository,
-            UserUsageRepository userUsageRepository
+            UserUsageRepository userUsageRepository,
+            GroupDiscountRepository groupDiscountRepository
     ) {
         this.userRepository = userRepository;
         this.uspRepository = uspRepository;
         this.chargeRepository = chargeRepository;
         this.discountRepository = discountRepository;
         this.userUsageRepository = userUsageRepository;
+        this.groupDiscountRepository =groupDiscountRepository;
     }
 
     @Value("#{stepExecutionContext['minValue']}")
@@ -159,6 +163,10 @@ public class BillingItemReader implements ItemStreamReader<BillingUserBillingInf
                 .map(UserUsageDto::fromEntity)
                 .collect(Collectors.groupingBy(UserUsageDto::getUserId));
 
+        Map<Long, List<GroupDiscountDto>> groupMap = groupDiscountRepository.findByUserIdIn(userIds)
+                .stream()
+                .map(GroupDiscountDto::fromEntity)
+                .collect(Collectors.groupingBy(GroupDiscountDto::getGroupId));
 
         // 3. DTO 조립 --> processor 로 넘길 정보
         for (BillingUser user : users) {
@@ -170,6 +178,7 @@ public class BillingItemReader implements ItemStreamReader<BillingUserBillingInf
                     .discounts(discountMap.getOrDefault(user.getUserId(), List.of()))
                     .usage(UsageMap.getOrDefault(user.getUserId(), List.of()))
                     .numOfMember(user.getNumOfMember())
+                    .groups(groupMap.getOrDefault(user.getUserId(), List.of()))
                     .build();
 
             buffer.add(dto);

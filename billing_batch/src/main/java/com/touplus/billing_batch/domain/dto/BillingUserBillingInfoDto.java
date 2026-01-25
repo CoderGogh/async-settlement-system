@@ -23,6 +23,8 @@ public class BillingUserBillingInfoDto {
     private List<UserSubscribeDiscountDto> discounts = new ArrayList<>();
     @Builder.Default
     private List<UserUsageDto> usage = new ArrayList<>();
+    @Builder.Default
+    private List<GroupDiscountDto> groups = new ArrayList<>();
 
     private Integer numOfMember;
 }

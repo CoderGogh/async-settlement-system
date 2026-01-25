@@ -21,4 +21,5 @@ public interface BillingUserRepository {
             LocalDate endDate,
             Pageable pageable
     );
+    List<BillingUser> findByUserIdIn(List<Long> userIds);
 }

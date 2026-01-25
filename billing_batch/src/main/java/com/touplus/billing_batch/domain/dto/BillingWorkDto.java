@@ -20,7 +20,6 @@ public class BillingWorkDto {
     private int additionalCharges; // 총 추가요금
     private int baseAmount; // 총 상품+추가요금
     private int discountAmount; // 총 할인 금액
-    private int unpaidAmount; // 총 미납 금액
     private int totalPrice; // 총 정산 금액
     private int joinedYear;
 
@@ -37,6 +36,5 @@ public class BillingWorkDto {
     private List<DetailItem> addon = new ArrayList<>();
     @Builder.Default
     private List<DetailItem> discounts = new ArrayList<>();
-    @Builder.Default
-    private List<DetailItem> unpaids = new ArrayList<>();
+
 }

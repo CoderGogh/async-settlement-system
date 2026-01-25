@@ -39,6 +39,10 @@ public class BillingException extends RuntimeException {
         return new BillingException("미납에 비정상적인 데이터가 삽입되어 있습니다: " + uId, "ERR_INVALID_UNPAID_DATA", userId);
     }
 
+    public static BillingException invalidDiscountPolicyData(Long userId, Long uId) {
+        return new BillingException("할인 정책에 비정상적인 데이터가 삽입되어 있습니다: " + uId, "ERR_INVALID_DISCOUNT_POLICY_DATA", userId);
+    }
+
     public static BillingException NoSettlementFee(Long userId) {
         return new BillingException(
                 "정산할 금액이 없습니다. userId=" + userId,

@@ -25,7 +25,7 @@ public class BillingUserRepositoryImpl implements BillingUserRepository {
     /* ===============================
      * 공통 RowMapper
      * =============================== */
-    private BillingUser mapUserIdOnly(ResultSet rs, int rowNum) throws SQLException {
+    private BillingUser mapRowNumOfMember(ResultSet rs, int rowNum) throws SQLException {
         return BillingUser.builder()
                 .userId(rs.getLong("user_id"))
                 .groupId(rs.getLong("group_id"))
@@ -33,9 +33,16 @@ public class BillingUserRepositoryImpl implements BillingUserRepository {
                 .build();
     }
 
+    private BillingUser mapUserIdOnly(ResultSet rs, int rowNum) throws SQLException {
+        return BillingUser.builder()
+                .userId(rs.getLong("user_id"))
+                .build();
+    }
+
     private BillingUser mapRow(ResultSet rs, int rowNum) throws SQLException {
         return BillingUser.builder()
                 .userId(rs.getLong("user_id"))
+                .groupId(rs.getLong("group_id"))
                 .build();
     }
 
@@ -62,7 +69,7 @@ public class BillingUserRepositoryImpl implements BillingUserRepository {
                 .addValue("limit", pageable.getPageSize())
                 .addValue("offset", pageable.getOffset());
 
-        return namedJdbcTemplate.query(sql, params, this::mapUserIdOnly);
+        return namedJdbcTemplate.query(sql, params, this::mapRowNumOfMember);
     }
 
     @Override
@@ -130,6 +137,26 @@ public class BillingUserRepositoryImpl implements BillingUserRepository {
                 .addValue("limit", pageable.getPageSize());
 
         // 이전에 수정했던 mapUserIdOnly를 그대로 사용 (numOfMember 매핑 포함)
-        return namedJdbcTemplate.query(sql, params, this::mapUserIdOnly);
+        return namedJdbcTemplate.query(sql, params, this::mapRowNumOfMember);
+    }
+
+    @Override
+    public List<BillingUser> findByUserIdIn(List<Long> userIds) {
+        if (userIds == null || userIds.isEmpty()) {
+            return List.of(); // 빈 리스트 반환
+        }
+
+        String sql = """
+            SELECT 
+                user_id,
+                group_id
+            FROM billing_user
+            WHERE user_id IN (:userIds)
+        """;
+
+        MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("userIds", userIds);
+
+        return namedJdbcTemplate.query(sql, params, this::mapRow);
     }
 }
