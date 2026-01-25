@@ -3,10 +3,12 @@ package com.touplus.billing_message.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Collections;
@@ -73,6 +75,31 @@ public class WaitingQueueService {
 
         log.debug("Redis 큐 추가(delay={}s): messageId={}, scheduledAt={}",
                 delaySeconds, messageId, releaseTime);
+    }
+
+    /**
+     * 큐 맨 뒤로 추가하고 적용된 예정 시간을 반환
+     */
+    public LocalDateTime addToQueueTail(Long messageId) {
+        long now = System.currentTimeMillis() / 1000;
+        double score = now;
+
+        Set<ZSetOperations.TypedTuple<String>> last =
+                redisTemplate.opsForZSet().reverseRangeWithScores(QUEUE_KEY, 0, 0);
+        if (last != null && !last.isEmpty()) {
+            ZSetOperations.TypedTuple<String> tuple = last.iterator().next();
+            if (tuple != null && tuple.getScore() != null && tuple.getScore() >= score) {
+                score = tuple.getScore() + 1;
+            }
+        }
+
+        redisTemplate.opsForZSet().add(QUEUE_KEY, String.valueOf(messageId), score);
+        LocalDateTime scheduledAt = LocalDateTime.ofInstant(
+                Instant.ofEpochSecond((long) score),
+                ZoneId.systemDefault());
+
+        log.debug("Redis 큐 꼬리 추가: messageId={}, scheduledAt={}", messageId, scheduledAt);
+        return scheduledAt;
     }
 
     /**

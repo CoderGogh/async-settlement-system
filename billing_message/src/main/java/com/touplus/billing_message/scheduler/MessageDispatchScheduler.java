@@ -43,6 +43,9 @@ public class MessageDispatchScheduler {
     @Value("${message.dispatch.batch-size:500}")
     private int batchSize;
 
+    @Value("${message.dispatch.chunk-size:200}")
+    private int chunkSize;
+
     /**
      * Redis 기반 메인 스케줄러
      * - 300ms 간격으로 Redis 폴링
@@ -69,9 +72,24 @@ public class MessageDispatchScheduler {
     }
 
     /**
-     * 메시지 발송 처리 (병렬)
+     * 메시지 발송 처리 (chunk 단위)
      */
     private void dispatchMessages(List<Long> messageIds) {
+        if (messageIds == null || messageIds.isEmpty()) {
+            return;
+        }
+        int size = messageIds.size();
+        int step = chunkSize > 0 ? chunkSize : size;
+        for (int i = 0; i < size; i += step) {
+            int end = Math.min(i + step, size);
+            dispatchChunk(messageIds.subList(i, end));
+        }
+    }
+
+    /**
+     * 메시지 발송 처리 (병렬)
+     */
+    private void dispatchChunk(List<Long> messageIds) {
         // 1. Bulk 조회: Message
         Map<Long, MessageJdbcRepository.MessageDto> messageMap =
                 messageJdbcRepository.findByIds(messageIds).stream()
@@ -143,15 +161,14 @@ public class MessageDispatchScheduler {
             log.info("발송 성공: {}건", successIds.size());
         }
 
-        // 7. 실패 처리 (재시도 예약)
+        // 7. 실패 처리 (큐 꼬리 재큐잉)
         for (FailedMessage failed : failedMessages) {
-            LocalDateTime retryAt = LocalDateTime.now().plusMinutes(5 * (failed.retryCount + 1));
-            messageJdbcRepository.markFailed(failed.messageId, retryAt);
-            waitingQueueService.addToQueue(failed.messageId, retryAt);
+            LocalDateTime scheduledAt = waitingQueueService.addToQueueTail(failed.messageId);
+            messageJdbcRepository.markFailed(failed.messageId, scheduledAt);
         }
 
         if (!failedMessages.isEmpty()) {
-            log.info("발송 실패 → 재시도 예약: {}건", failedMessages.size());
+            log.info("발송 실패 → 큐 꼬리 재큐잉: {}건", failedMessages.size());
         }
 
         if (!missingSnapshotIds.isEmpty()) {
