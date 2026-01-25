@@ -10,8 +10,6 @@ import java.util.List;
 
 public interface BillingUserRepository {
 
-    List<BillingUser> findUsersGreaterThanId(Long lastUserId, Pageable pageable);
-
     MinMaxIdDto findMinMaxId();
     List<BillingUserMemberDto> findUsersInRange(
             Long minValue,
@@ -22,5 +20,5 @@ public interface BillingUserRepository {
             LocalDate endDate,
             Pageable pageable
     );
-    List<BillingUser> findByUserIdIn(List<Long> userIds);
+
 }

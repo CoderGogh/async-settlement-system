@@ -23,15 +23,6 @@ public class BillingUserRepositoryImpl implements BillingUserRepository {
 
     private final NamedParameterJdbcTemplate namedJdbcTemplate;
 
-    @Override
-    public List<BillingUser> findUsersGreaterThanId(Long lastUserId, Pageable pageable) {
-        return List.of();
-    }
-
-    @Override
-    public List<BillingUser> findByUserIdIn(List<Long> userIds) {
-        return List.of();
-    }
 
     /* ===============================
      * 공통 RowMapper
