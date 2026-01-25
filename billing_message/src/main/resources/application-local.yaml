@@ -17,10 +17,7 @@ spring:
 
   datasource:
     # 도커 내부(host.docker.internal)가 아니라 내 컴퓨터(localhost)로 접속
-    url: jdbc:mysql://localhost:13306/billing_message
-     ?rewriteBatchedStatements=true
-      &useServerPrepStmts=true
-      &cachePrepStmts=true
+    url: jdbc:mysql://localhost:13306/billing_message?rewriteBatchedStatements=true&useServerPrepStmts=true&cachePrepStmts=true
     username: ${DB_USER}
     password: ${DB_PASSWORD}
     hikari:
