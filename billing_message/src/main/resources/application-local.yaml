@@ -2,45 +2,59 @@
 spring:
   config:
     activate:
-      on-profile: local
+      on-profile: local # 이 설정은 'local' 프로필일 때만 작동함
+  task:
+    scheduling:
+      pool:
+        size: 10  # 스케줄러 스레드 풀 (기본값 1 → 10)
+  jpa:
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 1000
+        order_inserts: true
+        order_updates: true
 
   datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    # ?rewriteBatchedStatements=true&allowMultiQueries=true 옵션 설명
-    # (기존) 1000건 저장 시: DB와 1000번 대화
-    # (변경) 1000건 저장 시: DB와 1번 대화
-    url: jdbc:mysql://localhost:13306/billing_batch?rewriteBatchedStatements=true&allowMultiQueries=true
-    username: ${DB_USER} #로컬로 테스트 시, 직접 값 입력하기
-    password: ${DB_PASSWORD} #로컬로 테스트 시, 직접 값 입력하기
+    # 도커 내부(host.docker.internal)가 아니라 내 컴퓨터(localhost)로 접속
+    url: jdbc:mysql://localhost:13306/billing_message
+     ?rewriteBatchedStatements=true
+      &useServerPrepStmts=true
+      &cachePrepStmts=true
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
     hikari:
-      maximum-pool-size: 50
-
-  # 배치 메타데이터 테이블 자동 생성 및 자동 실행 방지
-  batch:
-    jdbc:
-      initialize-schema: always
-    job:
-      enabled: false
+      maximum-pool-size: 50   # DB 작업용
+      minimum-idle: 25        # 유휴 커넥션 유지
 
   kafka:
+    # 도커 서비스명(kafka:29092)이 아니라 내 컴퓨터 포트(localhost:9092)로 접속
     bootstrap-servers: localhost:9092
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 
-      retries: 5
-      batch-size: 65536         # 64KB (spring.kafka.producer.batch-size)
-      compression-type: lz4     # 압축 (spring.kafka.producer.compression-type)
-      acks: all                 # 안정성 (spring.kafka.producer.acks)
+    consumer:
+      group-id: billing-message-groupM19
+      auto-offset-reset: earliest
+      enable-auto-commit: false # 수동 커밋 모드 (안정성 확보)
+      max-poll-records: 1000     # 한 번에 가져올 메시지 양
+
+      # [추가] Deserializer 설정 (batch 모듈과 쌍을 맞춰야 데이터가 읽힙니다)
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
 
       properties:
         linger.ms: 20           # 20ms 대기 ( Throughput 향상 핵심)
         max.request.size: 5242880 # 5MB로 확장
 
-    consumer:
-      group-id: billing-group
-      auto-offset-reset: earliest
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
-      properties:
-        spring.json.trusted.packages: "com.touplus.billing_batch.domain.dto"
+    listener:
+      # 컨슈머가 수동으로 커밋할 수 있도록 설정 (AckMode)
+      ack-mode: manual_immediate
+      
+message:
+  dispatch:
+    pool-size: 500            # 배치 크기와 동일 (1배치=1초)
+    queue-size: 1500
+    batch-size: 500           # pool-size와 동일
+    poll-delay-ms: 300        # 더 빠른 폴링
