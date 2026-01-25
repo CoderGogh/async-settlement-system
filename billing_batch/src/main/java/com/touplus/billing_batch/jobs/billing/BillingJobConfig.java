@@ -41,7 +41,6 @@ public class BillingJobConfig {
     private final JobRepository jobRepository;
     private final PlatformTransactionManager transactionManager;
     private final UserRangePartitioner userRangePartitioner;
-    private final BillingItemReader billingItemReader;
 
     private final BillingJobListener billingJobListener; // job 리스너 주입
     private final BillingSkipListener billingSkipListener; // 리스너 주입
@@ -70,7 +69,9 @@ public class BillingJobConfig {
     }
 
     @Bean
-    public Step workerStep(@Qualifier("billingItemWriter") ItemWriter<BillingResult> billingItemWriter) { // 2. 여기서 직접 주입받음
+    public Step workerStep(
+            @Qualifier("billingItemWriter") ItemWriter<BillingResult> billingItemWriter, BillingItemReader billingItemReader
+    ) { // 2. 여기서 직접 주입받음
         return new StepBuilder("workerStep", jobRepository)
                 .<BillingUserBillingInfoDto, BillingResult>chunk(2000, transactionManager) // 청크 단위를 크게 가져가 성능 최적화 //데드락 수에 따라 조정 필요
                 .reader(billingItemReader)

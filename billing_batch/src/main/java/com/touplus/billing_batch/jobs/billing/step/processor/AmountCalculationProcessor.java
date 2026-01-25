@@ -1,6 +1,7 @@
 package com.touplus.billing_batch.jobs.billing.step.processor;
 
 import com.touplus.billing_batch.common.BillingException;
+import com.touplus.billing_batch.domain.enums.UseType;
 import com.touplus.billing_batch.jobs.billing.cache.BillingReferenceCache;
 import com.touplus.billing_batch.domain.dto.*;
 import com.touplus.billing_batch.common.BillingFatalException;
@@ -16,6 +17,7 @@ import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.stereotype.Component;
 
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
 
 import java.util.Collections;
@@ -37,6 +39,10 @@ public class AmountCalculationProcessor
                 .build();
 
         Map<Long, BillingProductDto> productMap = referenceCache.getProductMap();
+        Map<UseType, OverusePolicyDto> overusePolicyMap = referenceCache.getOverusePolicyMap();
+        Map<UsageKeyDto, ProductBaseUsageDto> productBaseUsageMap = referenceCache.getProductBaseUsageMap();
+        Map<Long, RefundPolicyDto> refundPolicyMap = referenceCache.getRefundPolicyMap();
+
         if(productMap == null || productMap.isEmpty())
             throw BillingFatalException.cacheNotFound("상품 정보 캐싱이 이루어지지 않았습니다.");
         
@@ -56,6 +62,22 @@ public class AmountCalculationProcessor
             if (product == null) {
                 log.error("상품 정보를 찾을 수 없습니다. ProductId: {}, UserId: {}", usp.getProductId(), item.getUserId());
                 throw BillingException.dataNotFound(item.getUserId(), "상품 정보(ID: " + usp.getProductId() + ")가 캐시에 없습니다.");
+            }
+
+            // 환불 체크
+            if(usp.getDeletedAt() != null){
+                RefundPolicyDto refundPolicy= refundPolicyMap.get(product.getProductId());
+                if (refundPolicy != null) {
+                    long usedDays = ChronoUnit.DAYS.between(
+                            usp.getCreatedMonth(),
+                            usp.getDeletedAt()
+                    );
+
+                    if (usedDays < refundPolicy.getRefundDuration()) {
+                        continue; // 환불 기간 내 → 처리
+                    }
+                }
+
             }
 
             // 캐시 상품이 존재하면 상세 정보 가져오기
@@ -126,10 +148,22 @@ public class AmountCalculationProcessor
 
 //        log.info("[AmountCalculationProcessor] 추가 요금 합산 완료");
 
+        // 월 기본 사용량 기반 추가 사용량 정산
+
+        // 1. 월 기본 사용량 리스트가 비었느지 확인 -> 비었으면 종료 예외 처리
+        // 2. 사용자당 월 사용량 리스트가 비었는지 확인 -> 비었으면 종료 예외 처리
+        // 3. 사용자 요금 확인 ->
+
+
         // 정산 로직 이상 탐지
         long baseAmount = productSum + additionalSum;
         if(productSum<0 || additionalSum<0 || baseAmount <0 || baseAmount > Integer.MAX_VALUE){
             throw BillingFatalException.invalidProductAmount(item.getUserId(), productSum, additionalSum, baseAmount);
+        }
+
+        // 정산이 없음.
+        if(baseAmount == 0){
+            // skio
         }
 
         workDto.setProductAmount((int)productSum);
