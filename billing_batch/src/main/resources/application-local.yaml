@@ -47,3 +47,7 @@ spring:
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
         spring.json.trusted.packages: "com.touplus.billing_batch.domain.dto"
+
+message:
+  signal:
+    topic: billing-batch-done

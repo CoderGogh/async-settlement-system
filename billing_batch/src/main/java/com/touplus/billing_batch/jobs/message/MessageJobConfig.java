@@ -4,6 +4,7 @@ import com.touplus.billing_batch.domain.dto.BillingResultDto;
 import com.touplus.billing_batch.jobs.message.step.MessageSkipListener;
 import com.touplus.billing_batch.jobs.message.step.MessageStepLogger;
 import com.touplus.billing_batch.jobs.message.step.TopicCreateTasklet;
+import com.touplus.billing_batch.jobs.message.step.SignalPublishTasklet;
 import com.touplus.billing_batch.jobs.message.step.listener.MessageJobListener;
 import com.touplus.billing_batch.jobs.message.step.writer.MessageItemWriter;
 import lombok.RequiredArgsConstructor;
@@ -44,11 +45,13 @@ public class MessageJobConfig {
 
     @Bean
     public Job messageJob(@Qualifier("createTopicStep") Step createTopicStep,
+                          @Qualifier("publishSignalStep") Step publishSignalStep,
                           @Qualifier("messageJobStep") Step messageStepInstance) {
         return new JobBuilder("messageJob", jobRepository)
                 .listener(messageJobListener)
                 .start(createTopicStep)      // 1. 토픽 생성 (TopicCreateTasklet 실행)
-                .next(messageStepInstance)   // 2. 메시지 발송 실행
+                .next(publishSignalStep)     // ✅ 2. 신호 토픽 발행 (메시지 서버 활성화)
+                .next(messageStepInstance)   // 3. 메시지 발송 실행
                 .build();
     }
 
@@ -57,6 +60,13 @@ public class MessageJobConfig {
     public Step createTopicStep() {
         return new StepBuilder("createTopicStep", jobRepository)
                 .tasklet(topicCreateTasklet, transactionManager)
+                .build();
+    }
+
+    @Bean(name = "publishSignalStep")
+    public Step publishSignalStep(SignalPublishTasklet signalPublishTasklet) {
+        return new StepBuilder("publishSignalStep", jobRepository)
+                .tasklet(signalPublishTasklet, transactionManager)
                 .build();
     }
 
