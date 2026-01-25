@@ -8,11 +8,16 @@ import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.stereotype.Service;
 
+import org.springframework.dao.DataAccessException;
+import org.springframework.data.redis.connection.RedisConnection;
+import org.springframework.data.redis.core.RedisCallback;
+
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -78,6 +83,41 @@ public class WaitingQueueService {
     }
 
     /**
+     * Redis Pipeline으로 대기열에 메시지 일괄 추가
+     * - N번 네트워크 왕복 → 1번으로 감소
+     * @param messageIdScheduledAtMap messageId → scheduledAt 매핑
+     * @param delaySeconds 추가 지연 시간 (초)
+     */
+    public void addToQueueBatch(Map<Long, LocalDateTime> messageIdScheduledAtMap, long delaySeconds) {
+        if (messageIdScheduledAtMap == null || messageIdScheduledAtMap.isEmpty()) {
+            return;
+        }
+
+        byte[] keyBytes = QUEUE_KEY.getBytes();
+
+        redisTemplate.executePipelined(new RedisCallback<Object>() {
+            @Override
+            public Object doInRedis(RedisConnection connection) throws DataAccessException {
+                for (Map.Entry<Long, LocalDateTime> entry : messageIdScheduledAtMap.entrySet()) {
+                    Long messageId = entry.getKey();
+                    LocalDateTime scheduledAt = entry.getValue();
+
+                    LocalDateTime releaseTime = scheduledAt != null ? scheduledAt : LocalDateTime.now();
+                    if (delaySeconds > 0) {
+                        releaseTime = releaseTime.plusSeconds(delaySeconds);
+                    }
+                    double score = releaseTime.atZone(ZoneId.systemDefault()).toEpochSecond();
+
+                    connection.zSetCommands().zAdd(keyBytes, score, String.valueOf(messageId).getBytes());
+                }
+                return null;
+            }
+        });
+
+        log.debug("Redis Pipeline 큐 추가: {}건, delay={}s", messageIdScheduledAtMap.size(), delaySeconds);
+    }
+
+    /**
      * 큐 맨 뒤로 추가하고 적용된 예정 시간을 반환
      */
     public LocalDateTime addToQueueTail(Long messageId) {
@@ -99,6 +139,51 @@ public class WaitingQueueService {
                 ZoneId.systemDefault());
 
         log.debug("Redis 큐 꼬리 추가: messageId={}, scheduledAt={}", messageId, scheduledAt);
+        return scheduledAt;
+    }
+
+    /**
+     * 큐 맨 뒤로 일괄 추가 (Pipeline) + 적용된 scheduledAt 반환
+     * - 실패 메시지 재큐잉용
+     */
+    public LocalDateTime addToQueueTailBatch(List<Long> messageIds) {
+        if (messageIds == null || messageIds.isEmpty()) {
+            return LocalDateTime.now();
+        }
+
+        // 현재 큐의 마지막 스코어 조회
+        long now = System.currentTimeMillis() / 1000;
+        double baseScore = now;
+
+        Set<ZSetOperations.TypedTuple<String>> last =
+                redisTemplate.opsForZSet().reverseRangeWithScores(QUEUE_KEY, 0, 0);
+        if (last != null && !last.isEmpty()) {
+            ZSetOperations.TypedTuple<String> tuple = last.iterator().next();
+            if (tuple != null && tuple.getScore() != null && tuple.getScore() >= baseScore) {
+                baseScore = tuple.getScore() + 1;
+            }
+        }
+
+        final double startScore = baseScore;
+        byte[] keyBytes = QUEUE_KEY.getBytes();
+
+        redisTemplate.executePipelined(new RedisCallback<Object>() {
+            @Override
+            public Object doInRedis(RedisConnection connection) throws DataAccessException {
+                double score = startScore;
+                for (Long messageId : messageIds) {
+                    connection.zSetCommands().zAdd(keyBytes, score, String.valueOf(messageId).getBytes());
+                    score += 1;  // 각 메시지마다 1초씩 증가
+                }
+                return null;
+            }
+        });
+
+        LocalDateTime scheduledAt = LocalDateTime.ofInstant(
+                Instant.ofEpochSecond((long) startScore),
+                ZoneId.systemDefault());
+
+        log.debug("Redis Pipeline 큐 꼬리 추가: {}건, startScheduledAt={}", messageIds.size(), scheduledAt);
         return scheduledAt;
     }
 

@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -47,6 +48,22 @@ public class MessageProcessor {
      * 외부에서 User Map을 전달받아 처리 (DB 조회 제거로 성능 향상)
      */
     public void processBatchWithUsers(List<BillingSnapshot> snapshots, Map<Long, User> userMap) {
+        // billingMap 생성해서 최적화 버전 호출
+        Map<Long, BillingSnapshot> billingMap = snapshots.stream()
+                .collect(Collectors.toMap(BillingSnapshot::getBillingId, s -> s));
+        processBatchWithMaps(snapshots, userMap, billingMap);
+    }
+
+    /**
+     * 외부에서 User Map + BillingSnapshot Map을 전달받아 처리 (최적화 버전)
+     * - 중복 DB 조회 완전 제거
+     * - JDBC batchInsert + Redis Pipeline
+     */
+    public void processBatchWithMaps(
+            List<BillingSnapshot> snapshots,
+            Map<Long, User> userMap,
+            Map<Long, BillingSnapshot> billingMap) {
+
         if (snapshots.isEmpty())
             return;
 
@@ -78,8 +95,8 @@ public class MessageProcessor {
         }
 
         if (inserted > 0) {
-            // 2. 스냅샷 생성 + Redis 큐에 추가
-            createSnapshotsAndEnqueue(messages);
+            // 2. 스냅샷 생성 + Redis 큐에 추가 (최적화 버전)
+            createSnapshotsAndEnqueueOptimized(messages, userMap, billingMap);
             log.info("Message 저장 완료: {}건 → 스냅샷 생성 → Redis 큐에 추가됨", inserted);
         }
     }
@@ -154,7 +171,7 @@ public class MessageProcessor {
     }
 
     /**
-     * INSERT 후 스냅샷 생성 + Redis 큐에 추가
+     * INSERT 후 스냅샷 생성 + Redis 큐에 추가 (레거시 - 기존 호환용)
      */
     private void createSnapshotsAndEnqueue(List<Message> messages) {
         List<Long> billingIds = messages.stream()
@@ -177,12 +194,55 @@ public class MessageProcessor {
             log.error("스냅샷 생성 실패", e);
         }
 
-        // 3. Redis 큐에 추가 (EMAIL 1초 지연)
+        // 3. Redis 큐에 Pipeline으로 일괄 추가 (EMAIL 1초 지연)
+        Map<Long, LocalDateTime> messageIdScheduledAtMap = new HashMap<>(insertedMessages.size());
         for (Message msg : insertedMessages) {
-            waitingQueueService.addToQueue(msg.getMessageId(), msg.getScheduledAt(), 1);
+            messageIdScheduledAtMap.put(msg.getMessageId(), msg.getScheduledAt());
+        }
+        waitingQueueService.addToQueueBatch(messageIdScheduledAtMap, 1);
+
+        log.debug("Redis Pipeline으로 큐에 {}건 추가됨", insertedMessages.size());
+    }
+
+    /**
+     * INSERT 후 스냅샷 생성 + Redis 큐에 추가 (최적화 버전)
+     * - 중복 DB 조회 제거 (userMap, billingMap 재사용)
+     * - JDBC batchInsert 사용
+     */
+    private void createSnapshotsAndEnqueueOptimized(
+            List<Message> messages,
+            Map<Long, User> userMap,
+            Map<Long, BillingSnapshot> billingMap) {
+
+        List<Long> billingIds = messages.stream()
+                .map(Message::getBillingId)
+                .toList();
+
+        // 1. INSERT된 Message 엔티티 조회 (messageId 포함)
+        List<Message> insertedMessages = messageRepository.findByBillingIdIn(billingIds);
+
+        if (insertedMessages.isEmpty()) {
+            log.warn("INSERT된 메시지 조회 실패");
+            return;
         }
 
-        log.debug("Redis 큐에 {}건 추가됨", insertedMessages.size());
+        // 2. 스냅샷 생성 (최적화 - 중복 조회 제거, JDBC batchInsert)
+        try {
+            int snapshotCount = messageSnapshotService.createSnapshotsBatchOptimized(
+                    insertedMessages, MessageType.EMAIL, userMap, billingMap);
+            log.debug("스냅샷 JDBC {}건 생성됨", snapshotCount);
+        } catch (Exception e) {
+            log.error("스냅샷 생성 실패", e);
+        }
+
+        // 3. Redis 큐에 Pipeline으로 일괄 추가 (EMAIL 1초 지연)
+        Map<Long, LocalDateTime> messageIdScheduledAtMap = new HashMap<>(insertedMessages.size());
+        for (Message msg : insertedMessages) {
+            messageIdScheduledAtMap.put(msg.getMessageId(), msg.getScheduledAt());
+        }
+        waitingQueueService.addToQueueBatch(messageIdScheduledAtMap, 1);
+
+        log.debug("Redis Pipeline으로 큐에 {}건 추가됨", insertedMessages.size());
     }
 
     @Transactional

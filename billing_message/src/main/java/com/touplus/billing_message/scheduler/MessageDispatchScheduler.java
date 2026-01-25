@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -24,9 +25,10 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * Redis ZSet 기반 메시지 발송 스케줄러
+ * Redis ZSet 기반 메시지 발송 스케줄러 (다중 스케줄러)
  * - DB 락 없음 (FOR UPDATE SKIP LOCKED 제거)
- * - Redis에서 발송 대상 조회 → 직접 발송
+ * - Redis Lua 스크립트로 원자적 pop → 중복 처리 방지
+ * - 5개 스케줄러가 60ms 간격으로 시작하여 병렬 처리
  */
 @Component
 @RequiredArgsConstructor
@@ -35,7 +37,6 @@ public class MessageDispatchScheduler {
 
     private final WaitingQueueService waitingQueueService;
     private final MessageJdbcRepository messageJdbcRepository;
-    private final MessageSnapshotJdbcRepository messageSnapshotJdbcRepository;
     private final MessageSender messageSender;
     private final SendLogBufferService sendLogBufferService;
     private final Executor messageDispatchTaskExecutor;
@@ -47,12 +48,50 @@ public class MessageDispatchScheduler {
     private int chunkSize;
 
     /**
-     * Redis 기반 메인 스케줄러
-     * - 300ms 간격으로 Redis 폴링
-     * - DB 락 없이 Redis에서 발송 대상 조회
+     * 다중 스케줄러 #1
      */
-    @Scheduled(fixedDelayString = "${message.dispatch.poll-delay-ms:300}")
-    public void dispatchFromRedis() {
+    @Scheduled(fixedRateString = "${message.dispatch.poll-delay-ms:300}")
+    public void dispatch1() {
+        doDispatch(1);
+    }
+
+    /**
+     * 다중 스케줄러 #2 (60ms 지연 시작)
+     */
+    @Scheduled(fixedRateString = "${message.dispatch.poll-delay-ms:300}", initialDelay = 60)
+    public void dispatch2() {
+        doDispatch(2);
+    }
+
+    /**
+     * 다중 스케줄러 #3 (120ms 지연 시작)
+     */
+    @Scheduled(fixedRateString = "${message.dispatch.poll-delay-ms:300}", initialDelay = 120)
+    public void dispatch3() {
+        doDispatch(3);
+    }
+
+    /**
+     * 다중 스케줄러 #4 (180ms 지연 시작)
+     */
+    @Scheduled(fixedRateString = "${message.dispatch.poll-delay-ms:300}", initialDelay = 180)
+    public void dispatch4() {
+        doDispatch(4);
+    }
+
+    /**
+     * 다중 스케줄러 #5 (240ms 지연 시작)
+     */
+    @Scheduled(fixedRateString = "${message.dispatch.poll-delay-ms:300}", initialDelay = 240)
+    public void dispatch5() {
+        doDispatch(5);
+    }
+
+    /**
+     * 실제 발송 처리 로직
+     * - Redis Lua 스크립트로 원자적 pop (중복 방지)
+     */
+    private void doDispatch(int schedulerNo) {
         List<String> readyIds = waitingQueueService.popReadyMessageIds(batchSize);
 
         if (readyIds == null || readyIds.isEmpty()) {
@@ -63,12 +102,10 @@ public class MessageDispatchScheduler {
                 .map(Long::valueOf)
                 .toList();
 
-        log.info("Redis에서 발송 대상 {}건 조회", messageIds.size());
+        log.info("[스케줄러#{}] Redis에서 발송 대상 {}건 조회", schedulerNo, messageIds.size());
 
         // 발송 처리
         dispatchMessages(messageIds);
-
-        // Redis 제거는 dispatchMessages에서 처리
     }
 
     /**
@@ -90,36 +127,57 @@ public class MessageDispatchScheduler {
      * 메시지 발송 처리 (병렬)
      */
     private void dispatchChunk(List<Long> messageIds) {
-        // 1. Bulk 조회: Message
-        Map<Long, MessageJdbcRepository.MessageDto> messageMap =
-                messageJdbcRepository.findByIds(messageIds).stream()
+        // 1. Bulk 조회: Message + Snapshot (JOIN)
+        Map<Long, MessageJdbcRepository.MessageWithSnapshotDto> joinedMap =
+                messageJdbcRepository.findWithSnapshotByIds(messageIds).stream()
                         .collect(Collectors.toMap(
-                                MessageJdbcRepository.MessageDto::messageId,
-                                Function.identity()));
-
-        // 2. Bulk 조회: Snapshot
-        Map<Long, MessageSnapshotJdbcRepository.MessageSnapshotDto> snapshotMap =
-                messageSnapshotJdbcRepository.findByIds(messageIds).stream()
-                        .collect(Collectors.toMap(
-                                MessageSnapshotJdbcRepository.MessageSnapshotDto::messageId,
+                                MessageJdbcRepository.MessageWithSnapshotDto::messageId,
                                 Function.identity()));
 
         // 3. 병렬 발송
         List<CompletableFuture<SendResultHolder>> futures = messageIds.stream()
                 .map(id -> CompletableFuture.supplyAsync(() -> {
-                    MessageJdbcRepository.MessageDto message = messageMap.get(id);
-                    MessageSnapshotJdbcRepository.MessageSnapshotDto snapshotDto = snapshotMap.get(id);
+                    MessageJdbcRepository.MessageWithSnapshotDto joined = joinedMap.get(id);
 
-                    if (message == null) {
+                    if (joined == null) {
                         log.warn("메시지 없음: messageId={}", id);
                         return new SendResultHolder(id, false, null, MissingType.MESSAGE);
                     }
-                    if (snapshotDto == null) {
+                    if (joined.snapshotMessageId() == null) {
                         log.warn("스냅샷 없음: messageId={}", id);
-                        return new SendResultHolder(id, false, message, MissingType.SNAPSHOT);
+                        return new SendResultHolder(id, false,
+                                new MessageJdbcRepository.MessageDto(
+                                        joined.messageId(),
+                                        joined.billingId(),
+                                        joined.userId(),
+                                        joined.status(),
+                                        joined.scheduledAt(),
+                                        joined.retryCount(),
+                                        joined.banEndTime()),
+                                MissingType.SNAPSHOT);
                     }
 
-                    return sendMessage(id, message, snapshotDto);
+                    return sendMessage(
+                            id,
+                            new MessageJdbcRepository.MessageDto(
+                                    joined.messageId(),
+                                    joined.billingId(),
+                                    joined.userId(),
+                                    joined.status(),
+                                    joined.scheduledAt(),
+                                    joined.retryCount(),
+                                    joined.banEndTime()),
+                            new MessageSnapshotJdbcRepository.MessageSnapshotDto(
+                                    joined.snapshotMessageId(),
+                                    joined.snapshotBillingId(),
+                                    joined.settlementMonth(),
+                                    joined.snapshotUserId(),
+                                    joined.userName(),
+                                    joined.userEmail(),
+                                    joined.userPhone(),
+                                    joined.totalPrice(),
+                                    joined.settlementDetails(),
+                                    joined.messageContent()));
                 }, messageDispatchTaskExecutor))
                 .toList();
 
@@ -155,41 +213,50 @@ public class MessageDispatchScheduler {
             }
         }
 
-        // 6. Bulk UPDATE
+        // 6. Bulk UPDATE - 성공
         if (!successIds.isEmpty()) {
             messageJdbcRepository.bulkMarkSent(successIds);
             log.info("발송 성공: {}건", successIds.size());
         }
 
-        // 7. 실패 처리 (큐 꼬리 재큐잉)
-        for (FailedMessage failed : failedMessages) {
-            LocalDateTime scheduledAt = waitingQueueService.addToQueueTail(failed.messageId);
-            messageJdbcRepository.markFailed(failed.messageId, scheduledAt);
-        }
-
+        // 7. 실패 처리 - Bulk (Redis Pipeline + DB Bulk UPDATE)
         if (!failedMessages.isEmpty()) {
-            log.info("발송 실패 → 큐 꼬리 재큐잉: {}건", failedMessages.size());
+            List<Long> failedIds = failedMessages.stream()
+                    .map(FailedMessage::messageId)
+                    .toList();
+
+            // Redis Pipeline으로 큐 꼬리에 일괄 추가
+            LocalDateTime scheduledAt = waitingQueueService.addToQueueTailBatch(failedIds);
+
+            // DB Bulk UPDATE
+            messageJdbcRepository.bulkMarkFailed(failedIds, scheduledAt);
+
+            log.info("발송 실패 → Bulk 큐 꼬리 재큐잉: {}건", failedIds.size());
         }
 
+        // 8. 스냅샷 없음 - Bulk 처리
         if (!missingSnapshotIds.isEmpty()) {
             LocalDateTime retryAt = LocalDateTime.now().plusSeconds(30);
+
+            // DB Bulk UPDATE
+            messageJdbcRepository.bulkDefer(missingSnapshotIds, retryAt);
+
+            // Redis Pipeline으로 일괄 추가
+            Map<Long, LocalDateTime> retryMap = new HashMap<>();
             for (Long messageId : missingSnapshotIds) {
-                messageJdbcRepository.defer(messageId, retryAt);
-                waitingQueueService.addToQueue(messageId, retryAt);
+                retryMap.put(messageId, retryAt);
             }
-            log.warn("스냅샷 없음 재큐잉: {}건", missingSnapshotIds.size());
+            waitingQueueService.addToQueueBatch(retryMap, 0);
+
+            log.warn("스냅샷 없음 Bulk 재큐잉: {}건", missingSnapshotIds.size());
         }
 
         if (!missingMessageIds.isEmpty()) {
             log.error("메시지 없음(정합성 오류) 제거 대상: {}건", missingMessageIds.size());
         }
 
-        for (Long id : successIds) {
-            waitingQueueService.removeFromQueue(id);
-        }
-        for (Long id : missingMessageIds) {
-            waitingQueueService.removeFromQueue(id);
-        }
+        // 9. Redis에서 제거 (이미 pop된 상태이므로 불필요 - 제거)
+        // 참고: popReadyMessageIds()에서 Lua 스크립트로 이미 ZREM 됨
     }
 
     /**
