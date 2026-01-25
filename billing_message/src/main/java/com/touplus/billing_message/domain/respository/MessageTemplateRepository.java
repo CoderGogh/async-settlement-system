@@ -7,5 +7,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface MessageTemplateRepository extends JpaRepository<MessageTemplate, Long> {
 
-    Optional<MessageTemplate> findByMessageType(MessageType messageType);
+    Optional<MessageTemplate> findFirstByMessageType(MessageType messageType);
 }

@@ -56,7 +56,7 @@ public class MessageSnapshotService {
                                                 User::getUserId,
                                                 u -> u));
 
-                MessageTemplate template = messageTemplateRepository.findByMessageType(messageType)
+                MessageTemplate template = messageTemplateRepository.findFirstByMessageType(messageType)
                                 .orElseThrow(() -> new IllegalStateException(
                                                 "MessageTemplate not found: " + messageType));
 
@@ -106,12 +106,7 @@ public class MessageSnapshotService {
                 // 스냅샷 삽입
                 messageSnapshotRepository.saveAll(snapshots);
 
-                // 스냅샷 업데이트
-                List<Long> createdMessageIds = snapshots.stream()
-                                .map(MessageSnapshot::getMessageId)
-                                .toList();
-
-                messageRepository.markCreatedByIds(createdMessageIds);
+                // [Redis 기반] markCreatedByIds 제거 - WAITED → SENT로 직접 변경됨
 
                 log.info("MessageSnapshot batch created: {}", snapshots.size());
                 return snapshots.size();

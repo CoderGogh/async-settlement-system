@@ -96,6 +96,16 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
     boolean existsByStatus(MessageStatus status);
 
     /**
+     * 상태별 메시지 조회 (Redis 초기화용)
+     */
+    List<Message> findByStatus(MessageStatus status);
+
+    /**
+     * billingId 목록으로 메시지 조회 (스냅샷 생성용)
+     */
+    List<Message> findByBillingIdIn(List<Long> billingIds);
+
+    /**
      * WAITED 상태 메시지 선점 (FOR UPDATE SKIP LOCKED)
      */
     @Query(value = """

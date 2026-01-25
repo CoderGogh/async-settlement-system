@@ -99,7 +99,7 @@ public class MessageJdbcRepository {
                     .map(id -> "?")
                     .collect(Collectors.joining(","));
 
-            String sql = "UPDATE message SET status = 'SENT' WHERE message_id IN (" + placeholders + ") AND status = 'CREATED'";
+            String sql = "UPDATE message SET status = 'SENT' WHERE message_id IN (" + placeholders + ") AND status IN ('WAITED','CREATED')";
 
             totalUpdated += jdbcTemplate.update(sql, batch.toArray());
         }
@@ -172,6 +172,34 @@ public class MessageJdbcRepository {
     public int defer(Long messageId, LocalDateTime scheduledAt) {
         String sql = "UPDATE message SET status = 'WAITED', scheduled_at = ? WHERE message_id = ?";
         return jdbcTemplate.update(sql, Timestamp.valueOf(scheduledAt), messageId);
+    }
+
+    /**
+     * billingId 목록으로 메시지 조회 (INSERT 후 생성된 ID 조회용)
+     */
+    public List<MessageDto> findByBillingIds(List<Long> billingIds) {
+        if (billingIds.isEmpty())
+            return Collections.emptyList();
+
+        String placeholders = billingIds.stream()
+                .map(id -> "?")
+                .collect(Collectors.joining(","));
+
+        String sql = "SELECT message_id, billing_id, user_id, status, scheduled_at, retry_count, ban_end_time " +
+                "FROM message WHERE billing_id IN (" + placeholders + ")";
+
+        return jdbcTemplate.query(sql, billingIds.toArray(), (rs, rowNum) -> new MessageDto(
+                rs.getLong("message_id"),
+                rs.getLong("billing_id"),
+                rs.getLong("user_id"),
+                MessageStatus.valueOf(rs.getString("status")),
+                rs.getTimestamp("scheduled_at") != null
+                        ? rs.getTimestamp("scheduled_at").toLocalDateTime()
+                        : null,
+                rs.getInt("retry_count"),
+                rs.getTime("ban_end_time") != null
+                        ? rs.getTime("ban_end_time").toLocalTime()
+                        : null));
     }
 
     /**
