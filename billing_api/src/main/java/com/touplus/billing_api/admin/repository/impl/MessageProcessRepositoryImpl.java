@@ -18,7 +18,7 @@ public class MessageProcessRepositoryImpl implements MessageProcessRepository {
     
     @Override
     public ProcessType findLatestKafkaReceiveStatus() {
-        String sql = "SELECT kafka_receive FROM billing_message.message_process";
+        String sql = "SELECT kafka_receive FROM billing_message.message_process ORDER BY settlement_month DESC LIMIT 1";
 
         return jdbcTemplate.queryForObject(
             sql,
@@ -31,7 +31,7 @@ public class MessageProcessRepositoryImpl implements MessageProcessRepository {
 
     @Override
     public ProcessType findLatestCreateMessageStatus() {
-        String sql = "SELECT create_message FROM billing_message.message_process";
+        String sql = "SELECT create_message FROM billing_message.message_process ORDER BY settlement_month DESC LIMIT 1";
 
         return jdbcTemplate.queryForObject(
             sql,
@@ -44,7 +44,7 @@ public class MessageProcessRepositoryImpl implements MessageProcessRepository {
 
     @Override
     public ProcessType findLatestSentMessageStatus() {
-        String sql = "SELECT sent_message FROM billing_message.message_process";
+        String sql = "SELECT sent_message FROM billing_message.message_process ORDER BY settlement_month DESC LIMIT 1";
 
         return jdbcTemplate.queryForObject(
             sql,
