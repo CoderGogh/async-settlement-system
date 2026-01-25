@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-// targetMonth 를 어디서 활용...?
 @Component
 @StepScope
 @Slf4j
