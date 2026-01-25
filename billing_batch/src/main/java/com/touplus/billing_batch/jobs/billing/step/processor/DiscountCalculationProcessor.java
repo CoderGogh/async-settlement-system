@@ -132,7 +132,7 @@ public class DiscountCalculationProcessor implements ItemProcessor<BillingWorkDt
                 productPriceMap.replace(productId, Math.max(0, nowProductPrice + discountAmount));
 
                 // 할인 상세내역 기록
-                if (discountAmount > nowProductPrice) {
+                if (Math.abs(discountAmount) > nowProductPrice) {
                     // totalDiscount에 할인 금액 더하기
                     totalDiscountSum += (nowProductPrice * -1);
                     saveDiscountDetails(work, discountPolicy.getDiscountRange(), discount.getDiscountName(), nowProductPrice * -1);
@@ -177,7 +177,7 @@ public class DiscountCalculationProcessor implements ItemProcessor<BillingWorkDt
             double calculateDiscount = ((nowProductPrice * discountPercent) / 100.0) * -1;    // 할인액
             productPriceMap.replace(usd.getProductId(), Math.max(0, nowProductPrice + calculateDiscount));
 
-            if(calculateDiscount > nowProductPrice){
+            if(Math.abs(calculateDiscount) > nowProductPrice){
                 totalDiscountSum += (nowProductPrice * -1);
                 saveDiscountDetails(work, discountPolicy.getDiscountRange(), discount.getDiscountName(), nowProductPrice * -1);
             }else {
@@ -215,7 +215,7 @@ public class DiscountCalculationProcessor implements ItemProcessor<BillingWorkDt
                     productPriceMap.replace(usd.getProductId(), nowPrice + price);
 
 
-                    if(price > nowPrice){
+                    if(Math.abs(price) > nowPrice){
                         totalDiscountSum += (nowPrice * -1);
                         saveDiscountDetails(work, discountPolicy.getDiscountRange(), discount.getDiscountName(), nowPrice * -1);
                     }else {

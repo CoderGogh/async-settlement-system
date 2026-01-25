@@ -41,14 +41,14 @@ public class FinalBillingResultProcessor
     public BillingResult process(BillingWorkDto work) throws Exception {
 
         // 10원 미만 처리
-        long totalSum = Math.round(work.getTotalPrice());
+        long totalSum = (int)(work.getTotalPrice());
         int underTen = (int)(totalSum % 10);
         int totalPrice = (int)(totalSum - underTen);
 
         DetailItem detailUnderTen = DetailItem.builder()
                 .productName("10원 미만 할인")
                 .productType("DISCOUNT_UNDERTEN")
-                .price(underTen)
+                .price(underTen * -1)
                 .build();
 
         work.getDiscounts().add(detailUnderTen);
