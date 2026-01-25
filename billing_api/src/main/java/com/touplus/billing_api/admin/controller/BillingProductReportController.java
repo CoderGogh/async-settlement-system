@@ -47,7 +47,7 @@ public class BillingProductReportController {
     @GetMapping("/donut")
     public String billingReportDonut(Model model, HttpServletRequest request) {
 
-        List<String> productTypes = List.of("MOVIE", "ADDON");
+        List<String> productTypes = List.of("MOVIE");
         
         List<BillingProductStatResponse> allProducts =
                 reportService.getTopSubscribedProducts(productTypes, 100);
