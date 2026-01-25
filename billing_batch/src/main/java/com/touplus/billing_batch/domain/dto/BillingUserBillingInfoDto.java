@@ -3,6 +3,7 @@ package com.touplus.billing_batch.domain.dto;
 import lombok.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -24,7 +25,5 @@ public class BillingUserBillingInfoDto {
     @Builder.Default
     private List<UserUsageDto> usage = new ArrayList<>();
     @Builder.Default
-    private List<GroupDiscountDto> groups = new ArrayList<>();
-
-    private Integer numOfMember;
+    private BillingUserMemberDto  users = null;
 }

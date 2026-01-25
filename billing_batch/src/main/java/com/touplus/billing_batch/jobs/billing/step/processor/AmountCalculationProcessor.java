@@ -47,7 +47,7 @@ public class AmountCalculationProcessor
 
 //        log.info("[AmountCalculationProcessor] 상품 정보 가져오기 성공");
 
-        long productSum = 0;
+        double productSum = 0;
 
         // 상품 가격 합산
         // product는 무조건 1개 이상 존재.
@@ -82,7 +82,7 @@ public class AmountCalculationProcessor
             // 캐시 상품이 존재하면 상세 정보 가져오기
             String productName = product.getProductName();
             ProductType productType = product.getProductType();
-            int price = product.getPrice();
+            double price = product.getPrice();
 
             // 상품 데이터 이상
             if (productType == null) {
@@ -133,7 +133,7 @@ public class AmountCalculationProcessor
                 item.getAdditionalCharges() == null ? Collections.emptyList() : item.getAdditionalCharges();
 
         // 추가 요금 합산
-        long additionalSum = 0;
+        double additionalSum = 0;
         for (AdditionalChargeDto ac : charges) {
             //추가 요금 데이터 이상.
             if (ac == null) {
@@ -152,7 +152,7 @@ public class AmountCalculationProcessor
             workDto.getAddon().add(DetailItem.builder()
                     .productType("ADDITIONAL_CHARGE")
                     .productName(ac.getCompanyName())
-                    .price(ac.getPrice())
+                    .price((double)ac.getPrice())
                     .build());
         }
 
@@ -192,18 +192,18 @@ public class AmountCalculationProcessor
             }
 
             // 초과 요금이 있으면 추가요금 계산
-            int basicAmount = baseUsageDto.getBasicAmount();
-            int useAmount = us.getUseAmount();
+            double basicAmount = baseUsageDto.getBasicAmount();
+            double useAmount = us.getUseAmount();
             // 실제 사용량 < 기본 사용량이면 continue
             if(basicAmount < useAmount) {
                 // 실제 사용량 > 기본 사용량인 경우
-                long overCharge = (long) ((useAmount - basicAmount) * policy.getUnitPrice());
+                double overCharge = (useAmount - basicAmount) * policy.getUnitPrice();
 
                 additionalSum += overCharge;
                 workDto.getAddon().add(DetailItem.builder()
                         .productType("OVERUSE_CHARGE")
                         .productName(us.getUseType().name() + "초과 요금")
-                        .price((int) overCharge)
+                        .price(overCharge)
                         .build());
             }
         }
@@ -212,7 +212,7 @@ public class AmountCalculationProcessor
         // 5. if) 추가 요금이 있으면, 추가요금 정책에 따라 청구요금 계산
 
         // 정산 로직 이상 탐지
-        long baseAmount = productSum + additionalSum;
+        double baseAmount = productSum + additionalSum;
         if (productSum < 0 || additionalSum < 0 || baseAmount < 0 || baseAmount > Integer.MAX_VALUE) {
             throw BillingFatalException.invalidProductAmount(item.getUserId(), productSum, additionalSum, baseAmount);
         }
@@ -222,11 +222,11 @@ public class AmountCalculationProcessor
             throw BillingException.NoSettlementFee(item.getUserId());
         }
 
-        workDto.setProductAmount((int) productSum);
-        workDto.setAdditionalCharges((int) additionalSum);
+        workDto.setProductAmount(productSum);
+        workDto.setAdditionalCharges(additionalSum);
 
         // 총 상품 금액 + 총 추가요금
-        workDto.setBaseAmount((int) baseAmount);
+        workDto.setBaseAmount(baseAmount);
 
 //        log.info("[AmountCalculationProcessor] DTO에 상품/추가요금 내역 저장");
 

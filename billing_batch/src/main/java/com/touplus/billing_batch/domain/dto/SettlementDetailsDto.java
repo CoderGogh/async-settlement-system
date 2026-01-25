@@ -41,6 +41,6 @@ public class SettlementDetailsDto {
     public static class DetailItem {
         private String productType;
         private String productName;
-        private Integer price;
+        private Double price;
     }
 }

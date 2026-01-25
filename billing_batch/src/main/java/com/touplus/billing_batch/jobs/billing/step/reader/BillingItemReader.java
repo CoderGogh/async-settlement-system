@@ -127,14 +127,14 @@ public class BillingItemReader implements ItemStreamReader<BillingUserBillingInf
 
         // 1. 청구 대상 유저 선택 & groupMember 수 파악
         // '미정구 유저 찾기'
-        List<BillingUser> users = userRepository.findUsersInRange(
+        List<BillingUserMemberDto> users = userRepository.findUsersInRange(
                 minValue, maxValue, lastProcessedUserId, forceFullScan, startDate, endDate, Pageable.ofSize(chunkSize)
         );
 
         if (users.isEmpty()) return;
 
         // 2. Entity를 조회 후 DTO로 변환하여 Map으로 그룹화(Bulk 조회 준비동작)
-        List<Long> userIds = users.stream().map(BillingUser::getUserId).toList();
+        List<Long> userIds = users.stream().map(BillingUserMemberDto::getUserId).toList();
 
         // 2. Entity를 조회 후 DTO로 변환하여 Map으로 그룹화 (Bulk 조회 준비동작)
 
@@ -162,13 +162,15 @@ public class BillingItemReader implements ItemStreamReader<BillingUserBillingInf
                 .map(UserUsageDto::fromEntity)
                 .collect(Collectors.groupingBy(UserUsageDto::getUserId));
 
-        Map<Long, List<GroupDiscountDto>> groupMap = groupDiscountRepository.findByUserIdIn(userIds)
-                .stream()
-                .map(GroupDiscountDto::fromEntity)
-                .collect(Collectors.groupingBy(GroupDiscountDto::getGroupId));
+        Map<Long, BillingUserMemberDto> userMapById = users.stream()
+                .collect(Collectors.toMap(
+                        BillingUserMemberDto::getUserId,
+                        user -> user
+                ));
+
 
         // 3. DTO 조립 --> processor 로 넘길 정보
-        for (BillingUser user : users) {
+        for (BillingUserMemberDto user : users) {
             BillingUserBillingInfoDto dto = BillingUserBillingInfoDto.builder()
                     .userId(user.getUserId())
                     // Null 방지 --> List.of() 사용
@@ -176,8 +178,7 @@ public class BillingItemReader implements ItemStreamReader<BillingUserBillingInf
                     .additionalCharges(chargeMap.getOrDefault(user.getUserId(), List.of()))
                     .discounts(discountMap.getOrDefault(user.getUserId(), List.of()))
                     .usage(UsageMap.getOrDefault(user.getUserId(), List.of()))
-                    .numOfMember(user.getNumOfMember())
-                    .groups(groupMap.getOrDefault(user.getUserId(), List.of()))
+                    .users(userMapById.get(user.getUserId()))
                     .build();
 
             buffer.add(dto);

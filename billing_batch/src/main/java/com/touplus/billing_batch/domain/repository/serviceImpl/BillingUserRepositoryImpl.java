@@ -1,5 +1,6 @@
 package com.touplus.billing_batch.domain.repository.serviceImpl;
 
+import com.touplus.billing_batch.domain.dto.BillingUserMemberDto;
 import com.touplus.billing_batch.domain.dto.MinMaxIdDto;
 import com.touplus.billing_batch.domain.entity.BillingUser;
 import com.touplus.billing_batch.domain.repository.service.BillingUserRepository;
@@ -22,14 +23,25 @@ public class BillingUserRepositoryImpl implements BillingUserRepository {
 
     private final NamedParameterJdbcTemplate namedJdbcTemplate;
 
+    @Override
+    public List<BillingUser> findUsersGreaterThanId(Long lastUserId, Pageable pageable) {
+        return List.of();
+    }
+
+    @Override
+    public List<BillingUser> findByUserIdIn(List<Long> userIds) {
+        return List.of();
+    }
+
     /* ===============================
      * 공통 RowMapper
      * =============================== */
-    private BillingUser mapRowNumOfMember(ResultSet rs, int rowNum) throws SQLException {
-        return BillingUser.builder()
+    private BillingUserMemberDto mapRowGroup(ResultSet rs, int rowNum) throws SQLException {
+        return BillingUserMemberDto.builder()
                 .userId(rs.getLong("user_id"))
                 .groupId(rs.getLong("group_id"))
-                .numOfMember(rs.getInt("num_of_member"))
+                .userNumOfMember(rs.getInt("user_num_of_member"))       // 기존 COALESCE 값
+                .groupNumOfMember(rs.getInt("group_num_of_member")) // 실제 DB 값
                 .build();
     }
 
@@ -46,31 +58,6 @@ public class BillingUserRepositoryImpl implements BillingUserRepository {
                 .build();
     }
 
-    /**
-     * JPA:
-     * findUsersGreaterThanId(Long lastUserId, Pageable pageable)
-     */
-    @Override
-    public List<BillingUser> findUsersGreaterThanId(
-            Long lastUserId,
-            Pageable pageable
-    ) {
-        String sql = """
-            SELECT b.user_id, b.group_id, COALESCE(g.num_of_member, 0) as num_of_member
-            FROM billing_user b
-            LEFT JOIN group_discount g ON b.group_id = g.group_id
-            WHERE b.user_id > :lastUserId
-            ORDER BY b.user_id ASC
-            LIMIT :limit OFFSET :offset
-        """;
-
-        MapSqlParameterSource params = new MapSqlParameterSource()
-                .addValue("lastUserId", lastUserId)
-                .addValue("limit", pageable.getPageSize())
-                .addValue("offset", pageable.getOffset());
-
-        return namedJdbcTemplate.query(sql, params, this::mapRowNumOfMember);
-    }
 
     @Override
     public MinMaxIdDto findMinMaxId() {
@@ -95,7 +82,7 @@ public class BillingUserRepositoryImpl implements BillingUserRepository {
     }
 
     @Override
-    public List<BillingUser> findUsersInRange(
+    public List<BillingUserMemberDto> findUsersInRange(
             Long minValue,
             Long maxValue,
             Long lastProcessedUserId,
@@ -106,26 +93,27 @@ public class BillingUserRepositoryImpl implements BillingUserRepository {
     ) {
         // JOIN을 통해 num_of_member를 가져오는 SQL
         String sql = """
-        SELECT 
-            b.user_id, 
-            b.group_id, 
-            COALESCE(g.num_of_member, 0) as num_of_member
-        FROM billing_user b
-        LEFT JOIN group_discount g ON b.group_id = g.group_id
-        WHERE b.user_id BETWEEN :minValue AND :maxValue
-          AND b.user_id > :lastProcessedUserId
-          AND (
-              :forceFullScan = true
-              OR NOT EXISTS (
-                  SELECT 1
-                  FROM billing_result r
-                  WHERE r.user_id = b.user_id
-                    AND r.settlement_month BETWEEN :startDate AND :endDate
+            SELECT 
+                b.user_id, 
+                b.group_id, 
+                COALESCE(g.num_of_member, 0) AS user_num_of_member,  -- 기존 COALESCE
+                g.num_of_member AS group_num_of_member             -- 실제 테이블 값
+            FROM billing_user b
+            LEFT JOIN group_discount g ON b.group_id = g.group_id
+            WHERE b.user_id BETWEEN :minValue AND :maxValue
+              AND b.user_id > :lastProcessedUserId
+              AND (
+                  :forceFullScan = true
+                  OR NOT EXISTS (
+                      SELECT 1
+                      FROM billing_result r
+                      WHERE r.user_id = b.user_id
+                        AND r.settlement_month BETWEEN :startDate AND :endDate
+                  )
               )
-          )
-        ORDER BY b.user_id ASC
-        LIMIT :limit
-    """;
+            ORDER BY b.user_id ASC
+            LIMIT :limit
+        """;
 
         MapSqlParameterSource params = new MapSqlParameterSource()
                 .addValue("minValue", minValue)
@@ -137,26 +125,7 @@ public class BillingUserRepositoryImpl implements BillingUserRepository {
                 .addValue("limit", pageable.getPageSize());
 
         // 이전에 수정했던 mapUserIdOnly를 그대로 사용 (numOfMember 매핑 포함)
-        return namedJdbcTemplate.query(sql, params, this::mapRowNumOfMember);
+        return namedJdbcTemplate.query(sql, params, this::mapRowGroup);
     }
 
-    @Override
-    public List<BillingUser> findByUserIdIn(List<Long> userIds) {
-        if (userIds == null || userIds.isEmpty()) {
-            return List.of(); // 빈 리스트 반환
-        }
-
-        String sql = """
-            SELECT 
-                user_id,
-                group_id
-            FROM billing_user
-            WHERE user_id IN (:userIds)
-        """;
-
-        MapSqlParameterSource params = new MapSqlParameterSource();
-        params.addValue("userIds", userIds);
-
-        return namedJdbcTemplate.query(sql, params, this::mapRow);
-    }
 }

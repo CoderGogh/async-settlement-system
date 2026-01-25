@@ -22,7 +22,7 @@ public class BillingFatalException extends RuntimeException {
         return new BillingFatalException(message, "ERR_DATA_NOT_FOUND", 0L);
     }
 
-    public static BillingFatalException invalidProductAmount(Long userId, long productSum, long additionalSum, long baseAmount) {
+    public static BillingFatalException invalidProductAmount(Long userId, double productSum, double additionalSum, double baseAmount) {
         return new BillingFatalException(
                 "상품 로직 이상 userId=" + userId
                         + " productSum=" + productSum
@@ -41,20 +41,10 @@ public class BillingFatalException extends RuntimeException {
         );
     }
 
-    public static BillingFatalException invalidDiscountAmount(Long userId, long totalDiscount) {
+    public static BillingFatalException invalidDiscountAmount(Long userId, double totalDiscount) {
         return new BillingFatalException(
                 "할인 로직 이상 userId=" + userId
                         + " totalDiscount=" + totalDiscount,
-                "FATAL_INVALID_AMOUNT",
-                userId
-        );
-    }
-
-    public static BillingFatalException invalidUnpaidAmount(Long userId, long totalUnpaid, long finalPrice) {
-        return new BillingFatalException(
-                "미납(Final) 로직 이상 userId=" + userId
-                        + " totalUnpaid=" + totalUnpaid
-                        + " finalPrice=" + finalPrice,
                 "FATAL_INVALID_AMOUNT",
                 userId
         );
