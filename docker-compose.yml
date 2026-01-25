@@ -25,13 +25,13 @@ services:
   #    networks:
   #      - billing-net
 
-  #  redis:
-  #    image: redis:7
-  #    container_name: billing-redis
-  #    ports:
-  #      - "6379:6379"
-  #    networks:
-  #      - billing-net
+  redis:
+    image: redis:7
+    container_name: billing-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - billing-net
 
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0

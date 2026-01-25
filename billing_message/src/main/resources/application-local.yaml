@@ -27,6 +27,12 @@ spring:
       maximum-pool-size: 50   # DB 작업용
       minimum-idle: 25        # 유휴 커넥션 유지
 
+  # Redis (Docker: localhost:6379)
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
   kafka:
     # 도커 서비스명(kafka:29092)이 아니라 내 컴퓨터 포트(localhost:9092)로 접속
     bootstrap-servers: localhost:9092
