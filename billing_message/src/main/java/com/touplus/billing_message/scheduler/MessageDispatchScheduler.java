@@ -10,6 +10,7 @@ import com.touplus.billing_message.service.SendLogBufferService;
 import com.touplus.billing_message.service.WaitingQueueService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -39,6 +40,7 @@ public class MessageDispatchScheduler {
     private final MessageJdbcRepository messageJdbcRepository;
     private final MessageSender messageSender;
     private final SendLogBufferService sendLogBufferService;
+    @Qualifier("messageDispatchTaskExecutor")
     private final Executor messageDispatchTaskExecutor;
 
     @Value("${message.dispatch.batch-size:500}")

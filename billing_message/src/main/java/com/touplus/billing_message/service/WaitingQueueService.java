@@ -142,48 +142,39 @@ public class WaitingQueueService {
         return scheduledAt;
     }
 
+    private static final long RETRY_DELAY_SECONDS = 5;  // 재시도 지연 시간
+
     /**
-     * 큐 맨 뒤로 일괄 추가 (Pipeline) + 적용된 scheduledAt 반환
-     * - 실패 메시지 재큐잉용
+     * 실패 메시지 일괄 재큐잉 (Pipeline) - 고정 지연 방식
+     * - now + 5초 후 일괄 재시도
      */
     public LocalDateTime addToQueueTailBatch(List<Long> messageIds) {
         if (messageIds == null || messageIds.isEmpty()) {
             return LocalDateTime.now();
         }
 
-        // 현재 큐의 마지막 스코어 조회
+        // 고정 지연: 현재 시간 + 5초
         long now = System.currentTimeMillis() / 1000;
-        double baseScore = now;
-
-        Set<ZSetOperations.TypedTuple<String>> last =
-                redisTemplate.opsForZSet().reverseRangeWithScores(QUEUE_KEY, 0, 0);
-        if (last != null && !last.isEmpty()) {
-            ZSetOperations.TypedTuple<String> tuple = last.iterator().next();
-            if (tuple != null && tuple.getScore() != null && tuple.getScore() >= baseScore) {
-                baseScore = tuple.getScore() + 1;
-            }
-        }
-
-        final double startScore = baseScore;
+        final double retryScore = now + RETRY_DELAY_SECONDS;
         byte[] keyBytes = QUEUE_KEY.getBytes();
 
         redisTemplate.executePipelined(new RedisCallback<Object>() {
             @Override
             public Object doInRedis(RedisConnection connection) throws DataAccessException {
-                double score = startScore;
                 for (Long messageId : messageIds) {
-                    connection.zSetCommands().zAdd(keyBytes, score, String.valueOf(messageId).getBytes());
-                    score += 1;  // 각 메시지마다 1초씩 증가
+                    // 모든 실패 메시지를 동일한 스코어(now+5초)로 추가
+                    connection.zSetCommands().zAdd(keyBytes, retryScore, String.valueOf(messageId).getBytes());
                 }
                 return null;
             }
         });
 
         LocalDateTime scheduledAt = LocalDateTime.ofInstant(
-                Instant.ofEpochSecond((long) startScore),
+                Instant.ofEpochSecond((long) retryScore),
                 ZoneId.systemDefault());
 
-        log.debug("Redis Pipeline 큐 꼬리 추가: {}건, startScheduledAt={}", messageIds.size(), scheduledAt);
+        log.info("실패 메시지 재큐잉: {}건, {}초 후 재시도 (scheduledAt={})",
+                messageIds.size(), RETRY_DELAY_SECONDS, scheduledAt);
         return scheduledAt;
     }
 
