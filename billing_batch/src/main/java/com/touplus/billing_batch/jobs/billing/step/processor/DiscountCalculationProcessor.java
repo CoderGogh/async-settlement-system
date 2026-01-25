@@ -120,6 +120,16 @@ public class DiscountCalculationProcessor implements ItemProcessor<BillingWorkDt
                 if (discount.getCash() == null || discount.getCash() <= 0) {
                     throw BillingException.invalidDiscountData(userId, String.valueOf(usd.getDiscountId()));
                 }
+                String contentType = discount.getContentType().toString().toLowerCase();
+                int configValue = discount.getValue() == null ? 0 : discount.getValue(); // 할인 value
+
+                if ("group".equals(contentType)) {
+                    if (userGroup == null || userGroup.getGroupId() != null ||
+                            userGroup.getGroupNumOfMember() != configValue ||
+                            userGroup.getUserNumOfMember() != configValue){
+                        throw BillingException.invalidDiscountCondition(userId, discount.getDiscountId());
+                    }
+                }
                 Long productId = usd.getProductId();
                 // map 안의 price에서 할인 금액 빼기
                 // 할인 금액
@@ -154,16 +164,6 @@ public class DiscountCalculationProcessor implements ItemProcessor<BillingWorkDt
             BillingDiscountDto discount = discountMap.get(usd.getDiscountId());
             DiscountPolicyDto discountPolicy = discountPolicyMap.get(usd.getDiscountId());
 
-            String contentType = discount.getContentType().toString().toLowerCase();
-            int configValue = discount.getValue() == null ? 0 : discount.getValue(); // 할인 value
-
-            if ("group".equals(contentType)) {
-                if (userGroup == null || userGroup.getGroupId() != null ||
-                        userGroup.getGroupNumOfMember() != configValue ||
-                        userGroup.getUserNumOfMember() != configValue){
-                    throw BillingException.invalidDiscountCondition(userId, discount.getDiscountId());
-                }
-            }
 
             double discountPercent = discount.getPercent();
             if (discountPercent <= 0 || discountPercent > 100) {

@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.item.ItemProcessor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -27,6 +28,9 @@ public class AmountCalculationProcessor
         implements ItemProcessor<BillingUserBillingInfoDto, BillingWorkDto> {
 
     private final BillingReferenceCache referenceCache;
+
+    @Value("#{jobParameters['targetMonth']}")
+    private String targetMonth;
 
     @Override
     public BillingWorkDto process(BillingUserBillingInfoDto item) throws Exception {
@@ -100,9 +104,10 @@ public class AmountCalculationProcessor
             // 장기 할인에 대한 사용일 계산
             if (productType == ProductType.mobile || productType == ProductType.internet) {
                 LocalDate createdMonth = usp.getCreatedMonth();
-                LocalDate deletedAt = usp.getDeletedAt() == null ? LocalDate.now() : usp.getDeletedAt();
-                long yearsUsed = ChronoUnit.YEARS.between(createdMonth, deletedAt);
-                joinedYear += (int) yearsUsed;
+                LocalDate deletedAt = usp.getDeletedAt() == null ? LocalDate.parse(targetMonth) : usp.getDeletedAt();
+                long daysUsed = ChronoUnit.DAYS.between(createdMonth, deletedAt);
+                int yearsUsed = (int) (daysUsed / 365); // 365일 기준
+                joinedYear += yearsUsed;
             }
 
             // MOBILE 구독 상품이 있으면 productId 저장
