@@ -10,18 +10,20 @@
 <body>
 <div th:replace="~{layout/sidebar :: sidebar}"></div>
 <div class="main-content">
-    <h2>배치 모니터링</h2>
+    <h1>배치 모니터링</h1>
 
     <div id="liveArea" class="monitor-card inactive-monitor">
-        <div id="liveHeader" class="card-header bg-secondary">
-            <div>
-                <span id="statusDot" class="status-dot dot-offline"></span>
-                <span id="statusText">연결 대기 중...</span>
-            </div>
-            <div id="lastSuccessInfo" th:if="${lastSuccess != null}" style="font-size: 0.8rem; opacity: 0.9;">
-                최종 성공: #[[${lastSuccess.JOB_EXECUTION_ID}]] ([[${lastSuccess.END_TIME}]])
-            </div>
-        </div>
+      <div id="liveHeader" class="card-header bg-secondary">
+
+    <div>
+        <span id="statusDot" class="status-dot dot-offline"></span>
+        <span id="statusText">연결 대기 중...</span>
+    </div>
+    <div id="lastSuccessInfo" th:if="${lastSuccess != null}" style="font-size: 0.8rem; opacity: 0.9;">
+        최종 성공: #[[${lastSuccess.JOB_EXECUTION_ID}]] ([[${lastSuccess.END_TIME}]])
+    </div>
+</div>
+
 
         <div class="card-body">
             <div class="progress-wrapper">
@@ -96,156 +98,168 @@
             </tbody>
         </table>
     </div>
-</div>
+</div><script th:inline="javascript">
+const eventSource = new EventSource('/admin/batch/realtime/stream');
 
-<script th:inline="javascript">
-    const eventSource = new EventSource('/admin/batch/realtime/stream');
+let targetProgress = 0;
+let displayProgress = 0;
+let interpolationTimer = null;
+let currentTps = 0;
+const TOTAL_COUNT = 1000000;
 
-    let targetProgress = 0;
-    let displayProgress = 0;
-    let interpolationTimer = null;
-    let currentTps = 0;
+const liveArea = document.getElementById('liveArea');
+const liveHeader = document.getElementById('liveHeader');
+const pb = document.getElementById('progressBar');
+const skipCard = document.getElementById('skipCard');
+const partitionGrid = document.getElementById('partitionGrid');
+const statusDot = document.getElementById('statusDot');
+const statusText = document.getElementById('statusText');
+const processedCount = document.getElementById('processedCount');
+const tpsValue = document.getElementById('tpsValue');
+const etcValue = document.getElementById('etcValue');
+const skipCount = document.getElementById('skipCount');
 
-    const TOTAL_COUNT = 1000000;
+let isMonitoringStopped = false; // 완료 후 SSE 무시 플래그
+
+// ✅ 초기 상태 설정
+function initDashboard() {
+    liveHeader.classList.remove('bg-danger', 'bg-primary');
+    liveHeader.classList.add('bg-secondary'); // 초기 회색
+    partitionGrid.style.display = 'none';
+    liveArea.classList.add('inactive-monitor');
+
+    statusDot.className = 'status-dot dot-offline';
+    statusText.textContent = "연결 대기 중...";
+    processedCount.textContent = '0';
+    tpsValue.textContent = '0.0';
+    etcValue.textContent = '00:00:00';
+    skipCount.textContent = '0';
+    pb.style.width = '0%';
+    pb.innerText = '0%';
+    pb.classList.remove('bg-danger', 'bg-primary', 'animated-stripes');
+}
+initDashboard();
+
+// ✅ SSE 이벤트 처리
 eventSource.addEventListener("batchUpdate", (event) => {
     const data = JSON.parse(event.data);
 
-    const liveArea = document.getElementById('liveArea');
-    const liveHeader = document.getElementById('liveHeader');
-    const pb = document.getElementById('progressBar');
-    const skipCard = document.getElementById('skipCard');
+    if (isMonitoringStopped) return; // 완료 후 무시
 
-    // ✅ 헤더 색상 초기화
-    liveHeader.classList.remove('bg-primary', 'bg-secondary');
-
-    if (data.status === 'RUNNING') {
-        liveHeader.classList.add('bg-primary');
-        liveArea.classList.remove('inactive-monitor');
-        document.getElementById('statusDot').className = 'status-dot dot-online';
-        document.getElementById('statusText').textContent = "배치 Job 모니터링";
-    } else {
-        liveHeader.classList.add('bg-secondary');
-    }
+    liveArea.classList.remove('inactive-monitor');
 
     if (!data.isCompleted) {
-        // 진행률 / 지표 처리
-        if (data.skipCount > 0) {
-            pb.classList.add('bg-danger', 'animated-stripes');
-            skipCard.onclick = () => location.href = `/admin/batch/error/list/${data.currentJobId}`;
+        // 진행 중 빨강
+       liveHeader.classList.remove('bg-primary', 'bg-secondary', 'bg-danger', 'bg-info-custom', 'bg-warning-custom');
+
+		// 하늘색 적용 (진행 중)
+		liveHeader.classList.add('bg-secondary');
+		statusDot.className = 'status-dot dot-online';
+		statusText.textContent = "배치 Job 모니터링";
+
+        // 파티션 표시
+        if (data.partitions && data.partitions.length > 0) {
+            partitionGrid.style.display = 'grid';
+            partitionGrid.innerHTML = data.partitions.map(p => `
+                <div class="partition-item">
+                    <div style="color:#888">${p.stepName.split(':').pop()}</div>
+                    <div style="font-weight:800">${p.writeCount.toLocaleString()}</div>
+                </div>
+            `).join('');
         } else {
-            pb.classList.remove('bg-danger');
-            pb.classList.add('animated-stripes');
+            partitionGrid.style.display = 'none';
         }
+    }
 
-        targetProgress = parseFloat((data.progress || "0%").replace('%', ''));
-        currentTps = data.tps || 0;
+    // 진행률 / 지표
+    targetProgress = parseFloat((data.progress || "0%").replace('%', ''));
+    currentTps = data.tps || 0;
+    processedCount.textContent = (data.totalProcessed || 0).toLocaleString();
+    tpsValue.textContent = currentTps.toLocaleString();
+    etcValue.textContent = data.etc || "00:00:00";
+    skipCount.textContent = (data.skipCount || 0).toLocaleString();
 
-        document.getElementById('processedCount').textContent =
-            (data.totalProcessed || 0).toLocaleString();
-        document.getElementById('tpsValue').textContent =
-            (data.tps || 0).toLocaleString();
-        document.getElementById('etcValue').textContent =
-            data.etc || "00:00:00";
-        document.getElementById('skipCount').textContent =
-            (data.skipCount || 0).toLocaleString();
-
-        if (data.partitions) {
-            document.getElementById('partitionGrid').innerHTML =
-                data.partitions.map(p => `
-                    <div class="partition-item">
-                        <div style="color:#888">${p.stepName.split(':').pop()}</div>
-                        <div style="font-weight:800">${p.writeCount.toLocaleString()}</div>
-                    </div>
-                `).join('');
-        }
-
-        if (!interpolationTimer) startInterpolation();
+    // 상태바 색상
+    if (data.skipCount > 0) {
+        pb.classList.remove('bg-primary');
+        pb.classList.add('bg-danger');
+        skipCard.onclick = () => location.href = `/admin/batch/error/list/${data.currentJobId}`;
     } else {
+        pb.classList.remove('bg-danger');
+        pb.classList.add('bg-primary');
+        skipCard.onclick = null;
+    }
+
+    if (!interpolationTimer) startInterpolation();
+
+    // 완료 처리
+    if (data.isCompleted) {
         stopMonitoring("연결 대기 중...");
+        isMonitoringStopped = true;
     }
 });
 
+// ✅ 진행률 애니메이션
+function startInterpolation() {
+    interpolationTimer = setInterval(() => {
+        const incrementalStep = currentTps > 0 ? Math.max((currentTps / TOTAL_COUNT) * 10, 0.001) : 0;
 
-    function startInterpolation() {
-        interpolationTimer = setInterval(() => {
-            const pb = document.getElementById('progressBar');
-
-            // 🎯 [수정] TPS가 0보다 클 때만 최소 전진(0.001)을 허용합니다.
-            // 배치가 안 돌면(currentTps === 0) incrementalStep도 0이 됩니다.
-            const incrementalStep = currentTps > 0 ? Math.max((currentTps / TOTAL_COUNT) * 10, 0.001) : 0;
-
-            if (displayProgress < targetProgress) {
-                // 목표치 추격 (널뛰기 방지)
-                displayProgress += (targetProgress - displayProgress) * 0.05;
-            } else if (currentTps > 0) {
-                // 목표치 도달 후에는 TPS 기반으로 미세 전진
-                displayProgress += incrementalStep;
-            }
-
-            // 100% 근처에서 멈춤 처리
-            if (displayProgress > 99.99 && targetProgress < 100) displayProgress = 99.99;
-
-            const finalVal = displayProgress.toFixed(2);
-            pb.style.width = finalVal + '%';
-            pb.innerText = finalVal + '%';
-
-            if (displayProgress >= 100) pb.classList.remove('animated-stripes');
-        }, 100);
-    }
-    
-    // 🎯 [중요] 배치가 종료되었을 때 호출되는 함수에서 데이터 완전 초기화
-    function stopMonitoring(msg) {
-    	
-    	 liveHeader.classList.remove('bg-primary');
-         liveHeader.classList.add('bg-secondary');
-         
-        if (interpolationTimer) {
-            clearInterval(interpolationTimer);
-            interpolationTimer = null;
+        if (displayProgress < targetProgress) {
+            displayProgress += (targetProgress - displayProgress) * 0.05;
+        } else if (currentTps > 0) {
+            displayProgress += incrementalStep;
         }
 
-        // 1. 모든 계산용 수치 완전 초기화 (숫자가 올라가는 것 방지)
-        currentTps = 0;
-        targetProgress = 0;
-        displayProgress = 0;
+        if (displayProgress > 99.99 && targetProgress < 100) displayProgress = 99.99;
 
-        const liveArea = document.getElementById('liveArea');
-        const liveHeader = document.getElementById('liveHeader');
-        const pb = document.getElementById('progressBar');
+        const finalVal = displayProgress.toFixed(2);
+        pb.style.width = finalVal + '%';
+        pb.innerText = finalVal + '%';
 
-        // 2. 보라색(bg-primary)을 회색(bg-secondary)으로 교체
-        liveArea.classList.add('inactive-monitor');
-        liveHeader.classList.remove('bg-primary');
-        liveHeader.classList.add('bg-secondary');
-        liveHeader.classList.remove('idle');
-        liveHeader.classList.add('running');
+        if (displayProgress >= 100) pb.classList.remove('animated-stripes');
+    }, 100);
+}
 
-        
-        // 3. 바와 텍스트를 0으로 고정
-        pb.style.width = '0%';
-        pb.innerText = '0%';
-        pb.classList.remove('bg-danger', 'animated-stripes');
-
-        document.getElementById('statusDot').className = 'status-dot dot-offline';
-        document.getElementById('statusText').textContent = msg;
-
-        // 지표 텍스트들도 0으로 리셋
-        document.getElementById('processedCount').textContent = '0';
-        document.getElementById('tpsValue').textContent = '0.0';
-        document.getElementById('etcValue').textContent = '00:00:00';
-        document.getElementById('skipCount').textContent = '0';
+// ✅ 모니터링 종료 처리
+function stopMonitoring(msg, resetPartitions = true) {
+    if (interpolationTimer) {
+        clearInterval(interpolationTimer);
+        interpolationTimer = null;
     }
 
-    eventSource.addEventListener("finished", (event) => {
-        targetProgress = 100;
-        document.getElementById('statusText').textContent = "정산 완료";
-        document.getElementById('statusDot').className = 'status-dot dot-success';
-        document.getElementById('progressBar').classList.remove('animated-stripes');
-        document.getElementById('partitionGrid').innerHTML = '';
-        fetch('/admin/batch/dashboard/history-fragment')
-            .then(res => res.text())
-            .then(html => { document.getElementById('historyTableContainer').innerHTML = html; });
-    });
+    currentTps = 0;
+    targetProgress = 0;
+    displayProgress = 0;
+
+    liveArea.classList.add('inactive-monitor');
+    liveHeader.classList.remove('bg-primary', 'bg-info');
+    liveHeader.classList.add('bg-secondary');
+
+    pb.style.width = '0%';
+    pb.innerText = '0%';
+    pb.classList.remove('bg-danger', 'bg-primary', 'bg-info');
+
+    statusDot.className = 'status-dot dot-offline';
+    statusText.textContent = msg;
+
+    processedCount.textContent = '0';
+    tpsValue.textContent = '0.0';
+    etcValue.textContent = '00:00:00';
+    skipCount.textContent = '0';
+
+    if (resetPartitions && partitionGrid) {
+        partitionGrid.innerHTML = '';
+        partitionGrid.style.display = 'none';
+    }
+}
+
+// ✅ SSE finished 이벤트
+eventSource.addEventListener("finished", () => {
+    stopMonitoring("연결 대기 중...");
+    isMonitoringStopped = true;
+});
 </script>
+
+
 </body>
 </html>
