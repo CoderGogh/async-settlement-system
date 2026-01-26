@@ -52,8 +52,8 @@
 
                 <!-- 정산 상태 -->
                 <td>
-                    <span th:if="${user.billed}" class="badge bg-success">청구 완료</span>
-                    <span th:unless="${user.billed}" class="badge bg-secondary">미청구</span>
+                    <span th:if="${user.billed}" class="badge bg-success">정산 완료</span>
+                    <span th:unless="${user.billed}" class="badge bg-secondary">미정산</span>
                 </td>
 
                 <!-- 정산 금액 -->
