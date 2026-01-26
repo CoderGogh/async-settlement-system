@@ -19,10 +19,11 @@ public class BatchDashBoardController {
     private final JdbcBatchRepository repository;
 
     @GetMapping("/dashboard")
-    public String dashboard(Model model) {
+    public String dashboard(Model model, HttpServletRequest request) {
         // 1. 과거 이력 30건을 조회하여 'historyList'라는 이름으로 모델에 담습니다.
         model.addAttribute("historyList", repository.findAllHistory());
         model.addAttribute("lastSuccess", repository.findLatestSuccessfulBatch());
+        model.addAttribute("currentPath", request.getRequestURI());
         // 2. src/main/resources/templates/batch-dashboard.html 파일을 찾아갑니다.
         return "batch-dashboard";
     }
