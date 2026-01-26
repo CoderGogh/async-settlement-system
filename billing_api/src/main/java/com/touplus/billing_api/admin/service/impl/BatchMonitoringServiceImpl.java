@@ -15,6 +15,8 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 
 @Slf4j
 @Service
@@ -40,6 +42,7 @@ public class BatchMonitoringServiceImpl implements BatchMonitoringService {
     }
 
     private void runEnhancedMonitoringLoop(SseEmitter emitter) {
+        AtomicBoolean emitterClosed = new AtomicBoolean(false);
         log.info("==> [SSE Connection Started] New dashboard client connected.");
         try {
             while (!Thread.currentThread().isInterrupted()) {
@@ -47,13 +50,15 @@ public class BatchMonitoringServiceImpl implements BatchMonitoringService {
 
                 // 1. 배치가 없을 때: 화면을 비활성(Gray-out) 상태로 전송
                 if (currentId == null) {
-                    emitter.send(SseEmitter.event().name("batchUpdate").data(
-                            BatchProgressSseResponse.builder().isCompleted(true).build()
-                    ));
-                    log.info("==> [SSE Connection Waiting] Waiting New Batch Job");
+                    try {
+                        emitter.send(SseEmitter.event().name("batchUpdate")
+                                .data(BatchProgressSseResponse.builder().isCompleted(true).build()));
+                    } catch (IOException | IllegalStateException e) {
+                        emitterClosed.set(true);
+                        return;
+                    }
                     Thread.sleep(5000);
                     continue;
-//                    return;
                 }
 
                 List<PartitionStatusDto> partitions = repository.findPartitionDetails(currentId);
@@ -92,17 +97,26 @@ public class BatchMonitoringServiceImpl implements BatchMonitoringService {
                         .isCompleted(false)
                         .build();
 
-                try {
-                    log.debug("Sending update for Job ID: {}. Progress: {}", currentId, response.getProgress());
-                    emitter.send(SseEmitter.event().name("batchUpdate").data(response));
-                } catch (IOException e) {
-                    log.info("SSE client disconnected. ID: {}", currentId);
-                    break;
+                if (emitterClosed.get()) {
+                    log.info("Emitter already closed. Stop monitoring loop.");
+                    return;
                 }
+
+                try {
+                    emitter.send(SseEmitter.event().name("batchUpdate").data(response));
+                } catch (IOException | IllegalStateException e) {
+                    log.info("SSE client disconnected. jobId={}, thread={}",
+                            currentId, Thread.currentThread().getName());
+                    emitterClosed.set(true);
+                    return;
+                }
+
 
                 // 6. 종료 체크
                 if (partitions.stream().allMatch(p -> "COMPLETED".equals(p.getStatus()))) {
-                    emitter.send(SseEmitter.event().name("finished").data("completed"));
+                    try {
+                        emitter.send(SseEmitter.event().name("finished").data("completed"));
+                    } catch (Exception ignore) {}
                     break;
                 }
                 Thread.sleep(2000);
@@ -111,9 +125,14 @@ public class BatchMonitoringServiceImpl implements BatchMonitoringService {
             Thread.currentThread().interrupt();
         } catch (Exception e) {
             log.error("Monitoring error", e);
-            emitter.completeWithError(e);
+            if (emitterClosed.compareAndSet(false, true)) {
+                emitter.completeWithError(e);
+            }
         } finally {
-            emitter.complete();
+            if (emitterClosed.compareAndSet(false, true)) {
+                emitter.complete();
+                log.info("SSE emitter completed safely.");
+            }
         }
     }
 

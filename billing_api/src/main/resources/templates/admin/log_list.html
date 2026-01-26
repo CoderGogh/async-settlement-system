@@ -41,9 +41,9 @@
 
       <div class="filter-group sort-group">
         <label>정렬 기준</label>
-        <select name="sort" id="sort-select" class="large-select">
+        <select name="sort" class="large-select full-width" onchange="this.form.submit()">
           <option value="latest" th:selected="${selectedSort == 'latest'}">최신순</option>
-          <option value="old" th:selected="${selectedSort == 'old'}">과거순</option>
+          <option value="old" th:selected="${selectedSort == 'old'}">오래된 순</option>
         </select>
       </div>
 
