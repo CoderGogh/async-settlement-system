@@ -1,6 +1,7 @@
 package com.touplus.billing_api.admin.service.impl;
 
 import com.touplus.billing_api.admin.service.BillingLogService;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
@@ -103,4 +104,15 @@ public class BillingLogServiceImpl implements BillingLogService {
             return false;
         }
     }
+    @PostConstruct
+    public void ensureLogDirectoryExists() {
+        Path logPath = Paths.get(logDir).toAbsolutePath().normalize();
+        try {
+            Files.createDirectories(logPath);
+            System.out.println("DEBUG: 로그 디렉토리 보장됨 = " + logPath);
+        } catch (IOException e) {
+            throw new IllegalStateException("로그 디렉토리 생성 실패: " + logPath, e);
+        }
+    }
+
 }

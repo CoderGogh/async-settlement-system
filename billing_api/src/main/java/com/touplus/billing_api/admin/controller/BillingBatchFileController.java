@@ -23,49 +23,66 @@ public class BillingBatchFileController {
 
     private final BillingLogService billingLogService;
 
-    /**
-     * 로그 파일 목록 조회 (필터 및 정렬 포함)
-     */
-    @GetMapping
-    public String listLogs(
-    		@RequestParam(value = "sort", required = false) String sort,
-            @RequestParam(value = "year", required = false) String year,
-            @RequestParam(value = "month", required = false) String month,
-            @RequestParam(value = "day", required = false) String day,
-            HttpServletRequest request, Model model) {
+
+@GetMapping
+public String listLogs(
+        @RequestParam(value = "sort", required = false) String sort,
+        @RequestParam(value = "year", required = false) String year,
+        @RequestParam(value = "month", required = false) String month,
+        @RequestParam(value = "day", required = false) String day,
+        HttpServletRequest request, Model model) {
 
         List<String> rawFileNames = billingLogService.getLogFileList();
         System.out.println("DEBUG: 서비스에서 가져온 파일명 리스트 = " + rawFileNames);
 
-        List<BillingLogFile> logFiles = rawFileNames.stream()
-                .map(name -> {
-                    try {
-                        return new BillingLogFile(name, billingLogService.checkErrorInFile(name));
-                    } catch (Exception e) {
-                        System.out.println("DEBUG: 객체 변환 중 에러 발생 파일명 = " + name + " | 에러: " + e.getMessage());
-                        return null;
-                    }
-                })
-                .filter(Objects::nonNull) // 에러난 객체 제외
-                .filter(file -> {
-                    String name = file.getFileName();
-                    // 필터 조건이 null이거나 빈 문자열이면 무조건 pass(true)
-                    boolean yMatch = (year == null || year.isEmpty() || name.contains(year));
-                    boolean mMatch = (month == null || month.isEmpty() || name.contains(year + month));
-                    boolean dMatch = (day == null || day.isEmpty() || name.contains(year + month + day));
+    List<BillingLogFile> logFiles = rawFileNames.stream()
+            .map(name -> {
+                try {
+                    return new BillingLogFile(name, billingLogService.checkErrorInFile(name));
+                } catch (Exception e) {
+                    return null;
+                }
+            })
+            .filter(Objects::nonNull)
+            .filter(file -> {
+                String name = file.getFileName();
+                // 1. 년도 필터
+                boolean yMatch = (year == null || year.isEmpty() || name.contains(year));
+
+                // 2. 월 필터 (년도가 있을 때만 연 조합)
+                boolean mMatch = true;
+                if (month != null && !month.isEmpty()) {
+                    String pattern = (year != null && !year.isEmpty()) ? year + month : month;
+                    mMatch = name.contains(pattern);
+                }
+
+                // 3. 일 필터 (년/월이 있을 때만 조합)
+                boolean dMatch = true;
+                if (day != null && !day.isEmpty()) {
+                    String pattern = (year != null && !year.isEmpty() && month != null && !month.isEmpty())
+                                     ? year + month + day : day;
+                    dMatch = name.contains(pattern);
+                }
 
                     return yMatch && mMatch && dMatch;
                 })
                 .collect(Collectors.toList());
 
-        System.out.println("DEBUG: 필터링 후 남은 객체 개수 = " + logFiles.size());
+    // ### [수정 핵심] 정렬 로직 추가 ###
+    if ("old".equals(sort)) {
+        // 오래된 순 (날짜 오름차순)
+        logFiles.sort((f1, f2) -> f1.getDateTime().compareTo(f2.getDateTime()));
+    } else {
+        // 최신순 (날짜 내림차순 - 기본값)
+        logFiles.sort((f1, f2) -> f2.getDateTime().compareTo(f1.getDateTime()));
+    }
 
-        model.addAttribute("logFiles", logFiles);
-        model.addAttribute("currentPath", request.getRequestURI());
-        model.addAttribute("selectedYear", year);
-        model.addAttribute("selectedMonth", month);
-        model.addAttribute("selectedDay", day);
-        model.addAttribute("selectedSort", sort);
+    model.addAttribute("logFiles", logFiles);
+    model.addAttribute("currentPath", request.getRequestURI());
+    model.addAttribute("selectedYear", year);
+    model.addAttribute("selectedMonth", month);
+    model.addAttribute("selectedDay", day);
+    model.addAttribute("selectedSort", (sort == null || sort.isEmpty()) ? "latest" : sort);
 
         return "admin/log_list";
     }
