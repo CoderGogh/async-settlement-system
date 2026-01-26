@@ -31,10 +31,8 @@ public class BillingResultConsumer {
     private final MessageProcessor messageProcessor;
 
     @KafkaListener(
-    		id = "billingMessageListener",
-    		autoStartup = "false",
-    		topics = "billing-result-topic-2512",
-    		groupId = "billing-message-group-sh22711-111111111111",
+    		topics = "billing-result-topic-2512", 
+    		groupId = "billing-message-group",
     		containerFactory = "kafkaListenerContainerFactory")
     public void consume(
             List<BillingResultDto> messages,
