@@ -32,23 +32,35 @@
             </tr>
             </thead>
 
-            <tbody>
-            <tr th:each="user : ${settlements.contents}"
-                style="cursor:pointer"
-                th:onclick="|openSettlementDetail([[${user.user.userId}]])|">
-
+            <tr th:each="user : ${settlements.contents}" style="cursor: default">
                 <td th:text="${user.user.userId}"></td>
                 <td th:text="${user.user.name}"></td>
                 <td th:text="${user.user.phone}"></td>
                 <td th:text="${user.user.email}"></td>
 
-                <!-- 구독 상품 -->
-                <td>
-                    <span th:if="${#lists.isEmpty(user.details)}">-</span>
-                    <span th:each="prod : ${user.details}">
-                    <span th:text="${prod.productName} "></span><span> </span>
-                    </span>
+                <td th:unless="${#lists.isEmpty(user.details)}">
+                    <button class="btn btn-sm btn-primary" type="button"
+                            th:attr="data-bs-toggle='modal', data-bs-target='#settlementModal'"
+                            th:onclick="'fillSettlementModal(' + ${user.user.userId} + ')'">
+                        전체 상세보기
+                    </button>
+
+                    <!-- hidden fragment -->
+                    <div th:id="'modalContent_' + ${user.user.userId}" style="display:none">
+                        <table class="table table-bordered">
+                            <thead>
+                            <tr><th>상품명</th><th>가격</th></tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="prod : ${user.details}">
+                                <td th:text="${prod.productName}"></td>
+                                <td th:text="${prod.price}"></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </td>
+
 
                 <!-- 정산 상태 -->
                 <td>
@@ -59,7 +71,7 @@
                 <!-- 정산 금액 -->
                 <td th:text="${user.totalPrice != null ? user.totalPrice : 0}"></td>
             </tr>
-            </tbody>
+
         </table>
     </div>
 
@@ -111,49 +123,30 @@
 </body>
 </html>
 <script>
-    function openSettlementDetail(userId) {
-        fetch(`/admin/settlement/${userId}`)
-            .then(res => res.json())
-            .then(data => {
-                const userData = data.contents.find(u => u.user.userId === userId);
-                const details = userData ? userData.details : [];
+    document.addEventListener('DOMContentLoaded', () => {
+    const closeBtn = document.querySelector('#settlementModal .btn-close');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            const modalEl = document.getElementById('settlementModal');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) {
+                modal.hide();
+            }
 
-                let html = '';
+            // backdrop 제거
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) backdrop.remove();
+        });
+    }
+});
 
-                if (!details || details.length === 0) {
-                    html = '<p class="text-muted">정산 상세 내역이 없습니다.</p>';
-                } else {
-                    html += `
-                        <table class="table table-bordered">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>상품명</th>
-                                    <th>수량</th>
-                                    <th>금액</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                    `;
-
-                    details.forEach(d => {
-                        html += `
-                            <tr>
-                                <td>${d.productName}</td>
-                                <td>${d.count}</td>
-                                <td>${d.price.toLocaleString()}</td>
-                            </tr>
-                        `;
-                    });
-
-                    html += '</tbody></table>';
-                }
-
-                document.getElementById('settlementDetailBody').innerHTML = html;
-                new bootstrap.Modal(document.getElementById('settlementModal')).show();
-            })
-            .catch(() => {
-                document.getElementById('settlementDetailBody').innerHTML =
-                    '<p class="text-danger">정산 정보를 불러오지 못했습니다.</p>';
-            });
+    function fillSettlementModal(userId) {
+        const modalBody = document.querySelector('#settlementModal .modal-body');
+        const content = document.querySelector(`#modalContent_${userId}`);
+        if(modalBody && content){
+            modalBody.innerHTML = content.innerHTML;
+            const modal = new bootstrap.Modal(document.getElementById('settlementModal'));
+            modal.show();
+        }
     }
 </script>
