@@ -24,9 +24,6 @@ public class BillingItemWriterConfig {
 
     private final DataSource dataSource;
 
-    @Value("#{jobParameters['chunkSize'] ?: 1000}")
-    private int chunkSize;
-
     @Bean(name = "billingItemWriter")
     public JdbcBatchItemWriter<BillingResult> billingItemWriter() {
         /*
@@ -35,7 +32,7 @@ public class BillingItemWriterConfig {
          * 2. Bulk Insert: 쿼리 한 번에 1,000건씩 묶어서 전송 (rewriteBatchedStatements=true 설정과 결합 시 폭발적 성능)
          * 3. 테이블명: billing_result
          */
-        log.info("Commit Billing Result Data: {}", chunkSize);
+        log.info("Commit Billing Result Data");
         return new JdbcBatchItemWriterBuilder<BillingResult>()
                 .dataSource(dataSource)
                 .sql("INSERT INTO billing_result " +
