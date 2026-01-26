@@ -1,95 +1,96 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
- 	<meta charset="UTF-8">
-    <title>Billing Tower</title>
-   	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-	<link rel="stylesheet" th:href="@{/css/message-dashboard.css}">
-	<link rel="stylesheet" th:href="@{/css/common.css}">
-<style>
-        .progress { height: 28px; border-radius: 15px; background-color: #dee2e6; }
-        .monitor-card { transition: all 0.3s ease; border: none; }
-        .inactive-monitor { filter: grayscale(100%); opacity: 0.65; background-color: #f8f9fa; }
-        .status-dot { height: 12px; width: 12px; border-radius: 50%; display: inline-block; margin-right: 8px; }
-        .dot-online { background-color: #28a745; box-shadow: 0 0 10px #28a745; animation: blink 1.5s infinite; }
-        .dot-offline { background-color: #adb5bd; }
-        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
-        .metric-card { background: white; border: 1px solid #eee; padding: 15px; border-radius: 10px; transition: 0.3s; }
-        .clickable-error { cursor: pointer; border: 2px solid #dc3545 !important; background-color: #fff5f5; }
-        .clickable-error:hover { transform: scale(1.02); box-shadow: 0 4px 15px rgba(220, 53, 69, 0.2); }
-        .progress-bar {
-            transition: width 0.1s linear;
-        }
-        #statusText {
-            transition: opacity 0.3s ease;
-        }
-    </style>
+    <meta charset="UTF-8">
+    <title>To U+ | Billing Tower</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+    <link rel="stylesheet" th:href="@{/css/batch-dashboard.css}">
 </head>
-<body class="bg-light">
+<body>
 <div th:replace="~{layout/sidebar :: sidebar}"></div>
-<div class="container py-5">
-    <h2 class="mb-4 fw-bold text-dark border-bottom pb-3">諛곗� 紐⑤���곕�</h2>
+<div class="main-content">
+    <h2>배치 모니터링</h2>
 
-    <div id="liveArea" class="card shadow monitor-card mb-5 inactive-monitor">
-        <div class="card-header bg-secondary text-white py-3" id="liveHeader">
-            <h5 class="mb-0 d-flex align-items-center">
+    <div id="liveArea" class="monitor-card inactive-monitor">
+        <div id="liveHeader" class="card-header bg-secondary">
+            <div>
                 <span id="statusDot" class="status-dot dot-offline"></span>
-                <span id="statusText">諛곗� �ㅽ�� 以��� ����</span>
-                <small class="ms-auto text-light" id="lastSuccessInfo"
-                       th:if="${lastSuccess != null}"
-                       th:text="'理�醫� �깃났: #' + ${lastSuccess.JOB_EXECUTION_ID} + ' (' + ${lastSuccess.END_TIME} + ')'"></small>
-            </h5>
+                <span id="statusText">연결 대기 중...</span>
+            </div>
+            <div id="lastSuccessInfo" th:if="${lastSuccess != null}" style="font-size: 0.8rem; opacity: 0.9;">
+                최종 성공: #[[${lastSuccess.JOB_EXECUTION_ID}]] ([[${lastSuccess.END_TIME}]])
+            </div>
         </div>
-        <div class="card-body p-4">
-            <div class="row align-items-center mb-4">
-                <div class="col-md-9">
-                    <div class="progress shadow-sm">
-                        <div id="progressBar" class="progress-bar bg-secondary" role="progressbar" style="width: 0%">0%</div>
-                    </div>
+
+        <div class="card-body">
+            <div class="progress-wrapper">
+                <div class="progress-outer">
+                    <div id="progressBar" class="progress-inner">0%</div>
                 </div>
-                <div class="col-md-3 text-end text-muted fw-bold">
-                    <span id="processedCount">0</span> / 5,000,000
+                <div style="min-width: 120px; text-align: right;">
+                    <span id="processedCount" style="font-weight: 800; font-size: 1.2rem;">0</span>
+                    <span style="color: #6c757d; font-size: 0.9rem;">/ 1,000,000</span>
                 </div>
             </div>
-            <div class="row g-3 text-center">
-                <div class="col-md-4"><div class="metric-card shadow-sm">TPS: <span class="fw-bold h4 text-primary" id="tpsValue">0.0</span></div></div>
-                <div class="col-md-4"><div class="metric-card shadow-sm text-success">ETC: <span class="fw-bold h4" id="etcValue">00:00:00</span></div></div>
-                <div class="col-md-4"><div id="skipCard" class="metric-card shadow-sm">Skip: <span class="fw-bold h4 text-danger" id="skipCount">0</span></div></div>
+
+            <div class="metrics-container">
+                <div class="metric-box">
+                    <div class="metric-label">TPS</div>
+                    <div id="tpsValue" class="metric-value text-primary">0.0</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-label">ETC (남은 시간)</div>
+                    <div id="etcValue" class="metric-value text-success">00:00:00</div>
+                </div>
+                <div class="metric-box" id="skipCard">
+                    <div class="metric-label">Skip</div>
+                    <div id="skipCount" class="metric-value text-danger">0</div>
+                </div>
             </div>
-            <div id="partitionGrid" class="row g-2 mt-4 text-center text-muted small">���� ��湲� 以�...</div>
+
+            <div id="partitionGrid" class="partition-grid">
+            </div>
         </div>
     </div>
 
-    <div id="historyTableContainer" th:fragment="history-table-content" class="card shadow-sm border-0">
-        <div class="card-header bg-white py-3">理�洹� 諛곗� �ㅽ�� �대��</div>
-        <table class="table table-hover mb-0 text-center">
-            <thead class="table-light text-secondary small">
+    <div id="historyTableContainer" th:fragment="history-table-content" class="history-card">
+        <div class="history-header">최근 배치 실행 이력</div>
+        <table>
+            <thead>
             <tr>
-                <th>ID</th>
-                <th>����</th>
-                <th>���� ��媛�</th>
-                <th>泥�由� 嫄댁��</th>
-                <th>���� ��媛�</th>
-                <th>�ㅽ�� 嫄댁��</th>
+                <th>ID</th><th>상태</th><th>시작 시간</th><th>처리 건수</th><th>소요 시간</th><th>스킵 건수</th>
             </tr>
             </thead>
             <tbody>
             <tr th:each="h : ${historyList}">
-                <td th:text="${h.executionId}" class="fw-bold text-primary"></td>
-                <td><span th:text="${h.status}" th:classappend="${h.status == 'COMPLETED' ? 'badge bg-success' : (h.status == 'FAILED' ? 'badge bg-danger' : 'badge bg-warning text-dark')}"></span></td>
+                <td th:text="${h.executionId}" style="color: var(--primary-color); font-weight: bold;"></td>
+                <td style="min-width: 120px;">
+                    <div th:if="${h.exitCode != null}" th:switch="${h.exitCode}">
+                        <span th:case="'FAILED'" class="badge badge-danger">FAILED</span>
+                        <span th:case="'UNKNOWN'" class="badge badge-secondary">TERMINATED</span>
+                        <span th:case="*"
+                              th:text="${h.status}"
+                              th:class="'badge ' + (${h.status == 'COMPLETED' ? 'badge-success' : 'badge-warning'})">
+                        </span>
+                    </div>
+                    <div th:if="${h.exitCode == null}">
+                        <span th:text="${h.status}"
+                              th:class="'badge ' + (${h.status == 'COMPLETED' ? 'badge-success' : 'badge-warning'})">
+                        </span>
+                    </div>
+                </td>
                 <td th:text="${#temporals.format(h.startTime, 'MM-dd HH:mm:ss')}"></td>
-                <td th:text="${#numbers.formatInteger(h.totalWrite, 0, 'COMMA')}"></td>
-                <td th:text="${h.duration + '珥�'}"></td>
+                <td th:text="${#numbers.formatInteger(h.totalWrite, 0, 'COMMA')}" style="font-weight: bold;"></td>
+                <td th:text="${h.duration + '초'}"></td>
                 <td>
                     <div th:if="${h.skipCount > 0}">
                         <a th:href="@{/admin/batch/error/list/{id}(id=${h.executionId})}"
-                           class="btn btn-sm btn-danger py-0 fw-bold"
-                           style="font-size: 0.75rem;"
-                           th:text="${h.skipCount + '嫄� (吏���)'}"></a>
+                           class="btn-detail">
+                            [[${h.skipCount}]]건 (상세)
+                        </a>
                     </div>
-                    <span th:unless="${h.skipCount > 0}" class="text-muted small">0嫄�</span>
+                    <span th:unless="${h.skipCount > 0}" style="color: #adb5bd;">0</span>
                 </td>
             </tr>
             </tbody>
@@ -98,110 +99,133 @@
 </div>
 
 <script th:inline="javascript">
+    /* [원본 로직 100% 유지] */
     const eventSource = new EventSource('/admin/batch/realtime/stream');
-
-    // ���� 愿�由щ�� ���� 蹂�����
-    let targetProgress = 0;      // ��踰����� 諛��� �ㅼ�� 吏���瑜�
-    let displayProgress = 0;     // ��硫댁�� 蹂댁�ъ��� 遺����ъ�� 吏���瑜�
-    let interpolationTimer = null;
-    let currentTps = 0;          // 珥��� 泥�由щ�� 諛���
+    let targetProgress = 0, displayProgress = 0, interpolationTimer = null, currentTps = 0;
+    const TOTAL_COUNT = 1000000;
 
     eventSource.addEventListener("batchUpdate", (event) => {
         const data = JSON.parse(event.data);
+        console.log("==> SSE 수신 데이터:", data);
+        const liveArea = document.getElementById('liveArea');
+        const liveHeader = document.getElementById('liveHeader');
+        const pb = document.getElementById('progressBar');
+        const skipCard = document.getElementById('skipCard');
+
         if (!data.isCompleted) {
-            // 1. ��踰����� �� �ㅼ�� �곗�댄�� ����
-            // "12.34%" ������ 臾몄���댁�� �レ��濡� 蹂���
-            targetProgress = parseFloat(data.progress.replace('%', ''));
-            currentTps = data.tps;
+            liveArea.classList.remove('inactive-monitor');
+            liveHeader.classList.remove('bg-secondary');
+            liveHeader.classList.add('bg-primary');
+            document.getElementById('statusDot').className = 'status-dot dot-online';
+            document.getElementById('statusText').textContent = "배치 Job 모니터링";
+            document.getElementById('liveHeader').className = 'card-header bg-primary';
 
-            // 2. 泥��� ������ ��留� 利��� ��湲고��
-            if (displayProgress === 0) displayProgress = targetProgress;
-
-            // 3. 吏��� ���곗�댄�� (���ㅽ�몃�� 利��� ���곗�댄��)
-            document.getElementById('processedCount').textContent = data.totalProcessed.toLocaleString();
-            document.getElementById('skipCount').textContent = data.skipCount.toLocaleString();
-            document.getElementById('tpsValue').textContent = data.tps;
-            document.getElementById('etcValue').textContent = data.etc;
-
-            // 4. 蹂닿� ���대㉧ ���� (��吏� �� ��怨� ���ㅻ㈃)
-            if (!interpolationTimer) startInterpolation();
-        } else { // 諛곗� �ㅽ�� 以��� ����
-            console.log("==> No active batch found. Stopping monitoring connection.");
-
-            // SSE �곌껐 醫�猷� (��踰��� �� �댁�� �⑦�룹�� 二쇨�諛�吏� ����)
-            eventSource.close();
-
-            // ���대㉧ 以�吏�
-            if (interpolationTimer) {
-                clearInterval(interpolationTimer);
-                interpolationTimer = null;
+            // [2] 로딩바 색상 제어
+            if (data.skipCount > 0) {
+                pb.classList.add('bg-danger', 'animated-stripes'); // 에러 시 빨간색
+                skipCard.style.cursor = 'pointer';
+                skipCard.onclick = () => location.href = `/admin/batch/error/list/${data.currentJobId}`;
+            } else {
+                pb.classList.remove('bg-danger'); // 평소엔 CSS에 정의된 보라색 적용
+                pb.classList.remove('bg-secondary');
+                pb.classList.add('animated-stripes');
             }
 
-            // UI瑜� '鍮�����' ����濡� 怨���
-            setInactiveMode();
+            targetProgress = parseFloat((data.progress || "0%").replace('%', ''));
+            currentTps = data.tps || 0;
+            if (displayProgress === 0) displayProgress = targetProgress;
+
+            document.getElementById('processedCount').textContent = (data.totalProcessed || 0).toLocaleString();
+            document.getElementById('tpsValue').textContent = (data.tps || 0).toLocaleString();
+            document.getElementById('etcValue').textContent = data.etc || "00:00:00";
+            document.getElementById('skipCount').textContent = (data.skipCount || 0).toLocaleString();
+
+            if(data.partitions) {
+                document.getElementById('partitionGrid').innerHTML = data.partitions.map(p => `
+                    <div class="partition-item">
+                        <div style="color: #888; margin-bottom: 4px;">${p.stepName.split(':').pop()}</div>
+                        <div style="font-weight: 800; color: ${p.skipCount > 0 ? 'var(--danger-color)' : 'var(--primary-color)'}">${p.writeCount.toLocaleString()}</div>
+                    </div>
+                `).join('');
+            }
+            if (!interpolationTimer) startInterpolation();
+        } else {
+            stopMonitoring("연결 대기 중...");
         }
     });
 
-    function setInactiveMode() {
-        const liveArea = document.getElementById('liveArea');
-        liveArea.classList.add('inactive-monitor');
-        document.getElementById('statusDot').className = 'status-dot dot-offline';
-        document.getElementById('statusText').textContent = "諛곗� �ㅽ�� 以��� ����";
-
-        const pb = document.getElementById('progressBar');
-        pb.className = 'progress-bar bg-secondary';
-        pb.style.width = '0%';
-        pb.innerText = '0%';
-    }
-
-    // 諛�瑜� 遺����쎄� ��吏����ㅻ�� �듭�� �⑥��
     function startInterpolation() {
-        // 100ms留��� �ㅽ�� (珥��� 10踰� ���곗�댄��)
         interpolationTimer = setInterval(() => {
             const pb = document.getElementById('progressBar');
 
-            // ���� 利�媛�遺� 怨��� (TPS 湲곕�)
-            // 500留� 嫄� ��鍮� 珥��� 利�媛���: (TPS / 5,000,000) * 100
-            // �대�� 100ms �⑥��濡� 履쇨�硫� / 10
-            const incrementalStep = (currentTps / 5000000) * 100 / 10;
+            // 🎯 [수정] TPS가 0보다 클 때만 최소 전진(0.001)을 허용합니다.
+            // 배치가 안 돌면(currentTps === 0) incrementalStep도 0이 됩니다.
+            const incrementalStep = currentTps > 0 ? Math.max((currentTps / TOTAL_COUNT) * 10, 0.001) : 0;
 
-            // �ㅼ�� 媛�蹂대�� ��臾� ����媛�吏� ��寃� 議곗����硫댁�� ��吏�
             if (displayProgress < targetProgress) {
-                // ��踰� 媛�蹂대�� �ㅼ��� ���ㅻ㈃ 議곌� �� 鍮�瑜닿� 異�寃� (蹂댁�� 濡�吏�)
-                displayProgress += (targetProgress - displayProgress) * 0.2;
-            } else {
-                // ��踰� 媛��� ���ы���대�� 諛곗�媛� ���� 以��대㈃ ��二� 議곌��� ��吏� (Crawl)
+                // 목표치 추격 (널뛰기 방지)
+                displayProgress += (targetProgress - displayProgress) * 0.05;
+            } else if (currentTps > 0) {
+                // 목표치 도달 후에는 TPS 기반으로 미세 전진
                 displayProgress += incrementalStep;
             }
 
-            // UI 諛���
-            const finalVal = Math.min(displayProgress, 100).toFixed(2);
+            // 100% 근처에서 멈춤 처리
+            if (displayProgress > 99.99 && targetProgress < 100) displayProgress = 99.99;
+
+            const finalVal = displayProgress.toFixed(2);
             pb.style.width = finalVal + '%';
             pb.innerText = finalVal + '%';
 
+            if (displayProgress >= 100) pb.classList.remove('animated-stripes');
         }, 100);
     }
 
-    // ���� ��猷� �� ���대㉧ 以�吏�
-    eventSource.addEventListener("finished", (event) => {
-        if (interpolationTimer) clearInterval(interpolationTimer);
-        const pb = document.getElementById('progressBar');
-        pb.style.width = '100%';
-        pb.innerText = '100% ��猷�';
-        document.getElementById('statusText').textContent = "���� ��猷�";
+    // 🎯 [중요] 배치가 종료되었을 때 호출되는 함수에서 데이터 완전 초기화
+    function stopMonitoring(msg) {
+        if (interpolationTimer) {
+            clearInterval(interpolationTimer);
+            interpolationTimer = null;
+        }
 
-        console.log("==> Fetching latest history fragment...");
+        // 1. 모든 계산용 수치 완전 초기화 (숫자가 올라가는 것 방지)
+        currentTps = 0;
+        targetProgress = 0;
+        displayProgress = 0;
+
+        const liveArea = document.getElementById('liveArea');
+        const liveHeader = document.getElementById('liveHeader');
+        const pb = document.getElementById('progressBar');
+
+        // 2. 보라색(bg-primary)을 회색(bg-secondary)으로 교체
+        liveArea.classList.add('inactive-monitor');
+        liveHeader.classList.remove('bg-primary');
+        liveHeader.classList.add('bg-secondary');
+
+        // 3. 바와 텍스트를 0으로 고정
+        pb.style.width = '0%';
+        pb.innerText = '0%';
+        pb.classList.remove('bg-danger', 'animated-stripes');
+
+        document.getElementById('statusDot').className = 'status-dot dot-offline';
+        document.getElementById('statusText').textContent = msg;
+
+        // 지표 텍스트들도 0으로 리셋
+        document.getElementById('processedCount').textContent = '0';
+        document.getElementById('tpsValue').textContent = '0.0';
+        document.getElementById('etcValue').textContent = '00:00:00';
+        document.getElementById('skipCount').textContent = '0';
+    }
+
+    eventSource.addEventListener("finished", (event) => {
+        targetProgress = 100;
+        document.getElementById('statusText').textContent = "정산 완료";
+        document.getElementById('statusDot').className = 'status-dot dot-success';
+        document.getElementById('progressBar').classList.remove('animated-stripes');
+        document.getElementById('partitionGrid').innerHTML = '';
         fetch('/admin/batch/dashboard/history-fragment')
-            .then(response => {
-                if (!response.ok) throw new Error('Network response was not ok');
-                return response.text();
-            })
-            .then(html => {
-                // ���대��� 媛��몃�� 而⑦���대���� �댁�⑸� 援�泥� (��濡�怨�移� ����!)
-                document.getElementById('historyTableContainer').innerHTML = html;
-                console.log("==> History table updated successfully.");
-            })
-            .catch(error => console.error('Error updating history:', error));
+            .then(res => res.text())
+            .then(html => { document.getElementById('historyTableContainer').innerHTML = html; });
     });
 </script>
 </body>

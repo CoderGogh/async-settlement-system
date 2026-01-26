@@ -27,8 +27,11 @@ public class JdbcBatchRepositoryImpl implements JdbcBatchRepository {
                  je.STATUS,
                  je.START_TIME,
                  je.END_TIME,
+                 je.EXIT_CODE,
                  TIMESTAMPDIFF(SECOND, je.START_TIME, je.END_TIME) as DURATION,
-                 SUM(se.READ_SKIP_COUNT + se.PROCESS_SKIP_COUNT + se.WRITE_SKIP_COUNT) as SKIP_COUNT,
+                 SUM(CASE WHEN se.STEP_NAME IN ('masterStep', 'messageJobStep')
+                       THEN (se.READ_SKIP_COUNT + se.PROCESS_SKIP_COUNT + se.WRITE_SKIP_COUNT)\s
+                       ELSE 0 END) as SKIP_COUNT,
                  SUM(CASE WHEN se.STEP_NAME NOT IN ('masterStep') THEN se.WRITE_COUNT ELSE 0 END) as TOTAL_WRITE
              FROM billing_batch.BATCH_JOB_EXECUTION je
              JOIN billing_batch.BATCH_STEP_EXECUTION se ON je.JOB_EXECUTION_ID = se.JOB_EXECUTION_ID
@@ -45,7 +48,7 @@ public class JdbcBatchRepositoryImpl implements JdbcBatchRepository {
                 .duration(rs.getLong("DURATION"))
                 .totalWrite(rs.getLong("TOTAL_WRITE"))
                 .skipCount(rs.getLong("SKIP_COUNT"))
-                // .totalAmount(0L) // 이제 리스트에서는 금액을 보여주지 않으므로 0 혹은 제거
+                .exitCode(rs.getString("EXIT_CODE"))
                 .build());
     }
 
@@ -61,7 +64,7 @@ public class JdbcBatchRepositoryImpl implements JdbcBatchRepository {
                 (READ_SKIP_COUNT + PROCESS_SKIP_COUNT + WRITE_SKIP_COUNT) as SKIP_COUNT
             FROM billing_batch.BATCH_STEP_EXECUTION 
             WHERE JOB_EXECUTION_ID = :id
-            AND STEP_NAME not in ('masterStep','createTopicStep','messageJobStep')
+            AND STEP_NAME not in ('masterStep','createTopicStep')
             ORDER BY STEP_NAME ASC
             """;
 
@@ -94,10 +97,10 @@ public class JdbcBatchRepositoryImpl implements JdbcBatchRepository {
     public Long findLatestActiveExecutionId() {
         // STARTING 혹은 STARTED 상태인 가장 최근의 ID 하나를 가져옵니다.
         String sql = """
-        SELECT JOB_EXECUTION_ID 
-        FROM billing_batch.BATCH_JOB_EXECUTION 
-        WHERE STATUS IN ('STARTING', 'STARTED') 
-        ORDER BY JOB_EXECUTION_ID DESC 
+        SELECT JOB_EXECUTION_ID
+        FROM billing_batch.BATCH_JOB_EXECUTION
+        WHERE STATUS IN ('STARTING', 'STARTED')
+        ORDER BY JOB_EXECUTION_ID DESC
         LIMIT 1
     """;
         try {
@@ -107,7 +110,7 @@ public class JdbcBatchRepositoryImpl implements JdbcBatchRepository {
         }
     }
 
-    // 최근 발생한 에러 로그 5건 조회
+    // 최근 발생한 에러 로그 조회
     public List<BatchBillingErrorLogDto> findAllErrorLogsByJobId(Long jobExecutionId) {
         String sql = """
         SELECT 
