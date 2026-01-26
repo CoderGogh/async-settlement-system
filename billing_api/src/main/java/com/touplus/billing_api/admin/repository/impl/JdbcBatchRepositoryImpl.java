@@ -28,7 +28,9 @@ public class JdbcBatchRepositoryImpl implements JdbcBatchRepository {
                  je.START_TIME,
                  je.END_TIME,
                  TIMESTAMPDIFF(SECOND, je.START_TIME, je.END_TIME) as DURATION,
-                 SUM(se.READ_SKIP_COUNT + se.PROCESS_SKIP_COUNT + se.WRITE_SKIP_COUNT) as SKIP_COUNT,
+                 SUM(CASE WHEN se.STEP_NAME IN ('masterStep', 'messageJobStep')
+                       THEN (se.READ_SKIP_COUNT + se.PROCESS_SKIP_COUNT + se.WRITE_SKIP_COUNT)\s
+                       ELSE 0 END) as SKIP_COUNT,
                  SUM(CASE WHEN se.STEP_NAME NOT IN ('masterStep') THEN se.WRITE_COUNT ELSE 0 END) as TOTAL_WRITE
              FROM billing_batch.BATCH_JOB_EXECUTION je
              JOIN billing_batch.BATCH_STEP_EXECUTION se ON je.JOB_EXECUTION_ID = se.JOB_EXECUTION_ID
@@ -61,7 +63,7 @@ public class JdbcBatchRepositoryImpl implements JdbcBatchRepository {
                 (READ_SKIP_COUNT + PROCESS_SKIP_COUNT + WRITE_SKIP_COUNT) as SKIP_COUNT
             FROM billing_batch.BATCH_STEP_EXECUTION 
             WHERE JOB_EXECUTION_ID = :id
-            AND STEP_NAME not in ('masterStep','createTopicStep','messageJobStep')
+            AND STEP_NAME not in ('masterStep','createTopicStep')
             ORDER BY STEP_NAME ASC
             """;
 
@@ -97,6 +99,7 @@ public class JdbcBatchRepositoryImpl implements JdbcBatchRepository {
         SELECT JOB_EXECUTION_ID 
         FROM billing_batch.BATCH_JOB_EXECUTION 
         WHERE STATUS IN ('STARTING', 'STARTED') 
+        AND EXIT_CODE IS NULL
         ORDER BY JOB_EXECUTION_ID DESC 
         LIMIT 1
     """;
@@ -107,7 +110,7 @@ public class JdbcBatchRepositoryImpl implements JdbcBatchRepository {
         }
     }
 
-    // 최근 발생한 에러 로그 5건 조회
+    // 최근 발생한 에러 로그 조회
     public List<BatchBillingErrorLogDto> findAllErrorLogsByJobId(Long jobExecutionId) {
         String sql = """
         SELECT 

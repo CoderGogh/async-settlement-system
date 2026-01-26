@@ -52,6 +52,7 @@ public class BatchMonitoringServiceImpl implements BatchMonitoringService {
                     ));
                     Thread.sleep(5000);
                     continue;
+//                    return;
                 }
 
                 List<PartitionStatusDto> partitions = repository.findPartitionDetails(currentId);
