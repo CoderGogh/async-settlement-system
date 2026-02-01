@@ -42,7 +42,7 @@
 - **Language/Framework**: Java 17 / Spring Boot 3.x
 - **Batch Processing**: Spring Batch
 - **Message Broker**: **Apache Kafka (GCP Cloud 호스팅)**
-- **Caching**: Redis (분산 락 및 임시 저장)
+- **Caching & Delay Queue**: Redis (분산 락 및 임시 저장)
 - **Database**: **MySQL 8.0 (Cafe24 호스팅)**
 
 ### Deployment Environment
@@ -57,25 +57,39 @@
 본 프로젝트는 **모노레포(Monorepo)** 구조로 관리되며, 각 모듈은 독립적인 책임을 가집니다.
 
 ```text
-Ureka_plus/
-├── billing_api/      # [Module] 사용자 요청 처리 및 정산 데이터 조회 API
-├── billing_batch/    # [Module] 대용량 정산 데이터 배치 처리 (Spring Batch)
-├── billing_message/  # [Module] Kafka 메시지 소비 및 실제 알림 발송 처리
-├── billing_common/   # [Module] 공통 도메인(Entity), 유틸리티 및 설정 공유
-├── billing_batch/src # 주요 배치 Job/Step/Reader/Writer 설계 로직
-├── docker-compose.yml# 로컬 및 개발 환경 인프라 구성 (Kafka, Redis 등)
-└── README.md         # 프로젝트 가이드 문서
+Ureka_plus
+├── billing_api (Dashboard & Admin API)
+│   ├── controller      # 모니터링 및 관리자 제어 API
+│   ├── domain          # 정산/메시지 도메인 엔티티 및 DTO
+│   └── resources       # 대시보드 UI (HTML/CSS) 및 설정
+│
+├── billing_batch (Settlement Engine)
+│   ├── config          # Batch Job & Kafka Producer 설정
+│   ├── domain/dto      # 요금 계산 및 정책(할인/추가요금) 모델
+│   ├── repository      # 정산 데이터 영속화 레이어
+│   └── common          # 배치 실행 리스너 및 로깅 유틸
+│
+├── billing_message (Messaging Consumer)
+│   ├── listener        # Kafka Message Consumer (정산 완료 이벤트 구독)
+│   ├── service         # 채널별 메시지 발송 로직
+│   └── config          # Kafka Consumer & Redis 분산 락 설정
+│
+└── billing_common (Shared)
+    └── common          # 암호화(Crypto), 마스킹 유틸리티 등 공통 로직
 
 ```
 ---
 ## 5. DB 스키마
 ** Batch Meta**
+
 <img width="520" height="443" alt="image" src="https://github.com/user-attachments/assets/2696a54b-3fb6-4c66-ad4f-9fb5880472b1" />
 
 ** Batch origin **
+
 <img width="744" height="432" alt="image" src="https://github.com/user-attachments/assets/dbd6eac5-4bb4-4c05-99c7-4c5f15806679" />
 
 ** Message **
+
 <img width="511" height="445" alt="image" src="https://github.com/user-attachments/assets/3b8c103e-41f0-4402-bac9-4b5893837d41" />
 
 ---
