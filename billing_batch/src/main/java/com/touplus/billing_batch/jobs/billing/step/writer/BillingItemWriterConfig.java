@@ -45,7 +45,6 @@ public class BillingItemWriterConfig {
                     params.addValue("userId", item.getUserId());
                     params.addValue("totalPrice", item.getTotalPrice());
                     params.addValue("settlementDetails", item.getSettlementDetails());
-                    // Enum 객체를 .name()을 통해 순수 문자열(READY, SUCCESS 등)로 변환!
                     params.addValue("sendStatus", item.getSendStatus() != null ? item.getSendStatus().name() : "READY");
                     params.addValue("batchExecutionId", item.getBatchExecutionId());
                     params.addValue("processedAt", item.getProcessedAt());
