@@ -19,7 +19,7 @@
 
 ## 2.  주요 기능 (Key Features)
 
-### 🧾 정산 관리 (Settlement - Spring Batch)
+### 정산 관리 (Settlement - Spring Batch)
 - **정산 데이터 확정**: 요금 계산 후 DB에 정상 커밋된 건에 한해서만 Kafka "정산 완료" 이벤트 발행
 - **배치 전략**: 실패 시 중단 지점부터 재시도 가능한 **Restart/Skip/Retry** 정책 적용
 
@@ -54,7 +54,7 @@
 
 ## 4.  디렉토리 구조 (Directory Structure)
 
-본 프로젝트는 **모노레포(Monorepo)** 구조로 관리되며, 각 모듈은 독립적인 책임을 가집니다.
+본 프로젝트는 **멀티모듈** 구조로 관리되며, 각 모듈은 독립적인 책임을 가집니다.
 
 ```text
 Ureka_plus
@@ -80,15 +80,15 @@ Ureka_plus
 ```
 ---
 ## 5. DB 스키마
-** Batch Meta**
+**Batch Meta**
 
 <img width="520" height="443" alt="image" src="https://github.com/user-attachments/assets/2696a54b-3fb6-4c66-ad4f-9fb5880472b1" />
 
-** Batch origin **
+**Batch origin**
 
 <img width="744" height="432" alt="image" src="https://github.com/user-attachments/assets/dbd6eac5-4bb4-4c05-99c7-4c5f15806679" />
 
-** Message **
+**Message**
 
 <img width="511" height="445" alt="image" src="https://github.com/user-attachments/assets/3b8c103e-41f0-4402-bac9-4b5893837d41" />
 
