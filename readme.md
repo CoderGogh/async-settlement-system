@@ -1,72 +1,67 @@
-# 주제
-대용량 통신 요금 명세서 및 알림 발송 시스템
+# 🔋 Async Settlement System
+> **Large-Scale Billing & Notification System with Spring Batch & Kafka**
 
-**질문사항** <br>
-https://auspicious-blinker-37f.notion.site/2e921d7d5c4480ee9dabc1cdac0e514b?source=copy_link
-
-# 기능
-
-## 1. 정산
-
-- 정산 데이터의 유일한 기준
-- 모든 요금 계산과 정산 결과는 Batch Server에서 생성, 데이터베이스에 정상적으로 커밋된 이후에만 Kafka로 “정산 완료” 이벤트가 발행
-- Kafka를 통해 전달되는 모든 데이터는 이미 확정된 값
-
-## 2. 메시지
-- 이벤트를 받아 실제 이메일이나 문자, 푸시 메시지를 발송
-- 메시지 DB를 이용해 중복 발송을 방지, 동일한 정산 이벤트가 여러 번 들어와도 한 번만 처리
-- 메시지 발송 결과는 모두 기록되며, 실패한 건은 운영자가 재시도 가능
-
-## 3. 관리자
-- 운영 전용 서버
-- 배치 실행 상태와 메시지 발송 상태를 조회, 시작·중지·재시도 같은 제어 명령을 각 서버에 전달
-- 모든 제어는 명령 ID 기반으로 처리되어 중복 요청이 들어와도 실제 실행은 한 번만 이루어짐
+본 프로젝트는 **100만 사용자 및 500만 사용 이력**을 대상으로 대규모 정산을 수행하고, 결과를 **Kafka 기반 비동기 메시지**로 송신하는 고성능 정산 시스템입니다.
 
 ---
-## 기술 스택 (Tech Stack)
 
-### Backend
-- **Language**: Java 17
-- **Framework**: Spring Boot 3.x
+## 1. 🚀 소개 및 요구사항 (Introduction & Requirements)
+
+이 프로젝트는 대규모 트래픽 환경에서 대량의 데이터를 안정적으로 정산하고, 통신 요금 명세서를 비동기적으로 발송하는 인프라를 구축하는 데 중점을 둡니다.
+
+### 🎯 핵심 요구사항
+- **대규모 데이터 정산**: 100만 사용자 데이터를 Chunk 기반으로 안정적 처리
+- **비동기 이벤트 기반**: Kafka를 활용한 정산 결과 송신 및 알림 발송 분리
+- **성능 최적화**: Redis 캐싱을 통한 DB 부하 분산 및 트래픽 병목 현상 해소
+- **데이터 정합성**: 장애 발생 시 재처리 가능(Restartable)한 배치 설계 및 중복 발송 방지
+
+---
+
+## 2. ✨ 주요 기능 (Key Features)
+
+### 🧾 정산 관리 (Settlement - Spring Batch)
+- **정산 데이터 확정**: 요금 계산 후 DB에 정상 커밋된 건에 한해서만 Kafka "정산 완료" 이벤트 발행
+- **배치 전략**: 실패 시 중단 지점부터 재시도 가능한 **Restart/Skip/Retry** 정책 적용
+
+### 📩 메시지 발송 (Messaging - Kafka & Redis)
+- **비동기 알림**: Kafka 이벤트를 소비하여 실제 이메일, 문자, 푸시 메시지 발송
+- **중복 방지**: Redis 분산 락 및 메시지 DB 기록을 통해 동일 이벤트 중복 처리 원천 차단
+- **발송 기록 관리**: 모든 메시지 발송 결과를 기록하며 실패 건에 대한 운영자 재시도 지원
+
+### 🛠 관리자 제어 (Admin Console)
+- **상태 모니터링**: 배치 작업의 진행 상태와 메시지 큐 상태 실시간 조회
+- **명령 제어**: 명령 ID 기반으로 중복 요청을 방지하며 작업 시작/중지/재시도 제어
+
+---
+
+## 3. ⚙️ 기술 스택 및 배포 인프라 (Tech Stack & Infrastructure)
+
+본 시스템은 안정적인 서비스 운영을 위해 분산된 클라우드 인프라를 활용합니다.
+
+### Backend & Middleware
+- **Language/Framework**: Java 17 / Spring Boot 3.x
 - **Batch Processing**: Spring Batch
-- **Build Tool**: Gradle (Multi-module)
+- **Message Broker**: **Apache Kafka (GCP Cloud 호스팅)**
+- **Caching**: Redis (분산 락 및 임시 저장)
+- **Database**: **MySQL 8.0 (Cafe24 호스팅)**
 
-### Infrastructure & Messaging
-- **Database**:
-    - **Main**: MySQL 8.0 (정산 및 유저 데이터)
-    - **Cache**: Redis (분산 락, 임시 저장)
-- **Message Broker**: Apache Kafka, Zookeeper
-- **Containerization**: Docker, Docker Compose
-
-### Tools
-- **Version Control**: Git
-- **Deployment**: Cafe24(DB), AWS EC2(App)
+### Deployment Environment
+- **Application Server**: AWS EC2 / Docker & Docker Compose
+- **Main Database**: **Cafe24 MySQL** (사용자 및 정산 이력 영속화)
+- **Messaging Cluster**: **GCP (Google Cloud Platform)** (Kafka & Zookeeper 운영)
 
 ---
 
-## 프로젝트 구조 (Project Structure)
+## 4. 📂 디렉토리 구조 (Directory Structure)
 
-본 프로젝트는 **모노레포(Monorepo)** 구조로 관리되며, 다음과 같은 모듈로 구성
+본 프로젝트는 **모노레포(Monorepo)** 구조로 관리되며, 각 모듈은 독립적인 책임을 가집니다.
 
-```
+```text
 Ureka_plus/
-├── billing_api/      # [Module] 사용자 요청 처리 및 데이터 조회 API
+├── billing_api/      # [Module] 사용자 요청 처리 및 정산 데이터 조회 API
 ├── billing_batch/    # [Module] 대용량 정산 데이터 배치 처리 (Spring Batch)
-├── billing_message/  # [Module] Kafka 메시지 소비 및 알림 발송
-├── billing_common/   # [Module] 공통 도메인, 유틸리티, 설정 (예정)
-├── docker-compose.yml # 로컬/개발 환경 인프라 구성
-└── README.md
-```
-
----
-
-## 플로우차트
-<img width="15245" height="9216" alt="image" src="https://github.com/user-attachments/assets/a427d5cb-029c-4b71-9a3b-632f30ff6024" />
-
-- batch 서버
-<img width="2635" height="2600" alt="워크플로우-half" src="https://github.com/user-attachments/assets/f6b02faa-1551-4fdc-ae33-240978de9d9a" />
-
-- message 서버
-<img width="2971" height="1936" alt="워크플로우-2" src="https://github.com/user-attachments/assets/0694ba33-048b-4bb3-8b4c-89372b018b3f" />
-## 서버구조
-<img width="1793" height="1100" alt="Image" src="https://github.com/user-attachments/assets/cb0d74d3-736c-44a4-af24-38f28530553e" />
+├── billing_message/  # [Module] Kafka 메시지 소비 및 실제 알림 발송 처리
+├── billing_common/   # [Module] 공통 도메인(Entity), 유틸리티 및 설정 공유
+├── billing_batch/src # 주요 배치 Job/Step/Reader/Writer 설계 로직
+├── docker-compose.yml# 로컬 및 개발 환경 인프라 구성 (Kafka, Redis 등)
+└── README.md         # 프로젝트 가이드 문서
