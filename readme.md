@@ -19,6 +19,89 @@
 
 ---
 
+## 🌐 배포 정보
+
+| 항목 | 내용 |
+| :--- | :--- |
+| **플랫폼** | AWS EC2 |
+| **현재 상태** | 💤 비용 절감을 위해 현재 배포 중단 상태 |
+| **배포 시 접속** | `http://<EC2-IP>:8080` (배포 시 주소 업데이트 예정) |
+
+> 배포를 재개하면 위 주소에서 관리자 대시보드를 직접 확인할 수 있습니다.  
+> 로컬 환경에서는 아래 **시작하기** 섹션을 참고해 동일한 환경을 구성할 수 있습니다.
+
+## 🚀 시작하기
+
+### 사전 요구사항
+
+- Java 17+
+- Docker & Docker Compose
+- MySQL 8.0 (외부 연결, 포트 `13306` 사용)
+
+> `docker-compose.yml`의 MySQL 서비스는 주석 처리되어 있습니다.  
+> 로컬 MySQL을 **13306 포트**로 직접 실행하거나, 주석을 해제한 뒤 사용하세요.
+
+### 실행 순서
+
+**1. 환경 변수 설정**
+
+```bash
+cp .env.example .env
+# .env에 아래 값을 채워넣으세요
+```
+
+**2. 인프라 실행 (Redis · Zookeeper · Kafka)**
+
+```bash
+docker-compose up -d redis zookeeper kafka
+```
+
+**3. 애플리케이션 빌드 및 실행**
+
+```bash
+./gradlew build
+docker-compose up -d billing-api billing-batch billing-message
+```
+
+### 서비스 포트
+
+| 서비스 | 포트 | 설명 |
+| :--- | :---: | :--- |
+| `billing-api` | `8080` | 관리자 API 및 대시보드 |
+| `billing-batch` | `8081` | 정산 배치 서버 |
+| `billing-message` | `8082` | Kafka 메시지 처리 서버 |
+| `kafka` | `9092` | 메시지 브로커 |
+| `redis` | `6379` | 캐시 |
+
+## 🔐 환경 변수
+
+`.env.example`을 복사해 `.env`를 생성한 후 아래 항목을 채워넣으세요.
+
+| 변수명 | 설명 |
+| :--- | :--- |
+| `DB_USER` | MySQL 접속 계정 |
+| `DB_PASSWORD` | MySQL 접속 비밀번호 |
+| `CRYPTO_AES_SECRET_KEY` | 사용자 민감정보 AES-256 암호화 키 |
+| `CRYPTO_AES_IV` | AES 암호화 초기화 벡터(IV) |
+| `KAFKA_USERNAME` | Kafka 인증 계정 |
+| `KAFKA_PASSWORD` | Kafka 인증 비밀번호 |
+
+## 🏗️ 멀티 모듈 빌드
+
+이 프로젝트는 Gradle 멀티 모듈 구조로 이루어져 있습니다.
+
+```bash
+# 전체 빌드
+./gradlew build
+
+# 모듈별 개별 빌드
+./gradlew :billing_api:build
+./gradlew :billing_batch:build
+./gradlew :billing_message:build
+```
+
+---
+
 ## 🛠 기술 스택
 
 ### Backend
