@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="/assets/demo-shim.js"></script>
+    <meta charset="UTF-8">
+    <title>정산 · 메시지 대시보드</title>
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/common.css">
+    <link rel="stylesheet" href="/css/template-management.css">
+</head>
+<body>
+<div class="sidebar">
+    <!-- Sidebar Header -->
+<div class="sidebar-header">
+<span class="logo-icon">
+    <i class="bi bi-lightning-fill" style="font-size: 24px; color: #F26EB8;"></i>
+</span>
+    <span class="logo-text">To U+</span>
+</div>
+
+
+    <ul>
+        <!-- 메인 메뉴 -->
+        <li>
+            <a href="/admin/process/dashboard" class="sidebar-link"><i class="bi bi-speedometer2 me-2"></i>대시보드</a>
+        </li>
+
+        <li>
+            <a href="/admin/batch/dashboard" class="sidebar-link"> <i class="bi bi-cpu me-2"></i> 배치 대시보드</a>
+        </li>
+
+        <li>
+            <a href="/admin/message/dashboard" class="sidebar-link"><i class="bi bi-envelope me-2"></i>메시지 대시보드</a>
+        </li>
+
+        <li>
+		    <a href="/admin/logs" class="sidebar-link">
+		        <i class="bi bi-clipboard-check me-2"></i>Audit 로그 관리
+		    </a>
+		</li>
+
+        <!-- 사용자 대시보드 (드롭다운) -->
+        <li>
+            <a href="#" class="sidebar-link"> <i class="bi bi-people me-2"></i> 사용자 대시보드 ▾</a>
+            <ul class="dropdown">
+                <li>
+                    <a href="/admin/users/settlements">사용자별 정산 결과</a>
+                </li>
+                <li>
+                    <a href="/admin/users/products/donut">전체 구독 분포</a>
+                </li>
+                <li>
+                    <a href="/admin/users/products/bar">구독 TOP 7</a>
+                </li>
+            </ul>
+        </li>
+
+        <!-- 템플릿 관리 -->
+        <li class=" active">
+            <a href="/admin/process/templates/management" class="sidebar-link"><i class="bi bi-file-earmark-text me-2" ></i>템플릿 관리</a>
+        </li>
+    </ul>
+</div>
+<div class="container">
+    <h1>템플릿 관리</h1>
+
+<div class="optionAndBtn">
+	<div class="btnAndOption">
+		<form id="filterForm">
+		    <label></label>
+		    <select id="messageType" class="page-filter-select" onchange="filterTemplates()">
+		        <option value="">전체</option>
+				<option value="SMS">SMS</option>
+				<option value="EMAIL">EMAIL</option>
+		    </select>
+		</form>
+	</div>
+   	<div class="btnAndOption">
+   	    <button type="button" id="btnAddTemplate" class="btn btn-primary mt-2">
+	        템플릿 추가
+	    </button>
+    </div>
+</div>
+<!-- 템플릿 목록 -->
+    <div class="container-fluid px-4 template-wide">
+        <div class="card template-card mt-4">
+            <div class="card-body p-0">
+                <div class="table-responsive template-no-xscroll">
+                    <table class="table table-hover mb-0 text-center template-table">
+                        <thead class="template-thead">
+                        <tr>
+                            <th>템플릿 이름</th>
+                            <th style="width: 160px;">메시지 타입</th>
+                            <th>내용</th>
+                            <th style="width: 180px;">관리</th>
+                        </tr>
+                        </thead>
+
+                        <tbody>
+                        <tr>
+                            <td class="fw-semibold">미납 안내 문자</td>
+
+                            <td>
+                            <span class="badge badge-type">SMS</span>
+                            </td>
+
+                            <td class="content-cell text-start"
+                                title="[LG U+] {userName}님, 미납 요금이 있습니다. 납부 후 이용에 불편 없으시길 바랍니다.">[LG U+] {userName}님, 미납 요금이 있습니다. 납부 후 이용에 불편 없으시길 바랍니다.</td>
+
+                            <td>
+                                <div class="d-flex justify-content-center gap-2 action-wrap">
+                                    <button class="btn btn-sm btn-outline-primary action-btn-fixed"
+                                            onclick="editTemplate(3)">
+                                        수정
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger action-btn-fixed"
+                                            onclick="deleteTemplate(3)">
+                                        삭제
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="fw-semibold">월 청구서 이메일</td>
+
+                            <td>
+                            <span class="badge badge-type">EMAIL</span>
+                            </td>
+
+                            <td class="content-cell text-start"
+                                title="&lt;h2&gt;{settlementMonth} 청구서&lt;/h2&gt;&lt;p&gt;{userName}님, 이번 달 청구 금액은 &lt;b&gt;{totalPrice}원&lt;/b&gt;입니다.&lt;/p&gt;{settlementDetails}">&lt;h2&gt;{settlementMonth} 청구서&lt;/h2&gt;&lt;p&gt;{userName}님, 이번 달 청구 금액은 &lt;b&gt;{totalPrice}원&lt;/b&gt;입니다.&lt;/p&gt;{settlementDetails}</td>
+
+                            <td>
+                                <div class="d-flex justify-content-center gap-2 action-wrap">
+                                    <button class="btn btn-sm btn-outline-primary action-btn-fixed"
+                                            onclick="editTemplate(2)">
+                                        수정
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger action-btn-fixed"
+                                            onclick="deleteTemplate(2)">
+                                        삭제
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="fw-semibold">월 청구 안내 문자</td>
+
+                            <td>
+                            <span class="badge badge-type">SMS</span>
+                            </td>
+
+                            <td class="content-cell text-start"
+                                title="[LG U+] {userName}님, {settlementMonth} 이용요금은 {totalPrice}원입니다. 상세 내역은 U+ 앱에서 확인하세요.">[LG U+] {userName}님, {settlementMonth} 이용요금은 {totalPrice}원입니다. 상세 내역은 U+ 앱에서 확인하세요.</td>
+
+                            <td>
+                                <div class="d-flex justify-content-center gap-2 action-wrap">
+                                    <button class="btn btn-sm btn-outline-primary action-btn-fixed"
+                                            onclick="editTemplate(1)">
+                                        수정
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger action-btn-fixed"
+                                            onclick="deleteTemplate(1)">
+                                        삭제
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+
+    <!-- ================= 모달 ================= -->
+<div class="modal fade" id="templateModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="formTitle">새 템플릿 생성</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <input type="hidden" id="templateId">
+
+                <div class="mb-2">
+                    <label>템플릿 이름</label>
+                    <input type="text" id="templateName" class="form-control">
+                </div>
+
+                <div class="mb-2">
+                    <label>메시지 타입</label>
+                    <select id="templateType" class="form-select modal-select">
+                        <option value="SMS">SMS</option>
+                        <option value="EMAIL">EMAIL</option>
+                    </select>
+                </div>
+
+                <div class="mb-2">
+                    <label>내용</label>
+                    <textarea id="templateContent" rows="5" class="form-control"></textarea>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-outline-primary" onclick="saveTemplate()">저장</button>
+                <button class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+</div>
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+const modal = new bootstrap.Modal(document.getElementById('templateModal'));
+
+//추가 버튼
+$('#btnAddTemplate').click(function () {
+ resetForm();
+ modal.show();
+});
+
+// 필터링
+function filterTemplates() {
+    const type = $('#messageType').val();
+    let url = '/admin/process/templates/management';
+    if(type) url += '/' + type.toLowerCase();
+    window.location.href = url;
+}
+
+//초기화
+function resetForm() {
+    $('#formTitle').text('새 템플릿 생성');
+    $('#templateId').val('');
+    $('#templateName').val('');
+    $('#templateType').val('');
+    $('#templateContent').val('');
+}
+
+// 생성/수정 저장
+function saveTemplate() {
+    const id = $('#templateId').val();
+    console.log("id:", id); // 확인용
+
+    const data = {
+        templateName: $('#templateName').val(),
+        messageType: $('#templateType').val(),
+        templateContent: $('#templateContent').val()
+    };
+
+    if(!data.templateName || !data.messageType || !data.templateContent){
+        alert('모든 필드를 입력해주세요.');
+        return;
+    }
+
+    if(id) {
+        // 수정 (PUT)
+        $.ajax({
+            url: '/admin/process/templates/' + id,
+            type: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function() { 
+                alert('수정 완료');
+                location.reload(); 
+            },
+            error: function(xhr) { 
+                alert('수정 실패: ' + xhr.responseText); 
+            }
+        });
+    } else {
+        // 생성 (POST)
+        $.ajax({
+            url: '/admin/process/templates',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function() { 
+                alert('생성 완료');
+                location.reload(); 
+            },
+            error: function(xhr) { 
+                alert('생성 실패: ' + xhr.responseText); 
+            }
+        });
+    }
+}
+
+// 수정 폼 채우기
+function editTemplate(id) {
+    $.get('/admin/process/templates/' + id, function(data){
+        $('#formTitle').text('템플릿 수정');
+        $('#templateId').val(data.templateId || data.id);
+        $('#templateName').val(data.templateName);
+        $('#templateType').val(data.messageType);
+        $('#templateContent').val(data.templateContent);
+
+        modal.show(); 
+    });
+}
+
+
+// 삭제
+function deleteTemplate(id) {
+    if(confirm('정말 삭제하시겠습니까?')) {
+        $.ajax({
+            url: '/admin/process/templates/' + id,
+            type: 'DELETE',
+            success: function() { 
+                alert('삭제 완료');
+                location.reload(); 
+            },
+            error: function() { 
+                alert('삭제 실패'); 
+            }
+        });
+    }
+}
+</script>
+
+
+</body>
+</html>

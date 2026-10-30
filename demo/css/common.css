@@ -1,0 +1,160 @@
+body {
+    background-color: #f9fafb; 
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: #333;
+    line-height: 1.6;
+    overflow-y: scroll;
+}
+
+.container {
+    max-width: 960px;  
+    margin: 50px auto;
+    padding-left: 280px; 
+    padding-right: 32px;
+}
+
+/* ================= 모바일/스크롤용 ================= */
+@media (max-width: 768px) {
+    .sidebar {
+        width: 200px;
+        padding: 16px 0;
+    }
+    .main {
+        margin-left: 200px;
+        padding: 24px 16px;
+    }
+}
+
+/* 사이드 바 */
+/* ===== Sidebar Header ===== */
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 20px 18px;
+    margin-bottom: 10px;
+    font-weight: 700;
+    font-size: 18px;
+    color: #111827;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.logo-icon {
+    font-size: 22px;
+    color: #f9fafb;
+    display: flex;
+    align-items: center;
+    justify-content: center;  
+}
+
+.logo-text {
+    letter-spacing: 0.3px;
+    color: #f9fafb;
+    display: inline-flex;
+    align-items: center;
+    margin: 0;    
+}
+
+/* ===== Sidebar Layout ===== */
+.sidebar {
+    background-color: #2d283f;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 240px;
+    height: 100vh;
+    padding: 20px 15px;
+    box-shadow: 2px 0 8px rgba(0,0,0,0.05);
+    box-sizing: border-box;
+    overflow-y: auto;
+}
+
+/* ===== Sidebar List ===== */
+.sidebar ul {
+    list-style: none;
+    padding: 3px;
+    margin: 0;
+}
+
+.sidebar li {
+    position: relative;
+    padding: 0.5px;
+}
+
+/* ===== Sidebar Links ===== */
+.sidebar a {
+    display: flex;
+    padding: 8px 16px;
+    color: #f9fafb;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: background 0.3s, color 0.3s;
+    align-items: center;  /* 세로 중앙 정렬 */
+    gap: 18px !important;  /* 아이콘과 글씨 사이 간격 고정 */
+    
+  
+}
+.sidebar a .bi {
+    flex-shrink: 0;       /* 아이콘 크기 고정 */
+    font-size: 1.2rem;
+    width: 1.5rem;        /* 아이콘 영역 일정 */
+    text-align: center;
+}
+
+
+/* hover & active 기본 효과 */
+.sidebar a:hover {
+    background-color: #c7d2fe;
+    color: #2d283f;
+}
+
+/* ===== Active State ===== */
+.sidebar li.active > a {
+    background-color: #eef2ff;
+    color: #4f46e5;
+    font-weight: 600;
+}
+
+/* ===== Dropdown ===== */
+.sidebar .dropdown {
+    display: none;
+    background-color: #f3f4f6;
+    border-radius: 8px;
+    margin: 4px 0 8px;
+    padding-left: 10px;
+}
+
+/* dropdown link */
+.sidebar .dropdown a {
+    padding-left: 40px;
+    font-size: 14px;
+    font-weight: 400;
+    color: #374151;
+}
+
+/* dropdown active */
+.sidebar .dropdown li.active a {
+    background-color: #c7d2fe;
+    color: #3730a3;
+}
+
+/* dropdown open conditions */
+.sidebar li:hover > .dropdown,
+.sidebar li.open > .dropdown {
+    display: block;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+    .sidebar {
+        width: 200px;
+        padding: 16px 0;
+    }
+
+    .main {
+        margin-left: 200px;
+        padding: 24px 16px;
+    }
+}
+
+

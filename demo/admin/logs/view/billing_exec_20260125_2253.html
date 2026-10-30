@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="/assets/demo-shim.js"></script>
+    <meta charset="UTF-8">
+    <title>로그 상세보기</title>
+    <link rel="stylesheet" href="/css/whole-process-dashboard.css">
+    <link rel="stylesheet" href="/css/common.css">
+    <style>
+        .log-content-box {
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 8px;
+            max-height: 700px;
+            overflow-y: auto;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .btn-back { background-color: #858796; color: white; padding: 8px 15px; border-radius: 4px; text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="sidebar">
+    <!-- Sidebar Header -->
+<div class="sidebar-header">
+<span class="logo-icon">
+    <i class="bi bi-lightning-fill" style="font-size: 24px; color: #F26EB8;"></i>
+</span>
+    <span class="logo-text">To U+</span>
+</div>
+
+
+    <ul>
+        <!-- 메인 메뉴 -->
+        <li>
+            <a href="/admin/process/dashboard" class="sidebar-link"><i class="bi bi-speedometer2 me-2"></i>대시보드</a>
+        </li>
+
+        <li>
+            <a href="/admin/batch/dashboard" class="sidebar-link"> <i class="bi bi-cpu me-2"></i> 배치 대시보드</a>
+        </li>
+
+        <li>
+            <a href="/admin/message/dashboard" class="sidebar-link"><i class="bi bi-envelope me-2"></i>메시지 대시보드</a>
+        </li>
+
+        <li class=" active">
+		    <a href="/admin/logs" class="sidebar-link">
+		        <i class="bi bi-clipboard-check me-2"></i>Audit 로그 관리
+		    </a>
+		</li>
+
+        <!-- 사용자 대시보드 (드롭다운) -->
+        <li>
+            <a href="#" class="sidebar-link"> <i class="bi bi-people me-2"></i> 사용자 대시보드 ▾</a>
+            <ul class="dropdown">
+                <li>
+                    <a href="/admin/users/settlements">사용자별 정산 결과</a>
+                </li>
+                <li>
+                    <a href="/admin/users/products/donut">전체 구독 분포</a>
+                </li>
+                <li>
+                    <a href="/admin/users/products/bar">구독 TOP 7</a>
+                </li>
+            </ul>
+        </li>
+
+        <!-- 템플릿 관리 -->
+        <li>
+            <a href="/admin/process/templates/management" class="sidebar-link"><i class="bi bi-file-earmark-text me-2" ></i>템플릿 관리</a>
+        </li>
+    </ul>
+</div>
+
+<div class="container">
+    <div class="header-row">
+        <h1>📄 billing_exec_20260125_2253.log</h1>
+        <a href="/admin/logs" class="btn-back">목록으로</a>
+    </div>
+
+    <div class="card">
+        <div class="log-content-box">
+            <div>[2026-01-25 22:53:00.367] [http-nio-8081-exec-1] ========== 정산 배치 파일 리다이렉션 시작 ==========</div>
+            <div>[2026-01-25 22:53:00.368] [http-nio-8081-exec-1] &gt;&gt;&gt; 정산 대상 월 : 2025-12-01</div>
+            <div>[2026-01-25 22:53:00.689] [http-nio-8081-exec-1] &gt;&gt;&gt; [AfterJob] 최종 실행 상태 : exitCode=FAILED;exitDescription=java.time.format.DateTimeParseException: Text &#39;2025-12-01&#39; could not be parsed, unparsed text found at index 4</div>
+            <div>	at java.base/java.time.format.DateTimeFormatter.parseResolved0(DateTimeFormatter.java:2055)</div>
+            <div>	at java.base/java.time.format.DateTimeFormatter.parse(DateTimeFormatter.java:1954)</div>
+            <div>	at java.base/java.time.YearMonth.parse(YearMonth.java:297)</div>
+            <div>	at com.touplus.billing_batch.jobs.billing.step.listener.BillingJobListener.beforeJob(BillingJobListener.java:50)</div>
+            <div>	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)</div>
+            <div>	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)</div>
+            <div>	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)</div>
+            <div>	at java.base/java.lang.reflect.Method.invoke(Method.java:569)</div>
+            <div>	at org.springframework.aop.support.AopUtils.invokeJoinpointUsingReflection(AopUtils.java:360)</div>
+            <div>	at org.springframework.aop.framework.ReflectiveMethodInvocation.invokeJoinpoint(ReflectiveMethodInvocation.java:196)</div>
+            <div>	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:163)</div>
+            <div>	at org.springframework.transaction.interceptor.TransactionAspectSupport.invokeWithinTransaction(TransactionAspectSupport.java:380)</div>
+            <div>	at org.springframework.transaction.interceptor.TransactionInterceptor.invoke(TransactionInterceptor.java:119)</div>
+            <div>	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)</div>
+            <div>	at org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:728)</div>
+            <div>	at com.touplus.billing_batch.jobs.billing.step.listener.BillingJobListener$$SpringCGLIB$$1.beforeJob(&lt;generated&gt;)</div>
+            <div>	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)</div>
+            <div>	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)</div>
+            <div>	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)</div>
+            <div>	at java.base/java.lang.reflect.Method.invoke(Method.java:569)</div>
+            <div>	at org.springframework.aop.support.AopUtils.invokeJoinpointUsingReflection(AopUtils.java:360)</div>
+            <div>	at org.springframework.aop.framework.ReflectiveMethodInvocation.invokeJoinpoint(ReflectiveMethodInvocation.java:196)</div>
+            <div>	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:163)</div>
+            <div>	at org.springframework.aop.support.DelegatingIntroductionInterceptor.doProceed(DelegatingIntroductionInterceptor.java:137)</div>
+            <div>	at org.springframework.aop.support.DelegatingIntroductionInterceptor.invoke(DelegatingIntroductionInterceptor.java:124)</div>
+            <div>	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)</div>
+            <div>	at org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:728)</div>
+            <div>	at com.touplus.billing_batch.jobs.billing.step.listener.BillingJobListener$$SpringCGLIB$$0.beforeJob(&lt;generated&gt;)</div>
+            <div>	at org.springframework.batch.core.listener.CompositeJobExecutionListener.beforeJob(CompositeJobExecutionListener.java:73)</div>
+            <div>	at org.springframework.batch.core.job.AbstractJob.execute(AbstractJob.java:304)</div>
+            <div>	at org.springframework.batch.core.launch.support.TaskExecutorJobLauncher$1.run(TaskExecutorJobLauncher.java:155)</div>
+            <div>	at org.springframework.core.task.SyncTaskExecutor.execute(SyncTaskExecutor.java:48)</div>
+            <div>	at org.springframework.batch.core.launch.support.TaskExecutorJobLauncher.run(TaskExecutorJobLauncher.java:146)</div>
+            <div>	at com.touplus.billing_batch.scheduler.BillingBatchScheduler.runBillingJob(BillingBatchScheduler.java:51)</div>
+            <div>	at com.touplus.billing_batch.scheduler.BillingBatchController.runBillingJob(BillingBatchController.java:26)</div>
+            <div>	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)</div>
+            <div>	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)</div>
+            <div>	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)</div>
+            <div>	at java.base/java.lang.reflect.Method.invoke(Method.java:569)</div>
+            <div>	at org.springframework.web.method.support.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:258)</div>
+            <div>	at org.springframework.web.method.support.InvocableHandlerMethod.invokeForRequest(InvocableHandlerMethod.java:191)</div>
+            <div>	at org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle(ServletInvocableHandlerMethod.java:118)</div>
+            <div>	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.invokeHandlerMethod(RequestMappingHandlerAdapter.java:991)</div>
+            <div>	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.handleInternal(RequestMappingHandlerAdapter.java:896)</div>
+            <div>	at org.springframework.web.servlet.mvc.method.AbstractHandlerMethodAdapter.handle(AbstractHandlerMethodAdapter.java:87)</div>
+            <div>	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1089)</div>
+            <div>	at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:979)</div>
+            <div>	at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1014)</div>
+            <div>	at org.springframework.web.servlet.FrameworkServlet.doGet(FrameworkServlet.java:903)</div>
+            <div>	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:564)</div>
+            <div>	at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:885)</div>
+            <div>	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:658)</div>
+            <div>	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)</div>
+            <div>	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:138)</div>
+            <div>	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:51)</div>
+            <div>	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:162)</div>
+            <div>	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:138)</div>
+            <div>	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100)</div>
+            <div>	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)</div>
+            <div>	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:162)</div>
+            <div>	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:138)</div>
+            <div>	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93)</div>
+            <div>	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)</div>
+            <div>	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:162)</div>
+            <div>	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:138)</div>
+            <div>	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:201)</div>
+            <div>	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)</div>
+            <div>	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:162)</div>
+            <div>	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:138)</div>
+            <div>	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:165)</div>
+            <div>	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:88)</div>
+            <div>	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:482)</div>
+            <div>	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:113)</div>
+            <div>	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:83)</div>
+            <div>	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:72)</div>
+            <div>	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:342)</div>
+            <div>	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:399)</div>
+            <div>	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:63)</div>
+            <div>	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:903)</div>
+            <div>	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1774)</div>
+            <div>	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:52)</div>
+            <div>	at org.apache.tomcat.util.threads.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:973)</div>
+            <div>	at org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:491)</div>
+            <div>	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:63)</div>
+            <div>	at java.base/java.lang.Thread.run(Thread.java:840)</div>
+            <div></div>
+            <div>[2026-01-25 22:53:00.691] [http-nio-8081-exec-1] ========== 정산 배치 파일 리다이렉션 종료 ==========</div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

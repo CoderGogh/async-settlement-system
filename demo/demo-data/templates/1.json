@@ -1,0 +1,1 @@
+{"templateName":"월 청구 안내 문자","messageType":"SMS","templateContent":"[LG U+] {userName}님, {settlementMonth} 이용요금은 {totalPrice}원입니다. 상세 내역은 U+ 앱에서 확인하세요.","createdAt":"2026-01-05T16:31:45","updatedAt":"2026-01-05T16:40:31","deletedAt":null,"id":1}

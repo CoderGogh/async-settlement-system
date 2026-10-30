@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="/assets/demo-shim.js"></script>
+    <meta charset="UTF-8">
+    <title>로그 상세보기</title>
+    <link rel="stylesheet" href="/css/whole-process-dashboard.css">
+    <link rel="stylesheet" href="/css/common.css">
+    <style>
+        .log-content-box {
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 8px;
+            max-height: 700px;
+            overflow-y: auto;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .btn-back { background-color: #858796; color: white; padding: 8px 15px; border-radius: 4px; text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="sidebar">
+    <!-- Sidebar Header -->
+<div class="sidebar-header">
+<span class="logo-icon">
+    <i class="bi bi-lightning-fill" style="font-size: 24px; color: #F26EB8;"></i>
+</span>
+    <span class="logo-text">To U+</span>
+</div>
+
+
+    <ul>
+        <!-- 메인 메뉴 -->
+        <li>
+            <a href="/admin/process/dashboard" class="sidebar-link"><i class="bi bi-speedometer2 me-2"></i>대시보드</a>
+        </li>
+
+        <li>
+            <a href="/admin/batch/dashboard" class="sidebar-link"> <i class="bi bi-cpu me-2"></i> 배치 대시보드</a>
+        </li>
+
+        <li>
+            <a href="/admin/message/dashboard" class="sidebar-link"><i class="bi bi-envelope me-2"></i>메시지 대시보드</a>
+        </li>
+
+        <li class=" active">
+		    <a href="/admin/logs" class="sidebar-link">
+		        <i class="bi bi-clipboard-check me-2"></i>Audit 로그 관리
+		    </a>
+		</li>
+
+        <!-- 사용자 대시보드 (드롭다운) -->
+        <li>
+            <a href="#" class="sidebar-link"> <i class="bi bi-people me-2"></i> 사용자 대시보드 ▾</a>
+            <ul class="dropdown">
+                <li>
+                    <a href="/admin/users/settlements">사용자별 정산 결과</a>
+                </li>
+                <li>
+                    <a href="/admin/users/products/donut">전체 구독 분포</a>
+                </li>
+                <li>
+                    <a href="/admin/users/products/bar">구독 TOP 7</a>
+                </li>
+            </ul>
+        </li>
+
+        <!-- 템플릿 관리 -->
+        <li>
+            <a href="/admin/process/templates/management" class="sidebar-link"><i class="bi bi-file-earmark-text me-2" ></i>템플릿 관리</a>
+        </li>
+    </ul>
+</div>
+
+<div class="container">
+    <div class="header-row">
+        <h1>📄 billing_exec_20260125_2327.log</h1>
+        <a href="/admin/logs" class="btn-back">목록으로</a>
+    </div>
+
+    <div class="card">
+        <div class="log-content-box">
+            <div>[2026-01-25 23:27:15.731] [http-nio-8081-exec-1] ========== 정산 배치 파일 리다이렉션 시작 ==========</div>
+            <div>[2026-01-25 23:27:15.733] [http-nio-8081-exec-1] &gt;&gt;&gt; 정산 대상 월 (Param): 2025-12-01</div>
+            <div>[2026-01-25 23:27:18.574] [billing-thread-2] --- [Step 시작] workerStep:partition8 ---</div>
+            <div>[2026-01-25 23:27:18.607] [billing-thread-1] --- [Step 시작] workerStep:partition6 ---</div>
+            <div>[2026-01-25 23:27:18.626] [billing-thread-3] --- [Step 시작] workerStep:partition3 ---</div>
+            <div>[2026-01-25 23:27:18.647] [billing-thread-4] --- [Step 시작] workerStep:partition0 ---</div>
+            <div>[2026-01-25 23:27:18.670] [billing-thread-6] --- [Step 시작] workerStep:partition5 ---</div>
+            <div>[2026-01-25 23:27:18.670] [billing-thread-7] --- [Step 시작] workerStep:partition9 ---</div>
+            <div>[2026-01-25 23:27:18.710] [billing-thread-10] --- [Step 시작] workerStep:partition1 ---</div>
+            <div>[2026-01-25 23:27:18.733] [billing-thread-8] --- [Step 시작] workerStep:partition2 ---</div>
+            <div>[2026-01-25 23:27:18.755] [billing-thread-5] --- [Step 시작] workerStep:partition4 ---</div>
+            <div>[2026-01-25 23:27:18.758] [billing-thread-9] --- [Step 시작] workerStep:partition7 ---</div>
+            <div>[2026-01-25 23:29:03.185] [billing-thread-1] --- [Step 종료] workerStep:partition6 ---</div>
+            <div>[2026-01-25 23:29:03.185] [billing-thread-1] - 최종 상태: COMPLETED</div>
+            <div>[2026-01-25 23:29:03.190] [billing-thread-1] - 읽기 건수: 100000</div>
+            <div>[2026-01-25 23:29:03.190] [billing-thread-1] - 쓰기 성공: 100000</div>
+            <div>[2026-01-25 23:29:03.190] [billing-thread-1] - 스킵 건수: 0</div>
+            <div>[2026-01-25 23:29:06.006] [billing-thread-6] --- [Step 종료] workerStep:partition5 ---</div>
+            <div>[2026-01-25 23:29:06.007] [billing-thread-6] - 최종 상태: COMPLETED</div>
+            <div>[2026-01-25 23:29:06.007] [billing-thread-6] - 읽기 건수: 100000</div>
+            <div>[2026-01-25 23:29:06.007] [billing-thread-6] - 쓰기 성공: 100000</div>
+            <div>[2026-01-25 23:29:06.007] [billing-thread-6] - 스킵 건수: 0</div>
+            <div>[2026-01-25 23:29:06.109] [billing-thread-2] --- [Step 종료] workerStep:partition8 ---</div>
+            <div>[2026-01-25 23:29:06.110] [billing-thread-2] - 최종 상태: COMPLETED</div>
+            <div>[2026-01-25 23:29:06.110] [billing-thread-2] - 읽기 건수: 100000</div>
+            <div>[2026-01-25 23:29:06.110] [billing-thread-2] - 쓰기 성공: 100000</div>
+            <div>[2026-01-25 23:29:06.110] [billing-thread-2] - 스킵 건수: 0</div>
+            <div>[2026-01-25 23:29:08.352] [billing-thread-5] --- [Step 종료] workerStep:partition4 ---</div>
+            <div>[2026-01-25 23:29:08.352] [billing-thread-5] - 최종 상태: COMPLETED</div>
+            <div>[2026-01-25 23:29:08.352] [billing-thread-5] - 읽기 건수: 100000</div>
+            <div>[2026-01-25 23:29:08.352] [billing-thread-5] - 쓰기 성공: 100000</div>
+            <div>[2026-01-25 23:29:08.352] [billing-thread-5] - 스킵 건수: 0</div>
+            <div>[2026-01-25 23:29:08.415] [billing-thread-7] --- [Step 종료] workerStep:partition9 ---</div>
+            <div>[2026-01-25 23:29:08.416] [billing-thread-7] - 최종 상태: COMPLETED</div>
+            <div>[2026-01-25 23:29:08.416] [billing-thread-7] - 읽기 건수: 100000</div>
+            <div>[2026-01-25 23:29:08.416] [billing-thread-7] - 쓰기 성공: 100000</div>
+            <div>[2026-01-25 23:29:08.416] [billing-thread-7] - 스킵 건수: 0</div>
+            <div>[2026-01-25 23:29:09.800] [billing-thread-9] --- [Step 종료] workerStep:partition7 ---</div>
+            <div>[2026-01-25 23:29:09.800] [billing-thread-9] - 최종 상태: COMPLETED</div>
+            <div>[2026-01-25 23:29:09.800] [billing-thread-9] - 읽기 건수: 100000</div>
+            <div>[2026-01-25 23:29:09.801] [billing-thread-9] - 쓰기 성공: 100000</div>
+            <div>[2026-01-25 23:29:09.801] [billing-thread-9] - 스킵 건수: 0</div>
+            <div>[2026-01-25 23:29:13.756] [billing-thread-4] --- [Step 종료] workerStep:partition0 ---</div>
+            <div>[2026-01-25 23:29:13.756] [billing-thread-4] - 최종 상태: COMPLETED</div>
+            <div>[2026-01-25 23:29:13.756] [billing-thread-4] - 읽기 건수: 100000</div>
+            <div>[2026-01-25 23:29:13.756] [billing-thread-4] - 쓰기 성공: 100000</div>
+            <div>[2026-01-25 23:29:13.756] [billing-thread-4] - 스킵 건수: 0</div>
+            <div>[2026-01-25 23:29:14.686] [billing-thread-3] --- [Step 종료] workerStep:partition3 ---</div>
+            <div>[2026-01-25 23:29:14.687] [billing-thread-3] - 최종 상태: COMPLETED</div>
+            <div>[2026-01-25 23:29:14.687] [billing-thread-3] - 읽기 건수: 100000</div>
+            <div>[2026-01-25 23:29:14.687] [billing-thread-3] - 쓰기 성공: 100000</div>
+            <div>[2026-01-25 23:29:14.687] [billing-thread-3] - 스킵 건수: 0</div>
+            <div>[2026-01-25 23:29:14.717] [billing-thread-8] --- [Step 종료] workerStep:partition2 ---</div>
+            <div>[2026-01-25 23:29:14.717] [billing-thread-8] - 최종 상태: COMPLETED</div>
+            <div>[2026-01-25 23:29:14.717] [billing-thread-8] - 읽기 건수: 100000</div>
+            <div>[2026-01-25 23:29:14.717] [billing-thread-8] - 쓰기 성공: 100000</div>
+            <div>[2026-01-25 23:29:14.717] [billing-thread-8] - 스킵 건수: 0</div>
+            <div>[2026-01-25 23:29:15.832] [billing-thread-10] --- [Step 종료] workerStep:partition1 ---</div>
+            <div>[2026-01-25 23:29:15.832] [billing-thread-10] - 최종 상태: COMPLETED</div>
+            <div>[2026-01-25 23:29:15.832] [billing-thread-10] - 읽기 건수: 100000</div>
+            <div>[2026-01-25 23:29:15.833] [billing-thread-10] - 쓰기 성공: 100000</div>
+            <div>[2026-01-25 23:29:15.833] [billing-thread-10] - 스킵 건수: 0</div>
+            <div>[2026-01-25 23:29:16.360] [http-nio-8081-exec-1] &gt;&gt;&gt; [AfterJob] 최종 실행 상태 : exitCode=COMPLETED;exitDescription=</div>
+            <div>[2026-01-25 23:29:16.361] [http-nio-8081-exec-1] ========== 정산 배치 파일 리다이렉션 종료 ==========</div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
