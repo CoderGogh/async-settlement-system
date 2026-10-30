@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="/assets/demo-shim.js"></script>
+    <meta charset="UTF-8">
+    <title>사용자 정산 결과 | 관리자</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/common.css">
+    <link rel="stylesheet" href="/css/billing-result.css">
+</head>
+<body>
+
+<div class="sidebar">
+    <!-- Sidebar Header -->
+<div class="sidebar-header">
+<span class="logo-icon">
+    <i class="bi bi-lightning-fill" style="font-size: 24px; color: #F26EB8;"></i>
+</span>
+    <span class="logo-text">To U+</span>
+</div>
+
+
+    <ul>
+        <!-- 메인 메뉴 -->
+        <li>
+            <a href="/admin/process/dashboard" class="sidebar-link"><i class="bi bi-speedometer2 me-2"></i>대시보드</a>
+        </li>
+
+        <li>
+            <a href="/admin/batch/dashboard" class="sidebar-link"> <i class="bi bi-cpu me-2"></i> 배치 대시보드</a>
+        </li>
+
+        <li>
+            <a href="/admin/message/dashboard" class="sidebar-link"><i class="bi bi-envelope me-2"></i>메시지 대시보드</a>
+        </li>
+
+        <li>
+		    <a href="/admin/logs" class="sidebar-link">
+		        <i class="bi bi-clipboard-check me-2"></i>Audit 로그 관리
+		    </a>
+		</li>
+
+        <!-- 사용자 대시보드 (드롭다운) -->
+        <li class=" active open">
+            <a href="#" class="sidebar-link"> <i class="bi bi-people me-2"></i> 사용자 대시보드 ▾</a>
+            <ul class="dropdown">
+                <li class=" active">
+                    <a href="/admin/users/settlements">사용자별 정산 결과</a>
+                </li>
+                <li>
+                    <a href="/admin/users/products/donut">전체 구독 분포</a>
+                </li>
+                <li>
+                    <a href="/admin/users/products/bar">구독 TOP 7</a>
+                </li>
+            </ul>
+        </li>
+
+        <!-- 템플릿 관리 -->
+        <li>
+            <a href="/admin/process/templates/management" class="sidebar-link"><i class="bi bi-file-earmark-text me-2" ></i>템플릿 관리</a>
+        </li>
+    </ul>
+</div>
+
+<div class="container">
+    <h1> 사용자 정산 결과 </h1>
+   <span class="step-card">
+	    <i class="bi bi-calendar-event"></i>
+	    정산월: <span id="settlementMonth">2025-12</span>
+	</span>
+    <div class="table-responsive">
+        <table class="template-table">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>이름</th>
+                <th>전화번호</th>
+                <th>이메일</th>
+                <th>구독 상품</th>
+                <th>정산 상태</th>
+                <th>정산 금액</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>141</td>
+                <td>최**</td>
+                <td>010-****-0141</td>
+                <td>us********@example.com</td>
+
+                <td>
+                    <button class="btn-primary" type="button"
+                            onclick="fillSettlementModal(141)">
+                        전체 상세보기
+                    </button>
+
+                    <div id="modalContent_141" style="display:none">
+                        <table class="modal-table">
+                            <thead>
+                            <tr><th>상품명</th><th>가격</th></tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td class="content-cell">5G 스탠다드</td>
+                                <td>75000</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">기가 인터넷 500M</td>
+                                <td>33000</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">U+tv 프리미엄</td>
+                                <td>16500</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">V컬러링</td>
+                                <td>3300</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">로밍 데이터 패스</td>
+                                <td>11000</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">DATA초과 요금</td>
+                                <td>655780</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">선택약정 25%</td>
+                                <td>-18750</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">10원 미만 할인</td>
+                                <td>0</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </td>
+
+                <td>
+                    <span class="badge bg-success">정산 완료</span>
+                    
+                </td>
+                <td>775830</td>
+            </tr>
+            <tr>
+                <td>142</td>
+                <td>서**</td>
+                <td>010-****-0142</td>
+                <td>us********@example.com</td>
+
+                <td>
+                    <button class="btn-primary" type="button"
+                            onclick="fillSettlementModal(142)">
+                        전체 상세보기
+                    </button>
+
+                    <div id="modalContent_142" style="display:none">
+                        <table class="modal-table">
+                            <thead>
+                            <tr><th>상품명</th><th>가격</th></tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td class="content-cell">5G 슬림+</td>
+                                <td>47000</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">인터넷 100M</td>
+                                <td>22000</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">DATA초과 요금</td>
+                                <td>97194</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">장기고객 감사 할인</td>
+                                <td>-3300</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">인터넷 결합 할인</td>
+                                <td>-4370</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">10원 미만 할인</td>
+                                <td>-4</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </td>
+
+                <td>
+                    <span class="badge bg-success">정산 완료</span>
+                    
+                </td>
+                <td>158520</td>
+            </tr>
+            <tr>
+                <td>143</td>
+                <td>박**</td>
+                <td>010-****-0143</td>
+                <td>us********@example.com</td>
+
+                <td>
+                    <button class="btn-primary" type="button"
+                            onclick="fillSettlementModal(143)">
+                        전체 상세보기
+                    </button>
+
+                    <div id="modalContent_143" style="display:none">
+                        <table class="modal-table">
+                            <thead>
+                            <tr><th>상품명</th><th>가격</th></tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td class="content-cell">5G 프리미어 슈퍼</td>
+                                <td>115000</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">U+ 스마트홈</td>
+                                <td>4400</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">멜론</td>
+                                <td>9900</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">선택약정 25%</td>
+                                <td>-28750</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">10원 미만 할인</td>
+                                <td>0</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </td>
+
+                <td>
+                    <span class="badge bg-success">정산 완료</span>
+                    
+                </td>
+                <td>100550</td>
+            </tr>
+            <tr>
+                <td>144</td>
+                <td>송**</td>
+                <td>010-****-0144</td>
+                <td>us********@example.com</td>
+
+                <td>
+                    <button class="btn-primary" type="button"
+                            onclick="fillSettlementModal(144)">
+                        전체 상세보기
+                    </button>
+
+                    <div id="modalContent_144" style="display:none">
+                        <table class="modal-table">
+                            <thead>
+                            <tr><th>상품명</th><th>가격</th></tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td class="content-cell">5G 슬림+</td>
+                                <td>47000</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">U+tv 프리미엄</td>
+                                <td>16500</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">디즈니+ 결합</td>
+                                <td>9900</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">LMS초과 요금</td>
+                                <td>99</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">선택약정 25%</td>
+                                <td>-11750</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">10원 미만 할인</td>
+                                <td>-9</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </td>
+
+                <td>
+                    <span class="badge bg-success">정산 완료</span>
+                    
+                </td>
+                <td>61740</td>
+            </tr>
+            <tr>
+                <td>145</td>
+                <td>황**</td>
+                <td>010-****-0145</td>
+                <td>us********@example.com</td>
+
+                <td>
+                    <button class="btn-primary" type="button"
+                            onclick="fillSettlementModal(145)">
+                        전체 상세보기
+                    </button>
+
+                    <div id="modalContent_145" style="display:none">
+                        <table class="modal-table">
+                            <thead>
+                            <tr><th>상품명</th><th>가격</th></tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td class="content-cell">5G 프리미어 슈퍼</td>
+                                <td>115000</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">기가 인터넷 500M</td>
+                                <td>33000</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">디즈니+ 결합</td>
+                                <td>9900</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">U+ 스마트홈</td>
+                                <td>4400</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">선택약정 25%</td>
+                                <td>-28750</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">10원 미만 할인</td>
+                                <td>0</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </td>
+
+                <td>
+                    <span class="badge bg-success">정산 완료</span>
+                    
+                </td>
+                <td>133550</td>
+            </tr>
+            <tr>
+                <td>146</td>
+                <td>신**</td>
+                <td>010-****-0146</td>
+                <td>us********@example.com</td>
+
+                <td>
+                    <button class="btn-primary" type="button"
+                            onclick="fillSettlementModal(146)">
+                        전체 상세보기
+                    </button>
+
+                    <div id="modalContent_146" style="display:none">
+                        <table class="modal-table">
+                            <thead>
+                            <tr><th>상품명</th><th>가격</th></tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td class="content-cell">5G 스탠다드</td>
+                                <td>75000</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">기가 인터넷 500M</td>
+                                <td>33000</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">선택약정 25%</td>
+                                <td>-18750</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">인터넷 결합 할인</td>
+                                <td>-5625</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">10원 미만 할인</td>
+                                <td>-5</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </td>
+
+                <td>
+                    <span class="badge bg-success">정산 완료</span>
+                    
+                </td>
+                <td>83620</td>
+            </tr>
+            <tr>
+                <td>147</td>
+                <td>류**</td>
+                <td>010-****-0147</td>
+                <td>us********@example.com</td>
+
+                <td>
+                    <button class="btn-primary" type="button"
+                            onclick="fillSettlementModal(147)">
+                        전체 상세보기
+                    </button>
+
+                    <div id="modalContent_147" style="display:none">
+                        <table class="modal-table">
+                            <thead>
+                            <tr><th>상품명</th><th>가격</th></tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td class="content-cell">5G 프리미어 슈퍼</td>
+                                <td>115000</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">기가 인터넷 500M</td>
+                                <td>33000</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">인터넷 결합 할인</td>
+                                <td>-11500</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">10원 미만 할인</td>
+                                <td>0</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </td>
+
+                <td>
+                    <span class="badge bg-success">정산 완료</span>
+                    
+                </td>
+                <td>136500</td>
+            </tr>
+            <tr>
+                <td>148</td>
+                <td>윤**</td>
+                <td>010-****-0148</td>
+                <td>us********@example.com</td>
+
+                <td>
+                    <button class="btn-primary" type="button"
+                            onclick="fillSettlementModal(148)">
+                        전체 상세보기
+                    </button>
+
+                    <div id="modalContent_148" style="display:none">
+                        <table class="modal-table">
+                            <thead>
+                            <tr><th>상품명</th><th>가격</th></tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td class="content-cell">5G 스탠다드</td>
+                                <td>75000</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">기가 인터넷 500M</td>
+                                <td>33000</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">U+ 스마트홈</td>
+                                <td>4400</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">선택약정 25%</td>
+                                <td>-18750</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">인터넷 결합 할인</td>
+                                <td>-5625</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">10원 미만 할인</td>
+                                <td>-5</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </td>
+
+                <td>
+                    <span class="badge bg-success">정산 완료</span>
+                    
+                </td>
+                <td>88020</td>
+            </tr>
+            <tr>
+                <td>149</td>
+                <td>한**</td>
+                <td>010-****-0149</td>
+                <td>us********@example.com</td>
+
+                <td>
+                    <button class="btn-primary" type="button"
+                            onclick="fillSettlementModal(149)">
+                        전체 상세보기
+                    </button>
+
+                    <div id="modalContent_149" style="display:none">
+                        <table class="modal-table">
+                            <thead>
+                            <tr><th>상품명</th><th>가격</th></tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td class="content-cell">5G 라이트+</td>
+                                <td>55000</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">기가 인터넷 500M</td>
+                                <td>33000</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">로밍 데이터 패스</td>
+                                <td>11000</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">카카오페이지</td>
+                                <td>9900</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">LMS초과 요금</td>
+                                <td>132</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">선택약정 25%</td>
+                                <td>-13750</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">인터넷 결합 할인</td>
+                                <td>-4125</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">10원 미만 할인</td>
+                                <td>-7</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </td>
+
+                <td>
+                    <span class="badge bg-success">정산 완료</span>
+                    
+                </td>
+                <td>91150</td>
+            </tr>
+            <tr>
+                <td>150</td>
+                <td>안**</td>
+                <td>010-****-0150</td>
+                <td>us********@example.com</td>
+
+                <td>
+                    <button class="btn-primary" type="button"
+                            onclick="fillSettlementModal(150)">
+                        전체 상세보기
+                    </button>
+
+                    <div id="modalContent_150" style="display:none">
+                        <table class="modal-table">
+                            <thead>
+                            <tr><th>상품명</th><th>가격</th></tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td class="content-cell">5G 프리미어 슈퍼</td>
+                                <td>115000</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">휴대폰 분실파손 보험</td>
+                                <td>5900</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">가족결합 (3인)</td>
+                                <td>-8800</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">장기고객 감사 할인</td>
+                                <td>-3300</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">10원 미만 할인</td>
+                                <td>0</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </td>
+
+                <td>
+                    <span class="badge bg-success">정산 완료</span>
+                    
+                </td>
+                <td>108800</td>
+            </tr>
+            <tr>
+                <td>151</td>
+                <td>이**</td>
+                <td>010-****-0151</td>
+                <td>us********@example.com</td>
+
+                <td>
+                    <button class="btn-primary" type="button"
+                            onclick="fillSettlementModal(151)">
+                        전체 상세보기
+                    </button>
+
+                    <div id="modalContent_151" style="display:none">
+                        <table class="modal-table">
+                            <thead>
+                            <tr><th>상품명</th><th>가격</th></tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td class="content-cell">5G 프리미어 에센셜</td>
+                                <td>85000</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">가족결합 (3인)</td>
+                                <td>-8800</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">선택약정 25%</td>
+                                <td>-19050</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">10원 미만 할인</td>
+                                <td>0</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </td>
+
+                <td>
+                    <span class="badge bg-success">정산 완료</span>
+                    
+                </td>
+                <td>57150</td>
+            </tr>
+            <tr>
+                <td>152</td>
+                <td>서**</td>
+                <td>010-****-0152</td>
+                <td>us********@example.com</td>
+
+                <td>
+                    <button class="btn-primary" type="button"
+                            onclick="fillSettlementModal(152)">
+                        전체 상세보기
+                    </button>
+
+                    <div id="modalContent_152" style="display:none">
+                        <table class="modal-table">
+                            <thead>
+                            <tr><th>상품명</th><th>가격</th></tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td class="content-cell">5G 슬림+</td>
+                                <td>47000</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">인터넷 100M</td>
+                                <td>22000</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">가족결합 (3인)</td>
+                                <td>-8800</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">인터넷 결합 할인</td>
+                                <td>-3820</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">10원 미만 할인</td>
+                                <td>0</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </td>
+
+                <td>
+                    <span class="badge bg-success">정산 완료</span>
+                    
+                </td>
+                <td>56380</td>
+            </tr>
+            <tr>
+                <td>153</td>
+                <td>권**</td>
+                <td>010-****-0153</td>
+                <td>us********@example.com</td>
+
+                <td>
+                    <button class="btn-primary" type="button"
+                            onclick="fillSettlementModal(153)">
+                        전체 상세보기
+                    </button>
+
+                    <div id="modalContent_153" style="display:none">
+                        <table class="modal-table">
+                            <thead>
+                            <tr><th>상품명</th><th>가격</th></tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td class="content-cell">5G 라이트+</td>
+                                <td>55000</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">U+tv 프리미엄</td>
+                                <td>16500</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">선택약정 25%</td>
+                                <td>-13750</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">10원 미만 할인</td>
+                                <td>0</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </td>
+
+                <td>
+                    <span class="badge bg-success">정산 완료</span>
+                    
+                </td>
+                <td>57750</td>
+            </tr>
+            <tr>
+                <td>154</td>
+                <td>서**</td>
+                <td>010-****-0154</td>
+                <td>us********@example.com</td>
+
+                <td>
+                    <button class="btn-primary" type="button"
+                            onclick="fillSettlementModal(154)">
+                        전체 상세보기
+                    </button>
+
+                    <div id="modalContent_154" style="display:none">
+                        <table class="modal-table">
+                            <thead>
+                            <tr><th>상품명</th><th>가격</th></tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td class="content-cell">5G 스탠다드</td>
+                                <td>75000</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">U+tv 베이직</td>
+                                <td>12100</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">U+ 스마트홈</td>
+                                <td>4400</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">DATA초과 요금</td>
+                                <td>674931</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">장기고객 감사 할인</td>
+                                <td>-3300</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">선택약정 25%</td>
+                                <td>-17925</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">10원 미만 할인</td>
+                                <td>-6</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </td>
+
+                <td>
+                    <span class="badge bg-success">정산 완료</span>
+                    
+                </td>
+                <td>745200</td>
+            </tr>
+            <tr>
+                <td>155</td>
+                <td>최**</td>
+                <td>010-****-0155</td>
+                <td>us********@example.com</td>
+
+                <td>
+                    <button class="btn-primary" type="button"
+                            onclick="fillSettlementModal(155)">
+                        전체 상세보기
+                    </button>
+
+                    <div id="modalContent_155" style="display:none">
+                        <table class="modal-table">
+                            <thead>
+                            <tr><th>상품명</th><th>가격</th></tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td class="content-cell">5G 슬림+</td>
+                                <td>47000</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">인터넷 100M</td>
+                                <td>22000</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">휴대폰 분실파손 보험</td>
+                                <td>5900</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">로밍 데이터 패스</td>
+                                <td>11000</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">구글플레이</td>
+                                <td>3300</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">선택약정 25%</td>
+                                <td>-11750</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">10원 미만 할인</td>
+                                <td>0</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </td>
+
+                <td>
+                    <span class="badge bg-success">정산 완료</span>
+                    
+                </td>
+                <td>77450</td>
+            </tr>
+            <tr>
+                <td>156</td>
+                <td>김**</td>
+                <td>010-****-0156</td>
+                <td>us********@example.com</td>
+
+                <td>
+                    <button class="btn-primary" type="button"
+                            onclick="fillSettlementModal(156)">
+                        전체 상세보기
+                    </button>
+
+                    <div id="modalContent_156" style="display:none">
+                        <table class="modal-table">
+                            <thead>
+                            <tr><th>상품명</th><th>가격</th></tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td class="content-cell">5G 라이트+</td>
+                                <td>55000</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">넷플릭스 베이직 결합</td>
+                                <td>13500</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">U+ 스마트홈</td>
+                                <td>4400</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">카카오페이지</td>
+                                <td>15000</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">장기고객 감사 할인</td>
+                                <td>-3300</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">선택약정 25%</td>
+                                <td>-12925</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">10원 미만 할인</td>
+                                <td>-5</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </td>
+
+                <td>
+                    <span class="badge bg-success">정산 완료</span>
+                    
+                </td>
+                <td>71670</td>
+            </tr>
+            <tr>
+                <td>157</td>
+                <td>최**</td>
+                <td>010-****-0157</td>
+                <td>us********@example.com</td>
+
+                <td>
+                    <button class="btn-primary" type="button"
+                            onclick="fillSettlementModal(157)">
+                        전체 상세보기
+                    </button>
+
+                    <div id="modalContent_157" style="display:none">
+                        <table class="modal-table">
+                            <thead>
+                            <tr><th>상품명</th><th>가격</th></tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td class="content-cell">5G 슬림+</td>
+                                <td>47000</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">로밍 데이터 패스</td>
+                                <td>11000</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">DATA초과 요금</td>
+                                <td>162035</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">SMS초과 요금</td>
+                                <td>572</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">10원 미만 할인</td>
+                                <td>-7</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </td>
+
+                <td>
+                    <span class="badge bg-success">정산 완료</span>
+                    
+                </td>
+                <td>220600</td>
+            </tr>
+            <tr>
+                <td>158</td>
+                <td>권**</td>
+                <td>010-****-0158</td>
+                <td>us********@example.com</td>
+
+                <td>
+                    <button class="btn-primary" type="button"
+                            onclick="fillSettlementModal(158)">
+                        전체 상세보기
+                    </button>
+
+                    <div id="modalContent_158" style="display:none">
+                        <table class="modal-table">
+                            <thead>
+                            <tr><th>상품명</th><th>가격</th></tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td class="content-cell">5G 스탠다드</td>
+                                <td>75000</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">인터넷 100M</td>
+                                <td>22000</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">휴대폰 분실파손 보험</td>
+                                <td>5900</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">DATA초과 요금</td>
+                                <td>812071</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">SMS초과 요금</td>
+                                <td>286</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">가족결합 (3인)</td>
+                                <td>-8800</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">선택약정 25%</td>
+                                <td>-16550</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">인터넷 결합 할인</td>
+                                <td>-4965</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">10원 미만 할인</td>
+                                <td>-2</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </td>
+
+                <td>
+                    <span class="badge bg-success">정산 완료</span>
+                    
+                </td>
+                <td>884940</td>
+            </tr>
+            <tr>
+                <td>159</td>
+                <td>임**</td>
+                <td>010-****-0159</td>
+                <td>us********@example.com</td>
+
+                <td>
+                    <button class="btn-primary" type="button"
+                            onclick="fillSettlementModal(159)">
+                        전체 상세보기
+                    </button>
+
+                    <div id="modalContent_159" style="display:none">
+                        <table class="modal-table">
+                            <thead>
+                            <tr><th>상품명</th><th>가격</th></tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td class="content-cell">LTE 데이터33</td>
+                                <td>33000</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">로밍 데이터 패스</td>
+                                <td>11000</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">가족결합 (3인)</td>
+                                <td>-8800</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">10원 미만 할인</td>
+                                <td>0</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </td>
+
+                <td>
+                    <span class="badge bg-success">정산 완료</span>
+                    
+                </td>
+                <td>35200</td>
+            </tr>
+            <tr>
+                <td>160</td>
+                <td>강**</td>
+                <td>010-****-0160</td>
+                <td>us********@example.com</td>
+
+                <td>
+                    <button class="btn-primary" type="button"
+                            onclick="fillSettlementModal(160)">
+                        전체 상세보기
+                    </button>
+
+                    <div id="modalContent_160" style="display:none">
+                        <table class="modal-table">
+                            <thead>
+                            <tr><th>상품명</th><th>가격</th></tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td class="content-cell">5G 프리미어 에센셜</td>
+                                <td>85000</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">U+tv 베이직</td>
+                                <td>12100</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">U+ 스마트홈</td>
+                                <td>4400</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">가족결합 (3인)</td>
+                                <td>-8800</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">선택약정 25%</td>
+                                <td>-19050</td>
+                            </tr>
+                            <tr>
+                                <td class="content-cell">10원 미만 할인</td>
+                                <td>0</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </td>
+
+                <td>
+                    <span class="badge bg-success">정산 완료</span>
+                    
+                </td>
+                <td>73650</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ================= 페이징 ================= -->
+    <div class="pagination-container">
+        <a href="/admin/users/settlements/page-6"
+           class="btn-pagination">이전</a>
+
+        <span class="pagination-info">페이지 <span>8</span> / <span>1000</span></span>
+
+        <a href="/admin/users/settlements/page-8"
+           class="btn-pagination">다음</a>
+    </div>
+</div>
+
+<!-- ================= 모달 ================= -->
+<div class="modal" id="settlementModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">정산 상세 내역</h5>
+                <button class="btn-close" id="modalCloseBtn">&times;</button>
+            </div>
+            <div class="modal-body" id="settlementDetailBody">로딩 중...</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const modal = document.getElementById('settlementModal');
+    const modalBody = document.getElementById('settlementDetailBody');
+    const closeBtn = document.getElementById('modalCloseBtn');
+
+    function fillSettlementModal(userId) {
+        const content = document.getElementById(`modalContent_${userId}`);
+        if(content) {
+            modalBody.innerHTML = content.innerHTML;
+            modal.style.display = 'block';
+        }
+    }
+
+    closeBtn.addEventListener('click', () => modal.style.display = 'none');
+    window.addEventListener('click', (e) => { if(e.target===modal) modal.style.display='none'; });
+</script>
+</body>
+</html>

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="/assets/demo-shim.js"></script>
+	<meta charset="UTF-8">
+	<title>상품 구독 통계 | 관리자</title>
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+	<link rel="stylesheet" href="/css/common.css">
+	<link rel="stylesheet" href="/css/productDonut.css">
+</head>
+
+<body>
+<div class="sidebar">
+    <!-- Sidebar Header -->
+<div class="sidebar-header">
+<span class="logo-icon">
+    <i class="bi bi-lightning-fill" style="font-size: 24px; color: #F26EB8;"></i>
+</span>
+    <span class="logo-text">To U+</span>
+</div>
+
+
+    <ul>
+        <!-- 메인 메뉴 -->
+        <li>
+            <a href="/admin/process/dashboard" class="sidebar-link"><i class="bi bi-speedometer2 me-2"></i>대시보드</a>
+        </li>
+
+        <li>
+            <a href="/admin/batch/dashboard" class="sidebar-link"> <i class="bi bi-cpu me-2"></i> 배치 대시보드</a>
+        </li>
+
+        <li>
+            <a href="/admin/message/dashboard" class="sidebar-link"><i class="bi bi-envelope me-2"></i>메시지 대시보드</a>
+        </li>
+
+        <li>
+		    <a href="/admin/logs" class="sidebar-link">
+		        <i class="bi bi-clipboard-check me-2"></i>Audit 로그 관리
+		    </a>
+		</li>
+
+        <!-- 사용자 대시보드 (드롭다운) -->
+        <li class=" active open">
+            <a href="#" class="sidebar-link"> <i class="bi bi-people me-2"></i> 사용자 대시보드 ▾</a>
+            <ul class="dropdown">
+                <li>
+                    <a href="/admin/users/settlements">사용자별 정산 결과</a>
+                </li>
+                <li class=" active">
+                    <a href="/admin/users/products/donut">전체 구독 분포</a>
+                </li>
+                <li>
+                    <a href="/admin/users/products/bar">구독 TOP 7</a>
+                </li>
+            </ul>
+        </li>
+
+        <!-- 템플릿 관리 -->
+        <li>
+            <a href="/admin/process/templates/management" class="sidebar-link"><i class="bi bi-file-earmark-text me-2" ></i>템플릿 관리</a>
+        </li>
+    </ul>
+</div>
+
+<div class="container">
+	<h1>상품 유형별 구독 비율</h1>
+	<div class="chart-grid">
+		<div class="card">
+			<div class="chart-wrapper donut-wrapper">
+				<h3>mobile 상품 구독 비율</h3>
+				<canvas id="donutChart_0"></canvas>
+			</div>
+		</div>
+		<div class="card">
+			<div class="chart-wrapper donut-wrapper">
+				<h3>internet 상품 구독 비율</h3>
+				<canvas id="donutChart_1"></canvas>
+			</div>
+		</div>
+		<div class="card">
+			<div class="chart-wrapper donut-wrapper">
+				<h3>iptv 상품 구독 비율</h3>
+				<canvas id="donutChart_2"></canvas>
+			</div>
+		</div>
+		<div class="card">
+			<div class="chart-wrapper donut-wrapper">
+				<h3>addon 상품 구독 비율</h3>
+				<canvas id="donutChart_3"></canvas>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+
+    const charts = [{"productType":"mobile","title":"mobile \uC0C1\uD488 \uAD6C\uB3C5 \uBE44\uC728","labels":["5G \uC2A4\uD0E0\uB2E4\uB4DC","5G \uB77C\uC774\uD2B8+","5G \uD504\uB9AC\uBBF8\uC5B4 \uC5D0\uC13C\uC15C","5G \uC2AC\uB9BC+","LTE \uB370\uC774\uD13033","5G \uD504\uB9AC\uBBF8\uC5B4 \uC288\uD37C"],"data":[4846,3881,3598,2997,2366,1997]},{"productType":"internet","title":"internet \uC0C1\uD488 \uAD6C\uB3C5 \uBE44\uC728","labels":["\uAE30\uAC00 \uC778\uD130\uB137 500M","\uAE30\uAC00 \uC778\uD130\uB137 1G","\uC778\uD130\uB137 100M"],"data":[4240,2084,2048]},{"productType":"iptv","title":"iptv \uC0C1\uD488 \uAD6C\uB3C5 \uBE44\uC728","labels":["U+tv \uBCA0\uC774\uC9C1","U+tv \uD504\uB9AC\uBBF8\uC5C4"],"data":[2827,2780]},{"productType":"addon","title":"addon \uC0C1\uD488 \uAD6C\uB3C5 \uBE44\uC728","labels":["U+ \uC2A4\uB9C8\uD2B8\uD648","\uD734\uB300\uD3F0 \uBD84\uC2E4\uD30C\uC190 \uBCF4\uD5D8","V\uCEEC\uB7EC\uB9C1","\uB85C\uBC0D \uB370\uC774\uD130 \uD328\uC2A4"],"data":[4040,4030,3998,3913]}];
+
+    /* ===== 공통 색상 ===== */
+    const donutColors = [
+      '#ff6b6b',
+      '#4fc3f7',
+      '#ffd166',
+      '#6c63ff',
+      '#4dd0a3',
+      '#ff9f1c',
+      '#a0cded',
+      '#c77dff',
+      '#2ec4b6',
+      '#e76f51'
+    ];
+
+    /* ===== 차트 생성 ===== */
+    charts.forEach((chart, index) => {
+
+        const total = chart.data.reduce((sum, v) => sum + v, 0);
+
+        new Chart(
+            document.getElementById(`donutChart_${index}`),
+            {
+                type: 'doughnut',
+                data: {
+                    labels: chart.labels,
+                    datasets: [{
+                        data: chart.data,
+                        backgroundColor: donutColors,
+                        borderColor: '#ffffff',
+                        borderWidth: 2,
+                        hoverOffset: 12
+                    }]
+                },
+                options: {
+                    responsive: false,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    const value = context.raw;
+                                    const percent = ((value / total) * 100).toFixed(1);
+                                    return `${context.label} : ${value}명 (${percent}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        );
+    });
+</script>
+
+</body>
+</html>

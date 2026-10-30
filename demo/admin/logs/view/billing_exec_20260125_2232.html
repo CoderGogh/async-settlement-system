@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="/assets/demo-shim.js"></script>
+    <meta charset="UTF-8">
+    <title>로그 상세보기</title>
+    <link rel="stylesheet" href="/css/whole-process-dashboard.css">
+    <link rel="stylesheet" href="/css/common.css">
+    <style>
+        .log-content-box {
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 8px;
+            max-height: 700px;
+            overflow-y: auto;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .btn-back { background-color: #858796; color: white; padding: 8px 15px; border-radius: 4px; text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="sidebar">
+    <!-- Sidebar Header -->
+<div class="sidebar-header">
+<span class="logo-icon">
+    <i class="bi bi-lightning-fill" style="font-size: 24px; color: #F26EB8;"></i>
+</span>
+    <span class="logo-text">To U+</span>
+</div>
+
+
+    <ul>
+        <!-- 메인 메뉴 -->
+        <li>
+            <a href="/admin/process/dashboard" class="sidebar-link"><i class="bi bi-speedometer2 me-2"></i>대시보드</a>
+        </li>
+
+        <li>
+            <a href="/admin/batch/dashboard" class="sidebar-link"> <i class="bi bi-cpu me-2"></i> 배치 대시보드</a>
+        </li>
+
+        <li>
+            <a href="/admin/message/dashboard" class="sidebar-link"><i class="bi bi-envelope me-2"></i>메시지 대시보드</a>
+        </li>
+
+        <li class=" active">
+		    <a href="/admin/logs" class="sidebar-link">
+		        <i class="bi bi-clipboard-check me-2"></i>Audit 로그 관리
+		    </a>
+		</li>
+
+        <!-- 사용자 대시보드 (드롭다운) -->
+        <li>
+            <a href="#" class="sidebar-link"> <i class="bi bi-people me-2"></i> 사용자 대시보드 ▾</a>
+            <ul class="dropdown">
+                <li>
+                    <a href="/admin/users/settlements">사용자별 정산 결과</a>
+                </li>
+                <li>
+                    <a href="/admin/users/products/donut">전체 구독 분포</a>
+                </li>
+                <li>
+                    <a href="/admin/users/products/bar">구독 TOP 7</a>
+                </li>
+            </ul>
+        </li>
+
+        <!-- 템플릿 관리 -->
+        <li>
+            <a href="/admin/process/templates/management" class="sidebar-link"><i class="bi bi-file-earmark-text me-2" ></i>템플릿 관리</a>
+        </li>
+    </ul>
+</div>
+
+<div class="container">
+    <div class="header-row">
+        <h1>📄 billing_exec_20260125_2232.log</h1>
+        <a href="/admin/logs" class="btn-back">목록으로</a>
+    </div>
+
+    <div class="card">
+        <div class="log-content-box">
+            <div>[2026-01-25 22:32:34.247] [http-nio-8081-exec-1] ========== 정산 배치 파일 리다이렉션 시작 ==========</div>
+            <div>[2026-01-25 22:32:34.248] [http-nio-8081-exec-1] &gt;&gt;&gt; 정산 대상 월 : 2025-12-01</div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

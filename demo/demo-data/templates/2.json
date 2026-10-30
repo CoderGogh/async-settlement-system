@@ -1,0 +1,1 @@
+{"templateName":"월 청구서 이메일","messageType":"EMAIL","templateContent":"<h2>{settlementMonth} 청구서</h2><p>{userName}님, 이번 달 청구 금액은 <b>{totalPrice}원</b>입니다.</p>{settlementDetails}","createdAt":"2026-01-05T16:31:45","updatedAt":"2026-01-05T16:40:31","deletedAt":null,"id":2}

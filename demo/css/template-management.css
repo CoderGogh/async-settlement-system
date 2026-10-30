@@ -1,0 +1,208 @@
+/* ================= Body & Container ================= */
+body {
+    background-color: #f9fafb;
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: #e5e7eb;
+    line-height: 1.6;
+    overflow-y: scroll;
+}
+
+.container {
+    max-width: 1248px; /* 기존보다 30% 늘림 */
+    margin: 50px auto;
+    padding-left: 280px; /* 사이드바 공간 확보 */
+    padding-right: 32px;
+}
+
+/* ================= h1 ================= */
+h1 {
+    text-align: center;
+    margin-bottom: 40px;
+    font-size: 30px;
+    font-weight: 700;
+    color: #3b3b5e;
+}
+
+/* ================= 테이블 ================= */
+.template-table {
+    width: 100%;
+    border-collapse: collapse;
+    color: #e5e7eb;
+}
+
+.template-table th {
+    border-bottom: 1px solid #ddd;
+    font-weight: 600;
+    text-align: center;
+    padding: 16px 12px;
+    color: #51517c;
+}
+
+.template-table td {
+    border: none; /* tr 선 없음 */
+    padding: 14px 12px;
+    vertical-align: middle;
+    text-align: center;
+    font-size: 14px;
+}
+
+.template-table th {
+    text-align: center; /* 모든 th 가운데 정렬 */
+    background-color: #f3f4f6;
+}
+
+/* ================= 테이블 칸 너비 1:1:3:1 ================= */
+.template-table td:first-child {  /* 템플릿 이름 */
+    width: 15%; /* 1 */
+}
+
+.template-table td:nth-child(2) {  /* 메시지 타입 */
+    width: 15%; /* 1 */
+}
+
+.content-cell {  /* 내용 */
+    width: 45%; /* 3 */
+    text-align: left;
+    word-break: break-word;
+    padding-left: 16px;
+}
+
+.template-table td:last-child {  /* 관리 버튼 */
+    width: 25%; /* 1 비율 맞추려고 조금 여유 */
+}
+
+/* ================= 배지 스타일 ================= */
+.badge-type {
+    display: inline-block;
+    background-color: #444466;
+    color: #c5c5ff;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* ================= 액션 버튼 ================= */
+.action-btn-fixed.btn-outline-primary {
+    background-color: #51517c; /* 원래 배경 */
+    color: #e5e7eb;           /* 원래 글자색 */
+    border-color: #51517c;     /* 원래 테두리 */
+}
+
+.action-btn-fixed.btn-outline-primary:hover {
+    background-color: #3b3b5e; /* 호버 시 색상 */
+    color: #fff;
+    border-color: #3b3b5e;
+}
+
+.action-btn-fixed.btn-outline-primary:focus,
+.action-btn-fixed.btn-outline-primary:active,
+.action-btn-fixed.btn-outline-primary:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+    background-color: #51517c; /* 클릭/포커스 시 색상 유지 */
+    color: #e5e7eb;            /* 글자색 유지 */
+    border-color: #51517c;
+}
+
+/* 버튼 색상 어둡게 */
+.btn-outline-primary {
+    color: #e5e7eb;
+    border-color: #3b3b5e;
+    background-color: #51517c;
+}
+
+.btn-outline-primary:hover {
+    background-color: #3b3b5e;
+    color: #fff;
+    border-color: #3b3b5e;
+}
+
+.btn-outline-danger {
+    color: #e5e7eb;
+    border-color: #5c2a2a;
+    background-color: #51517c;
+}
+
+.btn-outline-danger:hover {
+    background-color: #5c2a2a;
+    color: #fff;
+    border-color: #5c2a2a;
+}
+
+/* ================= 추가 버튼 ================= */
+#btnAddTemplate {
+    background-color: #3b3b5e;
+    border-color: #3b3b5e;
+    color: #fff;
+    border-radius: 8px;
+    padding: 6px 16px;
+}
+
+#btnAddTemplate:hover {
+    background-color: #51517c;
+    border-color: #51517c;
+}
+
+
+/* ================= 페이지 상단 옵션 select ================= */
+#filterForm select {
+    background-color: #2a2a3f; /* 필터는 흰색 */
+    color: #f9fafb;
+    border: 1px solid #3b3b5e;
+    border-radius: 8px;
+    padding: 6px 12px;
+}
+
+/* ================= 모달 내부 select ================= */
+#templateModal select.form-select {
+    color: #3b3b5e;
+    border: 1px solid #3b3b5e;
+    border-radius: 8px;
+    padding: 6px 12px;
+}
+.modal-select option {
+    color: #3b3b5e;
+}
+
+/* ================= 모달 글씨 색 ================= */
+#templateModal label,
+#templateModal .modal-body input,
+#templateModal .modal-body textarea {
+    color: #3b3b5e;
+}
+
+h5{
+	color: #3b3b5e;
+}
+/* 모달 저장 버튼 색상 */
+#templateModal .btn-outline-primary {
+    color: #f9fafb;
+    border-color: #3b3b5e;
+    background-color: #3b3b5e;
+}
+
+#templateModal .btn-outline-primary:hover {
+    color: #fff;
+    background-color: #51517c;
+    border-color: #51517c;
+}
+
+/* ================= 옵션/버튼 영역 ================= */
+.optionAndBtn {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 910px;
+    margin-bottom: 20px;
+}
+
+.btnAndOption {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-left:17px;
+}
+.sidebar a {
+   gap: 10px !important;	
+}

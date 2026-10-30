@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="/assets/demo-shim.js"></script>
+    <meta charset="UTF-8">
+    <title>메시지 발송 현황 | 관리자</title>
+   	<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/message-dashboard.css">
+    <link rel="stylesheet" href="/css/common.css">
+</head>
+
+<body>
+<div class="sidebar">
+    <!-- Sidebar Header -->
+<div class="sidebar-header">
+<span class="logo-icon">
+    <i class="bi bi-lightning-fill" style="font-size: 24px; color: #F26EB8;"></i>
+</span>
+    <span class="logo-text">To U+</span>
+</div>
+
+
+    <ul>
+        <!-- 메인 메뉴 -->
+        <li>
+            <a href="/admin/process/dashboard" class="sidebar-link"><i class="bi bi-speedometer2 me-2"></i>대시보드</a>
+        </li>
+
+        <li>
+            <a href="/admin/batch/dashboard" class="sidebar-link"> <i class="bi bi-cpu me-2"></i> 배치 대시보드</a>
+        </li>
+
+        <li class=" active">
+            <a href="/admin/message/dashboard" class="sidebar-link"><i class="bi bi-envelope me-2"></i>메시지 대시보드</a>
+        </li>
+
+        <li>
+		    <a href="/admin/logs" class="sidebar-link">
+		        <i class="bi bi-clipboard-check me-2"></i>Audit 로그 관리
+		    </a>
+		</li>
+
+        <!-- 사용자 대시보드 (드롭다운) -->
+        <li>
+            <a href="#" class="sidebar-link"> <i class="bi bi-people me-2"></i> 사용자 대시보드 ▾</a>
+            <ul class="dropdown">
+                <li>
+                    <a href="/admin/users/settlements">사용자별 정산 결과</a>
+                </li>
+                <li>
+                    <a href="/admin/users/products/donut">전체 구독 분포</a>
+                </li>
+                <li>
+                    <a href="/admin/users/products/bar">구독 TOP 7</a>
+                </li>
+            </ul>
+        </li>
+
+        <!-- 템플릿 관리 -->
+        <li>
+            <a href="/admin/process/templates/management" class="sidebar-link"><i class="bi bi-file-earmark-text me-2" ></i>템플릿 관리</a>
+        </li>
+    </ul>
+</div>
+<div class="container">
+    <h1>메시지 발송 현황</h1>
+  <div class="month">
+		    <span class="step-card">
+		        <i class="bi bi-calendar-event"></i>
+		        정산월: <span id="settlementMonth">2025-12</span>
+		    </span>
+		</div>
+		
+		<div class="step-row">
+		    <span class="step-card">
+		        <i class="bi bi-bar-chart-line"></i>
+		        총 데이터: <span id="totalCount">19998</span>건
+		    </span>
+		</div>
+		<br>
+	<div class="card">
+        <!-- 이메일 WAITED -->
+        <div class="section">
+            <div class="section-title">
+                <span>이메일 발송 대기 건</span>
+                <span class="rate">
+                    <span id="waitCount">0</span>건
+                    · <span id="waitRate">0.00</span>%
+                </span>
+            </div>
+            <div class="bar-wrap">
+                <div id="waitBar" class="bar wait" style="width:0.0%"></div>
+            </div>
+        </div>
+
+        <!-- 이메일 SENT -->
+        <div class="section">
+            <div class="section-title">
+                <span>이메일 발송 성공 건</span>
+                <span class="rate">
+                    <span id="sentCount">19998</span>건
+                    · <span id="sentRate">100.00</span>%
+                </span>
+            </div>
+            <div class="bar-wrap">
+                <div id="sentBar" class="bar sent" style="width:100.0%"></div>
+            </div>
+        </div>
+
+        <!-- 이메일 RETRY -->
+        <div class="section">
+            <div class="section-title">
+                <span>이메일 재발송 대기 건</span>
+                <span class="rate">
+                    <span id="retryCount">0</span>건
+                    · <span id="retryRate">0.00</span>%
+                </span>
+            </div>
+            <div class="bar-wrap">
+                <div id="retryBar" class="bar retry" style="width:0.0%"></div>
+            </div>
+        </div>
+
+       <!-- SMS -->
+		<div class="section">
+		    <div class="section-title">
+		        <span>SMS 발송 건</span>
+		        <span class="rate">
+		            <span id="smsCount">0</span>건
+		            · <span id="smsRate">0.00</span>%
+		        </span>
+		    </div>
+		    <div class="bar-wrap">
+		        <div id="smsBar" class="bar sms" style="width:0.0%"></div>
+		    </div>
+		</div>
+
+
+        <!-- FAIL -->
+        <div class="section">
+            <div class="section-title">
+                <span>메시지 발송 실패 건</span>
+                <span class="rate">
+                    <span id="failCount">0</span>건
+                    · <span id="failRate">0.00</span>%
+                </span>
+            </div>
+            <div class="bar-wrap">
+                <div id="failBar" class="bar fail" style="width:0.0%"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function updateStatus(id, status) {
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.textContent = status;
+    el.classList.remove('pending','done','fail');
+    el.classList.add(status.toLowerCase());
+}
+
+const eventSource = new EventSource('/admin/process/stream');
+eventSource.onmessage = function(event) {
+    const data = JSON.parse(event.data);
+    updateStatus('batchJob', data.batchJob);
+    updateStatus('batchKafkaSent', data.batchKafkaSent);
+    updateStatus('messageKafkaReceive', data.messageKafkaReceive);
+    updateStatus('messageCreateMessage', data.messageCreateMessage);
+    updateStatus('messageSentMessage', data.messageSentMessage);
+};
+</script>
+
+</body>
+</html>
