@@ -1,0 +1,8 @@
+{
+  "framework": null,
+  "installCommand": "",
+  "buildCommand": "",
+  "outputDirectory": "demo",
+  "cleanUrls": true,
+  "redirects": [{ "source": "/", "destination": "/admin/process/dashboard", "permanent": false }]
+}
